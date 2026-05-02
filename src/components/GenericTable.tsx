@@ -5,9 +5,14 @@ interface Action {
     label: string;
 }
 
+interface Column {
+    key: string;
+    label: string;
+}
+
 interface GenericTableProps {
     data: Record<string, any>[];
-    columns: string[];
+    columns: Column[];
     actions: Action[];
     onAction: (name: string, item: Record<string, any>) => void;
 }
@@ -21,16 +26,16 @@ const GenericTable: React.FC<GenericTableProps> = ({ data, columns, actions, onA
                         <tr className="bg-gray-2 text-left dark:bg-meta-4">
                             {columns.map((col, index) => (
                                 <th
-                                    key={col}
+                                    key={col.key}
                                     className={`py-4 px-4 font-medium text-black dark:text-white ${
                                         index === 0 ? "min-w-[220px] xl:pl-11" : "min-w-[150px]"
                                     }`}
                                 >
-                                    {col}
+                                    {col.label}
                                 </th>
                             ))}
                             <th className="py-4 px-4 font-medium text-black dark:text-white">
-                                Actions
+                                Acciones
                             </th>
                         </tr>
                     </thead>
@@ -40,13 +45,13 @@ const GenericTable: React.FC<GenericTableProps> = ({ data, columns, actions, onA
                             <tr key={index}>
                                 {columns.map((col, colIndex) => (
                                     <td
-                                        key={col}
+                                        key={col.key}
                                         className={`border-b border-[#eee] py-5 px-4 dark:border-strokedark ${
                                             colIndex === 0 ? "pl-9 xl:pl-11" : ""
                                         }`}
                                     >
                                         <p className="text-black dark:text-white">
-                                            {item[col]}
+                                            {item[col.key]}
                                         </p>
                                     </td>
                                 ))}

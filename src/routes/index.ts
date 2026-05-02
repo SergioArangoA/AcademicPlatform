@@ -16,8 +16,14 @@ const UserCreate= lazy(() => import('../pages/Users/Create'));
 const UserUpdate= lazy(() => import('../pages/Users/Update'));
 const RoleList= lazy(() => import('../pages/Roles/List'));
 const Posts= lazy(() => import('../pages/Posts/List'));
+const StudentsEvaluations= lazy(() => import('../pages/Students/Evaluations/ListEvaluations'))
 
 const coreRoutes = [
+  {
+    path: '/students/evaluations/list',
+    title: 'Evaluaciones',
+    component: StudentsEvaluations,
+  },
   {
     path: '/users/list',
     title: 'Users',
