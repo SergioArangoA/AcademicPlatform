@@ -16,13 +16,19 @@ const UserCreate= lazy(() => import('../pages/Users/Create'));
 const UserUpdate= lazy(() => import('../pages/Users/Update'));
 const RoleList= lazy(() => import('../pages/Roles/List'));
 const Posts= lazy(() => import('../pages/Posts/List'));
-const StudentsEvaluations= lazy(() => import('../pages/Students/Evaluations/ListEvaluations'))
+const StudentsEvaluations= lazy(() => import('../pages/Students/Evaluations/ListEvaluations'));
+const ViewEvaluation = lazy(()=> import('../pages/Students/Evaluations/ViewEvaluation'));
 
 const coreRoutes = [
   {
     path: '/students/evaluations/list',
     title: 'Evaluaciones',
     component: StudentsEvaluations,
+  },
+  {
+    path: '/students/evaluation/:id',
+    title: 'Información evaluación',
+    component: ViewEvaluation,
   },
   {
     path: '/users/list',
