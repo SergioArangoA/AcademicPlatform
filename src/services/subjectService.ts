@@ -1,26 +1,26 @@
 import axios from "axios";
 import { api } from "../interceptors/authInterceptor";
-import { Evaluation } from "../models/Evaluation";
+import { Subject } from "../models/Subject";
 
-const API_URL = "/evaluation";
+const API_URL = "/academic/subjects";
 
-class EvaluationService {
-    async getEvaluations(): Promise<Evaluation[]> {
+class SubjectService {
+    async getSubjects(): Promise<Subject[]> {
         try {
-            const response = await api.get<Evaluation[]>(`${API_URL}/evaluations`);
+            const response = await api.get<Subject[]>(`${API_URL}`);
             return response.data;
         } catch (error) {
-            console.error("Error al obtener evaluaciones:", error);
+            console.error("Error al obtener materias:", error);
             return [];
         }
     }
 
-    async getEvaluationById(id: number): Promise<Evaluation | null> {
+    async getSubjectById(id: number): Promise<Subject | null> {
         try {
-            const response = await api.get<Evaluation>(`${API_URL}/${id}`);
+            const response = await api.get<Subject>(`${API_URL}/${id}`);
             return response.data;
         } catch (error) {
-            console.error("Evaluación no encontrada:", error);
+            console.error("Materia no encontrada:", error);
             return null;
         }
     }
@@ -57,4 +57,4 @@ class EvaluationService {
 }
 
 // Exportamos una instancia de la clase para reutilizarla
-export const evaluationService = new EvaluationService();
+export const subjectService = new SubjectService();
