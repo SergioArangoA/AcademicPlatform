@@ -13,7 +13,7 @@ const Evaluations: React.FC = () => {
         fetchData();
     }, []);
 
-    // 🔹 Obtiene los datos de los usuarios
+    // 🔹 Obtiene los datos de las evaluaciones
     const fetchData = async () => {
         const evaluations = await evaluationService.getEvaluations();
         setData(evaluations);
@@ -22,7 +22,7 @@ const Evaluations: React.FC = () => {
     const handleAction = (action: string, item: Evaluation) => {
         if (action === "view") {
             console.log("View evaluation:", item);
-            navigate(`/Students/evaluation/${item.evaluation_id}`);
+            navigate(`/students/evaluation/${item.evaluation_id}`);
         }
     };
 
@@ -47,7 +47,8 @@ const Evaluations: React.FC = () => {
     );
 };
 const mockEvaluations: Evaluation[] = [
-    {
+    {   
+        evaluation_id: 1,
         subject_id: 1,
         group_id: 101,
         name: "Parcial 1",
@@ -55,6 +56,7 @@ const mockEvaluations: Evaluation[] = [
         weight: 30,
     },
     {
+        evaluation_id: 2,
         subject_id: 1,
         group_id: 101,
         name: "Proyecto Final",

@@ -1,26 +1,26 @@
 import axios from "axios";
 import { api } from "../interceptors/authInterceptor";
-import { Evaluation } from "../models/Evaluation";
+import { Scale } from "../models/Scale";
 
-const API_URL = "/evaluation";
+const API_URL = "/evaluation/scales";
 
-class EvaluationService {
-    async getEvaluations(): Promise<Evaluation[]> {
+class ScaleService {
+    async getScales(): Promise<Scale[]> {
         try {
-            const response = await api.get<Evaluation[]>(`${API_URL}/evaluations`);
+            const response = await api.get<Scale[]>(`${API_URL}`);
             return response.data;
         } catch (error) {
-            console.error("Error al obtener evaluaciones:", error);
+            console.error("Error al obtener escalas:", error);
             return [];
         }
     }
 
-    async getEvaluationById(id: number): Promise<Evaluation | null> {
+    async getScaleById(id: number): Promise<Scale | null> {
         try {
-            const response = await api.get<Evaluation>(`${API_URL}/${id}`);
+            const response = await api.get<Scale>(`${API_URL}/${id}`);
             return response.data;
         } catch (error) {
-            console.error("Evaluación no encontrada:", error);
+            console.error("Escala no encontrada:", error);
             return null;
         }
     }
@@ -57,4 +57,4 @@ class EvaluationService {
 }
 
 // Exportamos una instancia de la clase para reutilizarla
-export const evaluationService = new EvaluationService();
+export const scaleService = new ScaleService();
