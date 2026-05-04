@@ -23,12 +23,12 @@ const EvaluationCard: React.FC<EvaluationCardProps> = ({evaluation,subject,group
           </h5>
 
           <h4 className="text-lg font-bold text-black dark:text-white mb-3">
-            {evaluation.name}
+            {evaluation?.name}
           </h4>
 
           <div className="text-sm space-y-1">
-            <p><span className="font-medium">Código:</span> {evaluation.evaluation_id} </p>
-            <p><span className="font-medium">Ponderación:</span> {evaluation.weight}% </p>
+            <p><span className="font-medium">Código:</span> {evaluation?.id} </p>
+            <p><span className="font-medium">Ponderación:</span> {evaluation?.weight}% </p>
           </div>
         </div>
 
@@ -38,7 +38,7 @@ const EvaluationCard: React.FC<EvaluationCardProps> = ({evaluation,subject,group
           </h5>
 
           <p className="text-black dark:text-white font-medium">
-            {subject.name}
+            {subject?.name}
           </p>
         </div>
 
@@ -48,7 +48,7 @@ const EvaluationCard: React.FC<EvaluationCardProps> = ({evaluation,subject,group
           </h5>
 
           <p className="text-black dark:text-white font-medium">
-            {group.name}
+            {group?.name}
           </p>
         </div>
 
@@ -58,7 +58,7 @@ const EvaluationCard: React.FC<EvaluationCardProps> = ({evaluation,subject,group
           </h5>
 
           <p className="text-black dark:text-white font-medium">
-            {user.name}
+            {user?.first_name} {user?.last_name}
           </p>
         </div>
 

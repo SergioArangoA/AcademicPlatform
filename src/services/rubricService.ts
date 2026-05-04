@@ -8,7 +8,7 @@ class RubricService {
     async getRubrics(): Promise<Rubric[]> {
         try {
             const response = await api.get<Rubric[]>(`${API_URL}`);
-            return response.data;
+            return response.data.data;
         } catch (error) {
             console.error("Error al obtener rúbricas:", error);
             return [];
@@ -18,7 +18,7 @@ class RubricService {
     async getRubricById(id: number): Promise<Rubric | null> {
         try {
             const response = await api.get<Rubric>(`${API_URL}/${id}`);
-            return response.data;
+            return response.data.data;
         } catch (error) {
             console.error("Rúbrica no encontrada:", error);
             return null;

@@ -8,7 +8,7 @@ class SubjectService {
     async getSubjects(): Promise<Subject[]> {
         try {
             const response = await api.get<Subject[]>(`${API_URL}`);
-            return response.data;
+            return response.data.data;
         } catch (error) {
             console.error("Error al obtener materias:", error);
             return [];
@@ -18,7 +18,7 @@ class SubjectService {
     async getSubjectById(id: number): Promise<Subject | null> {
         try {
             const response = await api.get<Subject>(`${API_URL}/${id}`);
-            return response.data;
+            return response.data.data;
         } catch (error) {
             console.error("Materia no encontrada:", error);
             return null;

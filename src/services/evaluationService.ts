@@ -2,13 +2,14 @@ import axios from "axios";
 import { api } from "../interceptors/authInterceptor";
 import { Evaluation } from "../models/Evaluation";
 
-const API_URL = "/evaluation";
+const API_URL = "/evaluation/evaluations";
 
 class EvaluationService {
     async getEvaluations(): Promise<Evaluation[]> {
         try {
-            const response = await api.get<Evaluation[]>(`${API_URL}/evaluations`);
-            return response.data;
+            const response = await api.get<Evaluation[]>(`${API_URL}`);
+            console.log("EVALUATIONS:", response.data);
+            return response.data.data;
         } catch (error) {
             console.error("Error al obtener evaluaciones:", error);
             return [];
@@ -18,7 +19,7 @@ class EvaluationService {
     async getEvaluationById(id: number): Promise<Evaluation | null> {
         try {
             const response = await api.get<Evaluation>(`${API_URL}/${id}`);
-            return response.data;
+            return response.data.data;
         } catch (error) {
             console.error("Evaluación no encontrada:", error);
             return null;

@@ -8,7 +8,7 @@ class CriterionService {
     async getCriteria(): Promise<Criterion[]> {
         try {
             const response = await api.get<Criterion[]>(`${API_URL}`);
-            return response.data;
+            return response.data.data;
         } catch (error) {
             console.error("Error al obtener criterios:", error);
             return [];
@@ -18,7 +18,7 @@ class CriterionService {
     async getCriterionById(id: number): Promise<Criterion | null> {
         try {
             const response = await api.get<Criterion>(`${API_URL}/${id}`);
-            return response.data;
+            return response.data.data;
         } catch (error) {
             console.error("Criterio no encontrado:", error);
             return null;
