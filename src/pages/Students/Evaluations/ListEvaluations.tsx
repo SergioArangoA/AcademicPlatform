@@ -22,7 +22,7 @@ const Evaluations: React.FC = () => {
     const handleAction = (action: string, item: Evaluation) => {
         if (action === "view") {
             console.log("View evaluation:", item);
-            navigate(`/students/evaluation/${item.evaluation_id}`);
+            navigate(`/students/evaluation/${item.id}`);
         }
     };
 
@@ -31,7 +31,7 @@ const Evaluations: React.FC = () => {
             <h2>Lista de evaluaciones</h2>
 
             <GenericTable
-                data={mockEvaluations}
+                data={data}
                 columns={[
                     {key: "name",label: "Nombre evaluación"},
                     {key: "description", label: "Descripción"},

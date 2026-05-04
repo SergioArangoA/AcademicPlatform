@@ -33,8 +33,8 @@ const EvaluationDetails: React.FC = () => {
         const evaluationData = await evaluationService.getEvaluationById(id);
         const subjectData = await subjectService.getSubjectById(evaluationData?.subject_id);
         const groupData = await groupService.getGroupById(evaluationData?.group_id);
-        const teacherData = await userService.getUserById(groupData?.teacher_id);
-        const rubricData = await rubricService.getRubricById(evaluationData?.evaluation_id);
+        const teacherData = await userService.getTeacherById(groupData?.teacher_id);
+        const rubricData = await rubricService.getRubricById(evaluationData?.rubric_id);
 
         setEvaluation(evaluationData);
         setSubject(subjectData);
@@ -71,10 +71,10 @@ const EvaluationDetails: React.FC = () => {
 
             {/* 📌 Tarjeta evaluación */}
             <EvaluationCard
-                evaluation={mockEvaluation}
-                subject={mockSubject}
-                group={mockGroup}
-                user={mockTeacher}
+                evaluation={evaluation}
+                subject={subject}
+                group={group}
+                user={teacher}
             />
 
             {/* 📊 Tabla */}

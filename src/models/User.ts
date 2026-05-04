@@ -1,8 +1,9 @@
 export interface User {
-    id?: number;
-    name?: string;
-    username?: string;
-    email?: string;
-    phone?: string;
-    password?: string;
+    id?: string;
+    first_name?: string;
+    last_name?: string;
+    identification?: number;
+    phone?: number;
+    speciality?: string;
+    user_id?: string;
 }

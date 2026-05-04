@@ -8,7 +8,7 @@ class ScaleService {
     async getScales(): Promise<Scale[]> {
         try {
             const response = await api.get<Scale[]>(`${API_URL}`);
-            return response.data;
+            return response.data.data;
         } catch (error) {
             console.error("Error al obtener escalas:", error);
             return [];
@@ -18,7 +18,7 @@ class ScaleService {
     async getScaleById(id: number): Promise<Scale | null> {
         try {
             const response = await api.get<Scale>(`${API_URL}/${id}`);
-            return response.data;
+            return response.data.data;
         } catch (error) {
             console.error("Escala no encontrada:", error);
             return null;
