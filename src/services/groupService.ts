@@ -8,7 +8,7 @@ class GroupService {
     async getGroups(): Promise<Group[]> {
         try {
             const response = await api.get<Group[]>(`${API_URL}`);
-            return response.data;
+            return response.data.data;
         } catch (error) {
             console.error("Error al obtener grupos:", error);
             return [];
@@ -18,7 +18,7 @@ class GroupService {
     async getGroupById(id: number): Promise<Group | null> {
         try {
             const response = await api.get<Group>(`${API_URL}/${id}`);
-            return response.data;
+            return response.data.data;
         } catch (error) {
             console.error("Grupo no encontrado:", error);
             return null;

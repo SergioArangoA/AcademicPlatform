@@ -1,9 +1,21 @@
 import axios from "axios";
 import { User } from "../models/User";
 
-const API_URL = import.meta.env.VITE_API_URL + "/users" || "";
+const API_URL = import.meta.env.VITE_API_URL;
 
 class UserService {
+    async getTeacherById(id: string): Promise<User | null> {
+        try {
+            const response = await axios.get<ApiResponse<User[]>>(`${API_URL}/academic/teachers/search?identification=90001`
+            );
+
+            return response.data.data[0] ?? null;
+
+        } catch (error) {
+            console.error("Error al obtener usuarios:", error);
+            return null;
+        }
+    }
     async getUsers(): Promise<User[]> {
         try {
             const response = await axios.get<User[]>(API_URL);
