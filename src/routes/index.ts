@@ -1,4 +1,6 @@
 import { lazy } from 'react';
+import Rubrics from '../pages/Students/Rubrics/ListRubrics';
+import Grades from '../pages/Students/Evaluations/ListGrades';
 
 const Calendar = lazy(() => import('../pages/Calendar'));
 const Chart = lazy(() => import('../pages/Chart'));
@@ -18,12 +20,24 @@ const RoleList= lazy(() => import('../pages/Roles/List'));
 const Posts= lazy(() => import('../pages/Posts/List'));
 const StudentsEvaluations= lazy(() => import('../pages/Students/Evaluations/ListEvaluations'));
 const ViewEvaluation = lazy(()=> import('../pages/Students/Evaluations/ViewEvaluation'));
+const StudentsRubrics = lazy(()=> import ('../pages/Students/Rubrics/ListRubrics'));
+const GradesList = lazy(()=> import ('../pages/Students/Evaluations/ListGrades'));
 
 const coreRoutes = [
   {
     path: '/students/evaluations/list',
     title: 'Evaluaciones',
     component: StudentsEvaluations,
+  },
+  {
+    path: '/students/evaluations/rubrics/list',
+    title: 'Rúbricas',
+    component: Rubrics,
+  },
+  {
+    path: '/students/evaluations/grades/list',
+    title: 'Notas',
+    component: Grades,
   },
   {
     path: '/students/evaluation/:id',

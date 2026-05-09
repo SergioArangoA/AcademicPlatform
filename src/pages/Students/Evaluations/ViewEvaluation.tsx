@@ -5,14 +5,18 @@ import { Subject } from "../../../models/Subject";
 import { User } from "../../../models/User";
 import { Group } from "../../../models/Group";
 import { Rubric } from "../../../models/Rubric";
-import GenericTable from "../../../components/GenericTable";
+import { Criterion } from "../../../models/Criterion";
+import { Scale } from "../../../models/Scale";
+import RubricInfoCard from "../../../components/evaluations/RubricCard";
+import RubricEvaluationTable from "../../../components/evaluations/RubricTable";
 import EvaluationCard from "../../../components/evaluations/EvaluationCard";
 import { evaluationService } from "../../../services/evaluationService";
 import { subjectService } from "../../../services/subjectService";
 import { groupService } from "../../../services/groupService";
 import { userService  } from "../../../services/userService";
 import { rubricService } from "../../../services/rubricService";
-import CardTwo from "../../../components/CardTwo";
+import { criteriaService } from "../../../services/criterionService";
+import { scaleService } from "../../../services/scaleService";
 
 const EvaluationDetails: React.FC = () => {
     const navigate = useNavigate();
@@ -22,6 +26,8 @@ const EvaluationDetails: React.FC = () => {
     const [group, setGroup] = useState<Group>();
     const [teacher, setTeacher] = useState<User>();
     const [rubric, setRubric] = useState<Rubric | null>(null);
+    const [criteria, setCriteria] = useState<Criterion[] | null>(null);
+    const [scales, setScales] = useState<Scale[] | null>(null);
 
     // 🔹 Llamar `fetchData` cuando el componente se monta
     useEffect(() => {
@@ -34,21 +40,18 @@ const EvaluationDetails: React.FC = () => {
         const subjectData = await subjectService.getSubjectById(evaluationData?.subject_id);
         const groupData = await groupService.getGroupById(evaluationData?.group_id);
         const teacherData = await userService.getTeacherById(groupData?.teacher_id);
-        const rubricData = await rubricService.getRubricById(evaluationData?.rubric_id);
+        const rubricData = await rubricService.getRubricById("5d84071e-96cd-4ae8-8141-31a0511f6103");//(evaluationData?.rubric_id);
+        const criteriaData = await criteriaService.getCriteria();
+        const scalesData = await scaleService.getScales();
 
         setEvaluation(evaluationData);
         setSubject(subjectData);
         setGroup(groupData);
         setTeacher(teacherData);
         setRubric(rubricData);
+        setCriteria(criteriaData);
+        setScales(scalesData);
     };
-
-    /*const handleAction = (action: string, item: Evaluation) => {
-        if (action === "view") {
-            console.log("View evaluation:", item);
-            navigate(`/Students/evaluation/${item.evaluation_id}`);
-        }
-    };*/
 
     return (
         <div className="p-6 space-y-6">
@@ -77,20 +80,22 @@ const EvaluationDetails: React.FC = () => {
                 user={teacher}
             />
 
-            {/* 📊 Tabla */}
-            {/*<GenericTable
-                data={data}
-                columns={columns}
-            />*/}
+            <RubricEvaluationTable
+            criteria={mockCriteria}
+            scales={mockScales}
+            />
 
             </div>
 
             {/* 🔹 Columna derecha (cards adicionales) */}
             <div className="col-span-3 space-y-6">
 
-            <CardTwo />
-            <CardTwo />
-            <CardTwo />
+            <RubricInfoCard
+              rubric = {rubric}
+              criteria = {criteria}
+              subject={subject}
+              evaluation={evaluation}
+            />
 
             </div>
 
@@ -115,33 +120,97 @@ const mockEvaluations: Evaluation[] = [
     },
 ];
 export default EvaluationDetails;
+const mockCriteria: Criterion[] = [
+  {
+    id: "c1",
+    name: "Knowledge",
+    description: "Level of theoretical understanding",
+    rubric_id: "r1",
+    weight: 50
+  },
+  {
+    id: "c2",
+    name: "Application",
+    description: "Practical application of concepts",
+    rubric_id: "r1",
+    weight: 30
+  },
+  {
+    id: "c3",
+    name: "Presentation",
+    description: "Clarity and structure",
+    rubric_id: "r1",
+    weight: 20
+  }
+  
+];
+const mockScales: Scale[] = [
+  // Knowledge (c1)
+  {
+    id: "s1",
+    criterion_id: "c1",
+    name: "Excellent",
+    description: "Mastery of concepts",
+    value: 5
+  },
+  {
+    id: "s2",
+    criterion_id: "c1",
+    name: "Good",
+    description: "Good understanding",
+    value: 4
+  },
+  {
+    id: "s3",
+    criterion_id: "c1",
+    name: "Basic",
+    description: "Partial understanding",
+    value: 3
+  },
 
-const mockEvaluation: Evaluation = {
-  evaluation_id: 1,
-  subject_id: 1,
-  group_id: 101,
-  name: "Parcial 1",
-  description: "Examen escrito",
-  weight: 30,
-};
+  // Application (c2)
+  {
+    id: "s4",
+    criterion_id: "c2",
+    name: "Excellent",
+    description: "Perfect application",
+    value: 5
+  },
+  {
+    id: "s5",
+    criterion_id: "c2",
+    name: "Good",
+    description: "Minor mistakes",
+    value: 4
+  },
+  {
+    id: "s6",
+    criterion_id: "c2",
+    name: "Basic",
+    description: "Struggles applying concepts",
+    value: 3
+  },
 
-const mockSubject: Subject = {
-  id: 1,
-  name: "Matemáticas Discretas",
-};
-
-const mockGroup: Group = {
-  id: 101,
-  name: "Grupo 101",
-  teacher_id: 10,
-};
-
-const mockTeacher: User = {
-  id: 10,
-  name: "Juan Pérez",
-};
-
-const mockRubric = {
-  id: 1,
-  name: "Rúbrica Parcial 1",
-};
+  // Presentation (c3)
+  {
+    id: "s7",
+    criterion_id: "c3",
+    name: "Excellent",
+    description: "Very clear and structured",
+    value: 5
+  },
+  {
+    id: "s8",
+    criterion_id: "c3",
+    name: "Good",
+    description: "Generally clear",
+    value: 4
+  },
+  {
+    id: "s9",
+    criterion_id: "c3",
+    name: "Basic",
+    description: "Hard to follow",
+    value: 3
+  }
+];

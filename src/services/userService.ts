@@ -19,17 +19,17 @@ class UserService {
     async getUsers(): Promise<User[]> {
         try {
             const response = await axios.get<User[]>(API_URL);
-            return response.data;
+            return response.data.data;
         } catch (error) {
             console.error("Error al obtener usuarios:", error);
             return [];
         }
     }
 
-    async getUserById(id: number): Promise<User | null> {
+    async getUserById(id: string): Promise<User | null> {
         try {
-            const response = await axios.get<User>(`${API_URL}/${id}`);
-            return response.data;
+            const response = await axios.get<User>(`${API_URL}/users/${id}`);
+            return response.data.data;
         } catch (error) {
             console.error("Usuario no encontrado:", error);
             return null;
