@@ -25,7 +25,7 @@ const DropdownUser = () => {
 
   const fullName = firstName || lastName
     ? `${firstName} ${lastName}`.trim()
-    : authU?.displayName || safeAuthU?.email || safeReduxU?.email || 'Usuario';
+    : safeAuthU?.name || safeReduxU?.name || authU?.displayName || safeAuthU?.email || safeReduxU?.email || 'Usuario';
 
   const profilePhoto = authUser && 'photoURL' in authUser && authUser.photoURL 
     ? authUser.photoURL 
@@ -90,7 +90,7 @@ const DropdownUser = () => {
           <span className="block text-sm font-bold text-[#374151] dark:text-white">
             {fullName}
           </span>
-          <span className="block text-[12px] text-[#9CA3AF] font-medium">{safeAuthU?.role || safeReduxU?.role || 'Docente'}</span>
+          <span className="block text-[12px] text-[#9CA3AF] font-medium">{safeAuthU?.role || safeReduxU?.role || 'guest'}</span>
         </span>
 
         <span className="h-10 w-10 rounded-full overflow-hidden flex items-center justify-center bg-[#6D28D9] text-white font-bold text-sm">
