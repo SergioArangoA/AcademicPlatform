@@ -56,7 +56,7 @@ const coreRoutes = [
   {
     path: '/admin/user-list',
     title: 'Lista Usuarios',
-    componen: UserList,
+    component: UserList,
   },
   {
     path: '/students/evaluations/rubrics/list',
