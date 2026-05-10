@@ -1,5 +1,6 @@
 import {
   signInWithPopup,
+  signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
   User,
@@ -55,6 +56,14 @@ class FirebaseAuthService {
     };
   }
 
+  /**
+   * Inicia sesión con email y contraseña en Firebase
+   */
+  async loginWithEmailPassword(email: string, password: string) {
+    const result = await signInWithEmailAndPassword(auth, email, password);
+    const idToken = await result.user.getIdToken();
+    return { user: result.user, token: idToken };
+  }
 
   /**
    * Cierra la sesión activa en Firebase
