@@ -8,6 +8,7 @@ import { lazy } from 'react';
 import Rubrics from '../pages/Students/Rubrics/ListRubrics';
 import Grades from '../pages/Students/Evaluations/ListGrades';
 
+const UnauthorizedAcces = lazy(()=>import('../pages/Exceptions/UnauthorizedAcces.tsx'))
 const Calendar = lazy(() => import('../pages/Calendar'));
 const Chart = lazy(() => import('../pages/Chart'));
 const FormElements = lazy(() => import('../pages/Form/FormElements'));
@@ -51,6 +52,12 @@ const TeacherFinalGrades = lazy(() => import('../pages/Teachers/Evaluations/Fina
 const UserRegistrationList = lazy(()=>import('../pages/Admin/userRegistrationList.tsx'));
 
 const coreRoutes = [
+  {
+    path: '/Acces-denied',
+    title: 'Acceso denegado',
+    component: UnauthorizedAcces,
+    allowedRoles: ['STUDENT','ADMIN','TEACHER']
+  },
   {
     path: '/students/evaluations/list',
     title: 'Evaluaciones',
