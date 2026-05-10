@@ -33,6 +33,7 @@ interface AuthContextType {
   loginWithGitHub: () => Promise<void>;
   loginWithMicrosoft: () => Promise<void>;
   logout: () => Promise<void>;
+  getRole: () => string | null;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -44,6 +45,7 @@ const AuthContext = createContext<AuthContextType>({
   loginWithGitHub: async () => {},
   loginWithMicrosoft: async () => {},
   logout: async () => {},
+  getRole: () => null,
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -255,6 +257,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     store.dispatch(clearUser());
   };
 
+  function getRole(){
+    const storedUser = JSON.parse(localStorage.getItem("user") || 'null');
+    if (storedUser && storedUser.role) {
+      return storedUser.role;
+    }
+    console.log("No hay usuario guardado en cache.");
+    return null;
+  }
+
   return (
     <AuthContext.Provider
       value={{
@@ -266,6 +277,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         loginWithMicrosoft,
         loginWithCredentials,
         logout,
+        getRole,
       }}
     >
       {!loading && children}
