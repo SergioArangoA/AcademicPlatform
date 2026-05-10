@@ -14,6 +14,31 @@ const DropdownUser = () => {
   const user = useSelector((state: RootState) => state.user.user);
   const { user: authUser } = useAuth();
   
+  const authU = authUser as any || {};
+  const reduxU = user as any || {};
+
+  const safeReduxU = reduxU?.user || reduxU;
+  const safeAuthU = authU?.user || authU;
+
+  const firstName = safeAuthU?.first_name || safeAuthU?.firstName || safeReduxU?.first_name || safeReduxU?.firstName || '';
+  const lastName = safeAuthU?.last_name || safeAuthU?.lastName || safeReduxU?.last_name || safeReduxU?.lastName || '';
+
+  const fullName = firstName || lastName
+    ? `${firstName} ${lastName}`.trim()
+    : authU?.displayName || safeAuthU?.email || safeReduxU?.email || 'Usuario';
+
+  const profilePhoto = authUser && 'photoURL' in authUser && authUser.photoURL 
+    ? authUser.photoURL 
+    : null;
+
+  const getInitials = (name: string) => {
+    const names = name.trim().split(' ');
+    if (names.length >= 2) {
+      return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase();
+    }
+    return names[0] ? names[0][0].toUpperCase() : 'U';
+  };
+
   const trigger = useRef<any>(null);
   const dropdown = useRef<any>(null);
 
@@ -62,29 +87,22 @@ const DropdownUser = () => {
         to="#"
       >
         <span className="hidden text-right lg:block">
-          <span className="block text-sm font-medium text-black dark:text-white">
-
-            {/* Ahora muestra el nombre y la foto de authUser cuando la sesión viene de Google.
-            Si no hay photoURL, sigue mostrando la imagen por defecto. */}
-
-            {authUser
-              ? 'displayName' in authUser
-                ? authUser.displayName || authUser.email || `${user?.first_name || ''} ${user?.last_name || ''}`.trim() || 'Guest'
-                : `${authUser.first_name || ''} ${authUser.last_name || ''}`.trim() || `${user?.first_name || ''} ${user?.last_name || ''}`.trim() || 'Guest'
-              : `${user?.first_name || ''} ${user?.last_name || ''}`.trim() || 'Guest'}
+          <span className="block text-sm font-bold text-[#374151] dark:text-white">
+            {fullName}
           </span>
-          <span className="block text-xs">{user?.role || 'Guest'}</span>
+          <span className="block text-[12px] text-[#9CA3AF] font-medium">{safeAuthU?.role || safeReduxU?.role || 'Docente'}</span>
         </span>
 
-        <span className="h-12 w-12 rounded-full overflow-hidden">
-          <img
-            src={
-              authUser && 'photoURL' in authUser && authUser.photoURL
-                ? authUser.photoURL
-                : UserOne
-            }
-            alt="User"
-          />
+        <span className="h-10 w-10 rounded-full overflow-hidden flex items-center justify-center bg-[#6D28D9] text-white font-bold text-sm">
+          {profilePhoto ? (
+            <img
+              src={profilePhoto}
+              alt="User"
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            getInitials(fullName)
+          )}
         </span>
 
         <svg

@@ -25,33 +25,47 @@ class RubricService {
         }
     }
 
-    async createUser(user: Omit<User, "id">): Promise<User | null> {
+    async createFullRubric(payload: any): Promise<Rubric | null> {
         try {
-            const response = await axios.post<User>(API_URL, user);
-            return response.data;
-        } catch (error) {
-            console.error("Error al crear usuario:", error);
-            return null;
-        }
-    }
+            // 1. Crear Rúbrica
+            const rubricResponse = await api.post('/evaluation/rubrics', {
+                title: payload.title,
+                description: payload.description,
+                subject_id: payload.subject_id
+            });
+            const rubricData = rubricResponse.data.data;
+            const rubricId = rubricData.id;
 
-    async updateUser(id: number, user: Partial<User>): Promise<User | null> {
-        try {
-            const response = await axios.put<User>(`${API_URL}/${id}`, user);
-            return response.data;
-        } catch (error) {
-            console.error("Error al actualizar usuario:", error);
-            return null;
-        }
-    }
+            // 2. Crear Criterios y Escalas
+            for (const criterion of payload.criteria) {
+                const critResponse = await api.post('/evaluation/criteria', {
+                    rubric_id: rubricId,
+                    name: criterion.name,
+                    description: criterion.description,
+                    weight: Number(criterion.weight)
+                });
+                const critId = critResponse.data.data.id;
 
-    async deleteUser(id: number): Promise<boolean> {
-        try {
-            await axios.delete(`${API_URL}/${id}`);
-            return true;
+                for (const scale of criterion.scales) {
+                    await api.post('/evaluation/scales', {
+                        criterion_id: critId,
+                        name: scale.name,
+                        description: scale.description,
+                        value: Number(scale.value)
+                    });
+                }
+            }
+
+            // 3. Publicar si se requiere
+            if (payload.is_public) {
+                await api.patch(`/evaluation/rubrics/${rubricId}/publish`);
+                rubricData.is_public = true;
+            }
+
+            return rubricData;
         } catch (error) {
-            console.error("Error al eliminar usuario:", error);
-            return false;
+            console.error("Error al crear la rúbrica completa:", error);
+            throw error;
         }
     }
 }

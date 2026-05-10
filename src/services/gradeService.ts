@@ -8,82 +8,7 @@ class GradeService {
     async getGrades(): Promise<Grade[]> {
         try {
             const response = await api.get<Grade[]>(`${API_URL}`);
-            if (response.data.data.length > 0){
-                return response.data.data;
-            }
-            return [
-  {
-    id: "g1",
-    enrollment_id: "enr1",
-    rubric_id: "5d84071e-96cd-4ae8-8141-31a0511f6103",
-    status: "completed",
-    observations: "Buen desempeño general",
-    details: [
-      {
-        scale_id: "s1", // Knowledge - Excellent
-        comment: "Domina completamente los conceptos",
-      },
-      {
-        scale_id: "s5", // Application - Good
-        comment: "Pequeños errores en la aplicación",
-      },
-      {
-        scale_id: "s8", // Presentation - Good
-        comment: "Claro, pero puede mejorar estructura",
-      },
-    ],
-  },
-
-  {
-    id: "g2",
-    enrollment_id: "enr2",
-    rubric_id: "r1",
-    status: "completed",
-    observations: "Desempeño aceptable",
-    details: [
-      {
-        scale_id: "s3", // Knowledge - Basic
-        comment: "Conceptos parcialmente entendidos",
-      },
-      {
-        scale_id: "s6", // Application - Basic
-        comment: "Dificultades al aplicar",
-      },
-      {
-        scale_id: "s9", // Presentation - Basic
-        comment: "Difícil de seguir",
-      },
-    ],
-  },
-
-  {
-    id: "g3",
-    enrollment_id: "enr3",
-    rubric_id: "r1",
-    status: "in_progress",
-    observations: "Evaluación en curso",
-    details: [
-      {
-        scale_id: "s2", // Knowledge - Good
-      },
-      {
-        scale_id: "s4", // Application - Excellent
-      },
-      {
-        scale_id: "s7", // Presentation - Excellent
-      },
-    ],
-  },
-
-  {
-    id: "g4",
-    enrollment_id: "enr4",
-    rubric_id: "r1",
-    status: "pending",
-    observations: "Aún no evaluado",
-    details: [],
-  },
-];
+            return response.data.data;
         } catch (error) {
             console.error("Error al obtener notas:", error);
             return [];
@@ -91,29 +16,6 @@ class GradeService {
     }
 
     async getGradeById(id: string): Promise<Grade | null> {
-        if (id === "g1"){
-            return {
-    id: "g1",
-    enrollment_id: "enr1",
-    rubric_id: "5d84071e-96cd-4ae8-8141-31a0511f6103",
-    status: "completed",
-    observations: "Buen desempeño general",
-    details: [
-      {
-        scale_id: "s1", // Knowledge - Excellent
-        comment: "Domina completamente los conceptos",
-      },
-      {
-        scale_id: "s5", // Application - Good
-        comment: "Pequeños errores en la aplicación",
-      },
-      {
-        scale_id: "s8", // Presentation - Good
-        comment: "Claro, pero puede mejorar estructura",
-      },
-    ],
-  }
-        }
         try {
             const response = await api.get<Grade>(`${API_URL}/${id}`);
             return response.data.data;

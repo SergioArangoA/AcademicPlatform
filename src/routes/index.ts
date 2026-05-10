@@ -1,3 +1,9 @@
+/*
+ * Archivo de Rutas (routes/index.ts)
+ * Configura el enrutamiento de la aplicacion. Se agregaron las rutas para el
+ * flujo del docente, incluyendo listar rubricas, crear rubricas,
+ * evaluar estudiantes y revisar el consolidado final de notas.
+ */
 import { lazy } from 'react';
 import Rubrics from '../pages/Students/Rubrics/ListRubrics';
 import Grades from '../pages/Students/Evaluations/ListGrades';
@@ -29,6 +35,7 @@ const TeacherListRubrics = lazy(() => import('../pages/Teachers/Rubrics/ListRubr
 const TeacherCreateRubric = lazy(() => import('../pages/Teachers/Rubrics/CreateRubric'));
 const TeacherListEvaluations = lazy(() => import('../pages/Teachers/Evaluations/ListEvaluations'));
 const TeacherGradeStudent = lazy(() => import('../pages/Teachers/Evaluations/GradeStudent'));
+const TeacherFinalGrades = lazy(() => import('../pages/Teachers/Evaluations/FinalGrades'));
 
 const coreRoutes = [
   {
@@ -156,6 +163,11 @@ const coreRoutes = [
     path: '/teachers/evaluations/:id/grade',
     title: 'Calificar Estudiante',
     component: TeacherGradeStudent,
+  },
+  {
+    path: '/teachers/grades',
+    title: 'Calificaciones Finales',
+    component: TeacherFinalGrades,
   }
 ];
 
