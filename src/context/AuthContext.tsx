@@ -68,6 +68,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const [loading, setLoading] = useState<boolean>(true);
 
+  const mergeFirebaseAndStoredUser = (firebaseUser: FirebaseUser, storedUser: AuthUser | null): AuthUser => {
+    if (!storedUser || !('role' in storedUser)) {
+      return firebaseUser;
+    }
+
+    return {
+      ...storedUser,
+      ...firebaseUser,
+      role: storedUser.role,
+      first_name: storedUser.first_name,
+      last_name: storedUser.last_name,
+      identification: storedUser.identification,
+      phone: storedUser.phone,
+      speciality: storedUser.speciality,
+      user_id: storedUser.user_id,
+    };
+  };
+
   // Guarda usuario en cache cada vez que cambia
   useEffect(() => {
     if (user) {
@@ -94,7 +112,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const unsubscribe = firebaseAuthService.onAuthStateChange((firebaseUser, idToken) => {
       if (firebaseUser && idToken) {
-        setUser(firebaseUser);
+        setUser((prevUser) => mergeFirebaseAndStoredUser(firebaseUser, prevUser));
         setToken(idToken);
         console.log("Usuario autenticado desde Firebase:", firebaseUser);
       } else {
@@ -156,27 +174,37 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // Login con usuario y contraseña (via backend Flask + Firebase)
+  // Login con usuario y contrasena (via backend Flask + Firebase)
   const loginWithCredentials = async (credentials: { email: string; password: string }) => {
     try {
-      // 1. Autenticar en Firebase
+      // Paso 1: Autenticar en Firebase usando correo y contrasena.
+      // Esto devuelve el usuario de Firebase y un token de autenticacion (idToken).
       const { user: firebaseUser, token: idToken } = await firebaseAuthService.loginWithEmailPassword(
         credentials.email,
         credentials.password
       );
       console.log("Login con credenciales exitoso en Firebase:", firebaseUser);
 
-      // 2. Autenticar en el Backend para obtener el perfil completo (incluyendo el rol)
+      // Paso 2: Autenticar en el Backend para obtener el perfil completo (incluyendo el rol).
+      // El backend verificara las credenciales y devolvera el perfil del usuario y un access_token.
       const response = await SecurityService.login(credentials);
       const appUser = response.user;
 
-      setUser(firebaseUser);
+      // Paso 3: Unimos la data de Firebase con la del Backend para no perder el rol.
+      // Ponemos firebaseUser al final para que sus datos reales (como el email) 
+      // sobrescriban los datos falsos del Mock de Postman.
+      const mergedUser = { ...appUser, ...firebaseUser, role: appUser.role };
+
+      // Paso 4: Actualizar el estado de React Context con el usuario combinado y el token de Firebase.
+      setUser(mergedUser);
       setToken(idToken);
       
-      // Guardamos el usuario del backend en Redux y LocalStorage para la UI (como el rol)
-      localStorage.setItem("user", JSON.stringify(appUser));
+      // Paso 5: Guardamos el usuario del backend en Redux y LocalStorage para la UI.
+      // Persistir la sesion guardando el usuario y el token en localStorage asegura que 
+      // la sesion sobreviva a recargas de pagina.
+      localStorage.setItem("user", JSON.stringify(mergedUser));
       localStorage.setItem("token", idToken);
-      store.dispatch(setReduxUser(appUser));
+      store.dispatch(setReduxUser(mergedUser));
       
     } catch (error) {
       console.error("Error en login con credenciales:", error);

@@ -24,6 +24,12 @@ const StudentsRubrics = lazy(()=> import ('../pages/Students/Rubrics/ListRubrics
 const GradesList = lazy(()=> import ('../pages/Students/Evaluations/ListGrades'));
 const GradeDetails = lazy(()=> import ('../pages/Students/Evaluations/ViewGrade'));
 
+// Teacher routes
+const TeacherListRubrics = lazy(() => import('../pages/Teachers/Rubrics/ListRubrics'));
+const TeacherCreateRubric = lazy(() => import('../pages/Teachers/Rubrics/CreateRubric'));
+const TeacherListEvaluations = lazy(() => import('../pages/Teachers/Evaluations/ListEvaluations'));
+const TeacherGradeStudent = lazy(() => import('../pages/Teachers/Evaluations/GradeStudent'));
+
 const coreRoutes = [
   {
     path: '/students/evaluations/list',
@@ -129,6 +135,27 @@ const coreRoutes = [
     path: '/image-editor',
     title: 'Image Editor',
     component: ImageEditor,
+  },
+  // Rutas del Docente
+  {
+    path: '/teachers/rubrics/list',
+    title: 'Mis Rúbricas',
+    component: TeacherListRubrics,
+  },
+  {
+    path: '/teachers/rubrics/create',
+    title: 'Crear Rúbrica',
+    component: TeacherCreateRubric,
+  },
+  {
+    path: '/teachers/evaluations/list',
+    title: 'Calificar Evaluaciones',
+    component: TeacherListEvaluations,
+  },
+  {
+    path: '/teachers/evaluations/:id/grade',
+    title: 'Calificar Estudiante',
+    component: TeacherGradeStudent,
   }
 ];
 
