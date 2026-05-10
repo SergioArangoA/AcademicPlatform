@@ -1,4 +1,12 @@
+/*
+ * Archivo de Rutas (routes/index.ts)
+ * Configura el enrutamiento de la aplicacion. Se agregaron las rutas para el
+ * flujo del docente, incluyendo listar rubricas, crear rubricas,
+ * evaluar estudiantes y revisar el consolidado final de notas.
+ */
 import { lazy } from 'react';
+import Rubrics from '../pages/Students/Rubrics/ListRubrics';
+import Grades from '../pages/Students/Evaluations/ListGrades';
 
 const Calendar = lazy(() => import('../pages/Calendar'));
 const Chart = lazy(() => import('../pages/Chart'));
@@ -20,6 +28,7 @@ const UserList = lazy(() => import('../pages/Admin/userList'));
 const CreateUser = lazy(() => import('../pages/Admin/createUser'));
 const UpdateUser = lazy(() => import('../pages/Admin/updateUser'));
 const ViewUser = lazy(() => import('../pages/Admin/viewUser'));
+<<<<<<< HEAD
 const CareerAndSemesterList = lazy(() => import('../pages/Admin/careerAndSemesterList'));
 const CreateCareer = lazy(() => import('../pages/Admin/createCareer'));
 const UpdateCareer = lazy(() => import('../pages/Admin/updateCareer'));
@@ -27,6 +36,19 @@ const ViewCareer = lazy(() => import('../pages/Admin/viewCareer.tsx'));
 const CreateSemester = lazy(() => import('../pages/Admin/createSemester.tsx'));
 const UpdateSemester = lazy(() => import('../pages/Admin/updateSemester.tsx'));
 const ViewSemester = lazy(() => import('../pages/Admin/viewSemester.tsx'));
+=======
+const ViewEvaluation = lazy(()=> import('../pages/Students/Evaluations/ViewEvaluation'));
+const StudentsRubrics = lazy(()=> import ('../pages/Students/Rubrics/ListRubrics'));
+const GradesList = lazy(()=> import ('../pages/Students/Evaluations/ListGrades'));
+const GradeDetails = lazy(()=> import ('../pages/Students/Evaluations/ViewGrade'));
+
+// Teacher routes
+const TeacherListRubrics = lazy(() => import('../pages/Teachers/Rubrics/ListRubrics'));
+const TeacherCreateRubric = lazy(() => import('../pages/Teachers/Rubrics/CreateRubric'));
+const TeacherListEvaluations = lazy(() => import('../pages/Teachers/Evaluations/ListEvaluations'));
+const TeacherGradeStudent = lazy(() => import('../pages/Teachers/Evaluations/GradeStudent'));
+const TeacherFinalGrades = lazy(() => import('../pages/Teachers/Evaluations/FinalGrades'));
+>>>>>>> ec6c78a9591f3296f698fd2904f96003fd5267ab
 
 const coreRoutes = [
   {
@@ -37,6 +59,28 @@ const coreRoutes = [
   {
     path: '/admin/user-list',
     title: 'Lista Usuarios',
+    path: '/students/evaluations/rubrics/list',
+    title: 'Rúbricas',
+    component: Rubrics,
+  },
+  {
+    path: '/students/evaluations/grades/list',
+    title: 'Notas',
+    component: Grades,
+  },
+  {
+    path: '/students/evaluations/:id',
+    title: 'Información evaluación',
+    component: ViewEvaluation,
+  },
+    {
+    path: '/students/evaluations/grades/:id',
+    title: 'Información nota',
+    component: GradeDetails,
+  },
+  {
+    path: '/users/list',
+    title: 'Users',
     component: UserList,
   },
   {
@@ -163,6 +207,32 @@ const coreRoutes = [
     path: '/image-editor',
     title: 'Image Editor',
     component: ImageEditor,
+  },
+  // Rutas del Docente
+  {
+    path: '/teachers/rubrics/list',
+    title: 'Mis Rúbricas',
+    component: TeacherListRubrics,
+  },
+  {
+    path: '/teachers/rubrics/create',
+    title: 'Crear Rúbrica',
+    component: TeacherCreateRubric,
+  },
+  {
+    path: '/teachers/evaluations/list',
+    title: 'Calificar Evaluaciones',
+    component: TeacherListEvaluations,
+  },
+  {
+    path: '/teachers/evaluations/:id/grade',
+    title: 'Calificar Estudiante',
+    component: TeacherGradeStudent,
+  },
+  {
+    path: '/teachers/grades',
+    title: 'Calificaciones Finales',
+    component: TeacherFinalGrades,
   }
 ];
 
