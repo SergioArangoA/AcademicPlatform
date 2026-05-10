@@ -5,12 +5,21 @@ import { LocalStorageProvider } from "../storage/LocalStorageProvider";
 import { store } from "../store/store";
 import { setUser } from "../store/userSlice";
 
+interface LoginCredentials {
+  email: string;
+  password: string;
+}
+
+interface LoginResponse {
+  user: User;
+  token: string;
+}
+
 class SecurityService extends EventTarget {
     private readonly keyToken: string;
     private readonly userKey: string;
     private readonly API_URL: string;
     private user: User | null;
-    private theAuthProvider: any;
     private storage: StorageProvider;
 
     constructor(storage: StorageProvider = new LocalStorageProvider()) {
@@ -39,9 +48,9 @@ class SecurityService extends EventTarget {
         }
     }
 
-    async login(user: User) {
+    async login(credentials: LoginCredentials): Promise<LoginResponse> {
         console.log("llamando api " + `${this.API_URL}/login`);
-        const response = await axios.post(`${this.API_URL}/login`, user, {
+        const response = await axios.post(`${this.API_URL}/login`, credentials, {
             headers: {
                 "Content-Type": "application/json",
             },
@@ -54,17 +63,23 @@ class SecurityService extends EventTarget {
 
         this.user = data.user;
 
-        // Ajusta esto según la estructura real de la respuesta
+        if (!this.user) {
+            throw new Error("La respuesta de login no contiene un usuario válido.");
+        }
+
         this.storage.setItem(this.userKey, JSON.stringify(this.user));
 
-        if (data?.token) {
-            this.storage.setItem(this.keyToken, data.token);
+        const token = data?.token;
+        if (!token) {
+            throw new Error("La respuesta de login no contiene token.");
         }
+
+        this.storage.setItem(this.keyToken, token);
 
         store.dispatch(setUser(this.user));
         this.dispatchEvent(new CustomEvent("userChange", { detail: this.user }));
 
-        return this.user;
+        return { user: this.user, token };
     }
 
     getUser() {
