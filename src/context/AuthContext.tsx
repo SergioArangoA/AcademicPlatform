@@ -17,8 +17,8 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { User as FirebaseUser } from "firebase/auth";
 import firebaseAuthService from "../services/firebaseAuthService";
-import SecurityService from "../services/securityService";
 import { User as AppUser } from "../models/User";
+import SecurityService from "../services/securityService";
 import { store } from "../store/store";
 import { setUser as setReduxUser } from "../store/userSlice";
 
@@ -156,21 +156,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // Login con usuario y contraseña (via backend Flask)
+  // Login con usuario y contraseña (via backend Flask + Firebase)
   const loginWithCredentials = async (credentials: { email: string; password: string }) => {
     try {
-      const response = await SecurityService.login(credentials);
-      if (response && response.token) {
-        console.log(" Login con credenciales exitoso:", response.user);
-        setUser(response.user);
-        setToken(response.token);
-        store.dispatch(setReduxUser(response.user));
+      // 1. Autenticar en Firebase
+      const { user: firebaseUser, token: idToken } = await firebaseAuthService.loginWithEmailPassword(
+        credentials.email,
+        credentials.password
+      );
+      console.log("Login con credenciales exitoso en Firebase:", firebaseUser);
 
-        localStorage.setItem("user", JSON.stringify(response.user));
-        localStorage.setItem("token", response.token);
-      }
+      // 2. Autenticar en el Backend para obtener el perfil completo (incluyendo el rol)
+      const response = await SecurityService.login(credentials);
+      const appUser = response.user;
+
+      setUser(firebaseUser);
+      setToken(idToken);
+      
+      // Guardamos el usuario del backend en Redux y LocalStorage para la UI (como el rol)
+      localStorage.setItem("user", JSON.stringify(appUser));
+      localStorage.setItem("token", idToken);
+      store.dispatch(setReduxUser(appUser));
+      
     } catch (error) {
-      console.error(" Error en login con credenciales:", error);
+      console.error("Error en login con credenciales:", error);
       throw error;
     }
   };

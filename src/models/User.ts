@@ -6,4 +6,5 @@ export interface User {
     phone?: number;
     speciality?: string;
     user_id?: string;
+    role?: string;
 }

@@ -73,7 +73,7 @@ const DropdownUser = () => {
                 : `${authUser.first_name || ''} ${authUser.last_name || ''}`.trim() || `${user?.first_name || ''} ${user?.last_name || ''}`.trim() || 'Guest'
               : `${user?.first_name || ''} ${user?.last_name || ''}`.trim() || 'Guest'}
           </span>
-          <span className="block text-xs">UX Designer</span>
+          <span className="block text-xs">{user?.role || 'Guest'}</span>
         </span>
 
         <span className="h-12 w-12 rounded-full overflow-hidden">
