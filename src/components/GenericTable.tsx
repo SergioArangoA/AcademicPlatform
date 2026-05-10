@@ -51,7 +51,7 @@ const GenericTable: React.FC<GenericTableProps> = ({ data, columns, actions, onA
                                         }`}
                                     >
                                         <p className="text-black dark:text-white">
-                                            {item[col.key]}
+                                            {item[col.key] === true ? "Activo" : (item[col.key] === false ? "Inactivo" : item[col.key])}
                                         </p>
                                     </td>
                                 ))}
