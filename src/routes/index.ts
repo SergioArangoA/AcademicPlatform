@@ -47,192 +47,238 @@ const TeacherListEvaluations = lazy(() => import('../pages/Teachers/Evaluations/
 const TeacherGradeStudent = lazy(() => import('../pages/Teachers/Evaluations/GradeStudent'));
 const TeacherFinalGrades = lazy(() => import('../pages/Teachers/Evaluations/FinalGrades'));
 
+// Admin routes
+const UserRegistrationList = lazy(()=>import('../pages/Admin/userRegistrationList.tsx'));
+
 const coreRoutes = [
   {
     path: '/students/evaluations/list',
     title: 'Evaluaciones',
     component: StudentsEvaluations,
+    allowedRoles: ['STUDENT'],
+  },
+  {
+    path: '/admin/registration/users/list',
+    title: 'Matrículas',
+    component: UserRegistrationList,
+    allowedRoles: ['ADMIN'],
   },
   {
     path: '/admin/user-list',
     title: 'Lista Usuarios',
     component: UserList,
+    allowedRoles: ['ADMIN'],
   },
   {
     path: '/students/evaluations/rubrics/list',
     title: 'Rúbricas',
     component: Rubrics,
+    allowedRoles: ['STUDENT'],
   },
   {
     path: '/students/evaluations/grades/list',
     title: 'Notas',
     component: Grades,
+    allowedRoles: ['STUDENT'],
   },
   {
     path: '/students/evaluations/:id',
     title: 'Información evaluación',
     component: ViewEvaluation,
+    allowedRoles: ['STUDENT'],
   },
     {
     path: '/students/evaluations/grades/:id',
     title: 'Información nota',
     component: GradeDetails,
+    allowedRoles: ['STUDENT'],
   },
   {
     path: '/users/list',
     title: 'Users',
     component: UserList,
+    allowedRoles: ['ADMIN'],
   },
   {
     path: '/admin/careers-semesters',
     title: 'Carreras y Semestres',
     component: CareerAndSemesterList,
+    allowedRoles: ['ADMIN'],
   },
   {
     path: '/admin/careers/create',
     title: 'Nueva Carrera',
     component: CreateCareer,
+    allowedRoles: ['ADMIN'],
   },
   {
     path: '/admin/careers/edit/:id',
     title: 'Editar Carrera',
     component: UpdateCareer,
+    allowedRoles: ['ADMIN'],
   },
   {
     path: '/admin/careers/view/:id',
     title: 'Ver Carrera',
     component: ViewCareer,
+    allowedRoles: ['ADMIN'],
   },
   {
     path: '/admin/semesters/view/:id',
     title: 'Ver Semestre',
     component: ViewSemester,
+    allowedRoles: ['ADMIN'],
   },
   {
     path: '/admin/semesters/create',
     title: 'Nuevo Semestre',
     component: CreateSemester,
+    allowedRoles: ['ADMIN'],
   },
   {
     path: '/admin/semesters/edit/:id',
     title: 'Editar Semestre',
     component: UpdateSemester,
+    allowedRoles: ['ADMIN'],
   },
   {
     path: '/admin/users/create',
     title: 'Create User',
     component: CreateUser,
+    allowedRoles: ['ADMIN'],
   },
   {
     path: '/admin/users/edit/:id',
     title: 'Update User',
     component: UpdateUser,
+    allowedRoles: ['ADMIN'],
   },
   {
     path: '/admin/users/view/:id',
     title: 'View User',
     component: ViewUser,
+    allowedRoles: ['ADMIN'],
   },
   {
     path: '/users/create',
     title: 'Create User',
     component: UserCreate,
+    allowedRoles: ['ADMIN'],
   },
   {
     path: '/users/update/:id',
     title: 'Edit User',
     component: UserUpdate,
+    allowedRoles: ['ADMIN'],
   },
   {
     path: '/posts/list',
     title: 'Posts',
     component: Posts,
+    allowedRoles: ['ADMIN', 'TEACHER'],
   },
   {
     path: '/roles-list',
     title: 'Roles',
     component: RoleList,
+    allowedRoles: ['ADMIN'],
   },
   {
     path: '/demo',
     title: 'Demo',
     component: Demo,
+    allowedRoles: ['STUDENT', 'TEACHER', 'ADMIN'],
   },
   {
     path: '/calendar',
     title: 'Calender',
     component: Calendar,
+    allowedRoles: ['STUDENT', 'TEACHER', 'ADMIN'],
   },
   {
     path: '/profile',
     title: 'Profile',
     component: Profile,
+    allowedRoles: ['STUDENT', 'TEACHER', 'ADMIN'],
   },
   {
     path: '/forms/form-elements',
     title: 'Forms Elements',
     component: FormElements,
+    allowedRoles: ['STUDENT', 'TEACHER', 'ADMIN'],
   },
   {
     path: '/forms/form-layout',
     title: 'Form Layouts',
     component: FormLayout,
+    allowedRoles: ['STUDENT', 'TEACHER', 'ADMIN'],
   },
   {
     path: '/tables',
     title: 'Tables',
     component: Tables,
+    allowedRoles: ['STUDENT', 'TEACHER', 'ADMIN'],
   },
   {
     path: '/settings',
     title: 'Settings',
     component: Settings,
+    allowedRoles: ['STUDENT', 'TEACHER', 'ADMIN'],
   },
   {
     path: '/chart',
     title: 'Chart',
     component: Chart,
+    allowedRoles: ['STUDENT', 'TEACHER', 'ADMIN'],
   },
   {
     path: '/ui/alerts',
     title: 'Alerts',
     component: Alerts,
+    allowedRoles: ['STUDENT', 'TEACHER', 'ADMIN'],
   },
   {
     path: '/ui/buttons',
     title: 'Buttons',
     component: Buttons,
+    allowedRoles: ['STUDENT', 'TEACHER', 'ADMIN'],
   },
   {
     path: '/image-editor',
     title: 'Image Editor',
     component: ImageEditor,
+    allowedRoles: ['STUDENT', 'TEACHER', 'ADMIN'],
   },
   // Rutas del Docente
   {
     path: '/teachers/rubrics/list',
     title: 'Mis Rúbricas',
     component: TeacherListRubrics,
+    allowedRoles: ['TEACHER'],
   },
   {
     path: '/teachers/rubrics/create',
     title: 'Crear Rúbrica',
     component: TeacherCreateRubric,
+    allowedRoles: ['TEACHER'],
   },
   {
     path: '/teachers/evaluations/list',
     title: 'Calificar Evaluaciones',
     component: TeacherListEvaluations,
+    allowedRoles: ['TEACHER'],
   },
   {
     path: '/teachers/evaluations/:id/grade',
     title: 'Calificar Estudiante',
     component: TeacherGradeStudent,
+    allowedRoles: ['TEACHER'],
   },
   {
     path: '/teachers/grades',
     title: 'Calificaciones Finales',
     component: TeacherFinalGrades,
+    allowedRoles: ['TEACHER'],
   }
 ];
 
