@@ -28,6 +28,13 @@ const UserList = lazy(() => import('../pages/Admin/userList'));
 const CreateUser = lazy(() => import('../pages/Admin/createUser'));
 const UpdateUser = lazy(() => import('../pages/Admin/updateUser'));
 const ViewUser = lazy(() => import('../pages/Admin/viewUser'));
+const CareerAndSemesterList = lazy(() => import('../pages/Admin/careerAndSemesterList'));
+const CreateCareer = lazy(() => import('../pages/Admin/createCareer'));
+const UpdateCareer = lazy(() => import('../pages/Admin/updateCareer'));
+const ViewCareer = lazy(() => import('../pages/Admin/viewCareer.tsx'));
+const CreateSemester = lazy(() => import('../pages/Admin/createSemester.tsx'));
+const UpdateSemester = lazy(() => import('../pages/Admin/updateSemester.tsx'));
+const ViewSemester = lazy(() => import('../pages/Admin/viewSemester.tsx'));
 const ViewEvaluation = lazy(()=> import('../pages/Students/Evaluations/ViewEvaluation'));
 const StudentsRubrics = lazy(()=> import ('../pages/Students/Rubrics/ListRubrics'));
 const GradesList = lazy(()=> import ('../pages/Students/Evaluations/ListGrades'));
@@ -49,6 +56,9 @@ const coreRoutes = [
   {
     path: '/admin/user-list',
     title: 'Lista Usuarios',
+    component: UserList,
+  },
+  {
     path: '/students/evaluations/rubrics/list',
     title: 'Rúbricas',
     component: Rubrics,
@@ -72,6 +82,41 @@ const coreRoutes = [
     path: '/users/list',
     title: 'Users',
     component: UserList,
+  },
+  {
+    path: '/admin/careers-semesters',
+    title: 'Carreras y Semestres',
+    component: CareerAndSemesterList,
+  },
+  {
+    path: '/admin/careers/create',
+    title: 'Nueva Carrera',
+    component: CreateCareer,
+  },
+  {
+    path: '/admin/careers/edit/:id',
+    title: 'Editar Carrera',
+    component: UpdateCareer,
+  },
+  {
+    path: '/admin/careers/view/:id',
+    title: 'Ver Carrera',
+    component: ViewCareer,
+  },
+  {
+    path: '/admin/semesters/view/:id',
+    title: 'Ver Semestre',
+    component: ViewSemester,
+  },
+  {
+    path: '/admin/semesters/create',
+    title: 'Nuevo Semestre',
+    component: CreateSemester,
+  },
+  {
+    path: '/admin/semesters/edit/:id',
+    title: 'Editar Semestre',
+    component: UpdateSemester,
   },
   {
     path: '/admin/users/create',
