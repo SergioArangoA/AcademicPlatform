@@ -15,7 +15,7 @@ class ScaleService {
         }
     }
 
-    async getScaleById(id: number): Promise<Scale | null> {
+    async getScaleById(id: string): Promise<Scale | null> {
         try {
             const response = await api.get<Scale>(`${API_URL}/${id}`);
             return response.data.data;

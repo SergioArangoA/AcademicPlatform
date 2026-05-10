@@ -15,7 +15,7 @@ class CriterionService {
         }
     }
 
-    async getCriterionById(id: number): Promise<Criterion | null> {
+    async getCriterionById(id: string): Promise<Criterion | null> {
         try {
             const response = await api.get<Criterion>(`${API_URL}/${id}`);
             return response.data.data;
