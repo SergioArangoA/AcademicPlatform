@@ -4,11 +4,35 @@ import DarkModeSwitcher from './DarkModeSwitcher';
 import DropdownMessage from './DropdownMessage';
 import DropdownNotification from './DropdownNotification';
 import DropdownUser from './DropdownUser';
+import { useLocation } from 'react-router-dom';
+import routes from '../routes';
 
 const Header = (props: {
   sidebarOpen: string | boolean | undefined;
   setSidebarOpen: (arg0: boolean) => void;
 }) => {
+  const { pathname } = useLocation();
+
+  let pageTitle = 'Inicio';
+  const currentRoute = routes.find(route => {
+    const regexPath = route.path.replace(/:\w+/g, '[^/]+');
+    return new RegExp(`^${regexPath}$`).test(pathname);
+  });
+
+  if (currentRoute) {
+    pageTitle = currentRoute.title;
+  } else if (pathname.includes('/teachers/groups')) {
+    pageTitle = 'Grupos';
+  } else if (pathname.includes('/teachers/students')) {
+    pageTitle = 'Estudiantes';
+  } else if (pathname.includes('/teachers/library')) {
+    pageTitle = 'Biblioteca';
+  } else if (pathname.includes('/teachers/scales')) {
+    pageTitle = 'Escalas';
+  } else if (pathname.includes('/teachers/dashboard') || pathname === '/') {
+    pageTitle = 'Inicio';
+  }
+
   return (
     <header className="sticky top-0 z-999 flex w-full bg-white drop-shadow-1 dark:bg-boxdark dark:drop-shadow-none">
       <div className="flex flex-grow items-center justify-between py-4 px-4 shadow-2 md:px-6 2xl:px-11">
@@ -62,54 +86,43 @@ const Header = (props: {
         </div>
 
         <div className="hidden sm:block">
-          <form action="https://formbold.com/s/unique_form_id" method="POST">
-            <div className="relative">
-              <button className="absolute top-1/2 left-0 -translate-y-1/2">
-                <svg
-                  className="fill-body hover:fill-primary dark:fill-bodydark dark:hover:fill-primary"
-                  width="20"
-                  height="20"
-                  viewBox="0 0 20 20"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    fillRule="evenodd"
-                    clipRule="evenodd"
-                    d="M9.16666 3.33332C5.945 3.33332 3.33332 5.945 3.33332 9.16666C3.33332 12.3883 5.945 15 9.16666 15C12.3883 15 15 12.3883 15 9.16666C15 5.945 12.3883 3.33332 9.16666 3.33332ZM1.66666 9.16666C1.66666 5.02452 5.02452 1.66666 9.16666 1.66666C13.3088 1.66666 16.6667 5.02452 16.6667 9.16666C16.6667 13.3088 13.3088 16.6667 9.16666 16.6667C5.02452 16.6667 1.66666 13.3088 1.66666 9.16666Z"
-                    fill=""
-                  />
-                  <path
-                    fillRule="evenodd"
-                    clipRule="evenodd"
-                    d="M13.2857 13.2857C13.6112 12.9603 14.1388 12.9603 14.4642 13.2857L18.0892 16.9107C18.4147 17.2362 18.4147 17.7638 18.0892 18.0892C17.7638 18.4147 17.2362 18.4147 16.9107 18.0892L13.2857 14.4642C12.9603 14.1388 12.9603 13.6112 13.2857 13.2857Z"
-                    fill=""
-                  />
-                </svg>
-              </button>
-
-              <input
-                type="text"
-                placeholder="Type to search..."
-                className="w-full bg-transparent pr-4 pl-9 focus:outline-none"
-              />
-            </div>
-          </form>
+          <h2 className="text-xl font-bold text-black dark:text-white capitalize">
+            {pageTitle}
+          </h2>
         </div>
 
         <div className="flex items-center gap-3 2xsm:gap-7">
           <ul className="flex items-center gap-2 2xsm:gap-4">
-            {/* <!-- Dark Mode Toggler --> */}
-            <DarkModeSwitcher />
-            {/* <!-- Dark Mode Toggler --> */}
+            {/* <!-- Dark Mode Toggler Removed --> */}
+
+            {/* <!-- Help Icon --> */}
+            <li className="relative">
+              <Link
+                className="relative flex h-8.5 w-8.5 items-center justify-center rounded-full border-[0.5px] border-stroke bg-gray hover:text-primary dark:border-strokedark dark:bg-meta-4 dark:text-white"
+                to="#"
+              >
+                <svg
+                  className="fill-current duration-300 ease-in-out"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM13 19H11V17H13V19ZM15.07 11.25L14.17 12.17C13.45 12.9 13 13.5 13 15H11V14.5C11 13.4 11.45 12.4 12.17 11.67L13.41 10.41C13.78 10.05 14 9.55 14 9C14 7.9 13.1 7 12 7C10.9 7 10 7.9 10 9H8C8 6.79 9.79 5 12 5C14.21 5 16 6.79 16 9C16 9.88 15.64 10.68 15.07 11.25Z"
+                    fill="currentColor"
+                  />
+                </svg>
+              </Link>
+            </li>
+            {/* <!-- Help Icon --> */}
 
             {/* <!-- Notification Menu Area --> */}
             <DropdownNotification />
             {/* <!-- Notification Menu Area --> */}
 
-            {/* <!-- Chat Notification Area --> */}
-            <DropdownMessage />
-            {/* <!-- Chat Notification Area --> */}
+            {/* <!-- Chat Notification Area Removed --> */}
           </ul>
 
           {/* <!-- User Area --> */}
