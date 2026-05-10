@@ -1,6 +1,7 @@
 export interface Scale{
-    criterion_id?: number;
-    name?: string;
-    description?: string;
-    value?: number;
+    id?: string;
+    criterion_id: string;
+    name: string;
+    description: string;
+    value: number;
 }
