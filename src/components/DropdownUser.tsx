@@ -1,19 +1,33 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 import UserOne from '../images/user/user-01.png';
 //Importar la torre de control para obtener el usuario actual
 import { useSelector } from "react-redux";
 import { RootState } from "../store/store";
+import { useAuth } from '../context/AuthContext';
 
 const DropdownUser = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const navigate = useNavigate();
+  const { logout } = useAuth();
   const user = useSelector((state: RootState) => state.user.user);
+  const { user: authUser } = useAuth();
   
   const trigger = useRef<any>(null);
   const dropdown = useRef<any>(null);
 
-  // close on click outside
+  /**
+   * Llama a la función logout() del contexto de autenticación
+   */
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/auth/signin');
+    } catch (error) {
+      console.error('Error during logout:', error);
+    }
+  };
   useEffect(() => {
     const clickHandler = ({ target }: MouseEvent) => {
       if (!dropdown.current) return;
@@ -49,13 +63,28 @@ const DropdownUser = () => {
       >
         <span className="hidden text-right lg:block">
           <span className="block text-sm font-medium text-black dark:text-white">
-            {user?.name || 'Guest'}
+
+            {/* Ahora muestra el nombre y la foto de authUser cuando la sesión viene de Google.
+            Si no hay photoURL, sigue mostrando la imagen por defecto. */}
+
+            {authUser
+              ? 'displayName' in authUser
+                ? authUser.displayName || authUser.email || `${user?.first_name || ''} ${user?.last_name || ''}`.trim() || 'Guest'
+                : `${authUser.first_name || ''} ${authUser.last_name || ''}`.trim() || `${user?.first_name || ''} ${user?.last_name || ''}`.trim() || 'Guest'
+              : `${user?.first_name || ''} ${user?.last_name || ''}`.trim() || 'Guest'}
           </span>
           <span className="block text-xs">UX Designer</span>
         </span>
 
-        <span className="h-12 w-12 rounded-full">
-          <img src={UserOne} alt="User" />
+        <span className="h-12 w-12 rounded-full overflow-hidden">
+          <img
+            src={
+              authUser && 'photoURL' in authUser && authUser.photoURL
+                ? authUser.photoURL
+                : UserOne
+            }
+            alt="User"
+          />
         </span>
 
         <svg
@@ -159,7 +188,10 @@ const DropdownUser = () => {
             </Link>
           </li>
         </ul>
-        <button className="flex items-center gap-3.5 py-4 px-6 text-sm font-medium duration-300 ease-in-out hover:text-primary lg:text-base">
+        <button 
+          onClick={handleLogout}
+          className="flex items-center gap-3.5 py-4 px-6 text-sm font-medium duration-300 ease-in-out hover:text-primary lg:text-base"
+        >
           <svg
             className="fill-current"
             width="22"
