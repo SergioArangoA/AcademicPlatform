@@ -5,10 +5,20 @@ import { Scale } from "../../models/Scale";
 interface RubricEvaluationTableProps {
   criteria: Criterion[];
   scales: Scale[];
+  isInteractive?: boolean;
+  selectedScales?: Record<string, string>; // criterion_id -> scale_id
+  comments?: Record<string, string>; // criterion_id -> comment
+  onScaleSelect?: (criterionId: string, scaleId: string, value: number) => void;
+  onCommentChange?: (criterionId: string, comment: string) => void;
 }
 const RubricEvaluationTable: React.FC<RubricEvaluationTableProps> = ({
   criteria,
   scales,
+  isInteractive = false,
+  selectedScales = {},
+  comments = {},
+  onScaleSelect,
+  onCommentChange,
 }) => {
   const globalScales = useMemo(() => {
     const map = new Map<string, Scale>();
@@ -43,6 +53,11 @@ const RubricEvaluationTable: React.FC<RubricEvaluationTableProps> = ({
                 </div>
                 </th>
             ))}
+            {isInteractive && (
+                <th className="py-4 px-4 text-center font-medium text-black dark:text-white w-48">
+                    Comentario
+                </th>
+            )}
             </tr>
         </thead>
 
@@ -79,16 +94,25 @@ const RubricEvaluationTable: React.FC<RubricEvaluationTableProps> = ({
                     const scale = criterionScales.find(
                     (s) => s.value === globalScale.value
                     );
+                    
+                    const isSelected = selectedScales[c.id] === scale?.id;
 
                     return (
                     <td
                         key={globalScale.id}
-                        className="py-5 px-3 align-top text-center"
+                        className={`py-5 px-3 align-top text-center transition-colors ${
+                          isInteractive ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-meta-4' : ''
+                        } ${isSelected ? 'bg-primary bg-opacity-10 dark:bg-opacity-20 border border-primary' : ''}`}
+                        onClick={() => {
+                          if (isInteractive && scale && onScaleSelect) {
+                            onScaleSelect(c.id, scale.id, scale.value);
+                          }
+                        }}
                     >
                         {scale ? (
                         <div className="space-y-2">
-                            <div className="text-xs text-gray-600 dark:text-gray-300">
-                            {scale.description}
+                            <div className={`text-xs ${isSelected ? 'text-primary font-medium' : 'text-gray-600 dark:text-gray-300'}`}>
+                            {scale.description || scale.name}
                             </div>
                         </div>
                         ) : (
@@ -99,6 +123,18 @@ const RubricEvaluationTable: React.FC<RubricEvaluationTableProps> = ({
                     </td>
                     );
                 })}
+                
+                {isInteractive && (
+                  <td className="py-5 px-4 align-top">
+                    <textarea
+                      rows={2}
+                      placeholder="Comentario (opcional)"
+                      value={comments[c.id] || ''}
+                      onChange={(e) => onCommentChange && onCommentChange(c.id, e.target.value)}
+                      className="w-full min-w-[150px] rounded border-[1.5px] border-stroke bg-transparent py-2 px-3 text-sm font-medium outline-none transition focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
+                    />
+                  </td>
+                )}
                 </tr>
             );
             })}
