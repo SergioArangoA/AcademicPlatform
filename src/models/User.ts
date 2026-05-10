@@ -7,4 +7,7 @@ export interface User {
     speciality?: string;
     user_id?: string;
     role?: string;
+    email?: string;
+    photoURL?: string;
+    code?: string;
 }

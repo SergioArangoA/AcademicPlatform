@@ -26,33 +26,13 @@ class EvaluationService {
         }
     }
 
-    async createUser(user: Omit<User, "id">): Promise<User | null> {
+    async associateRubric(evaluationId: string, rubricId: string): Promise<any> {
         try {
-            const response = await axios.post<User>(API_URL, user);
+            const response = await api.patch(`${API_URL}/${evaluationId}/associate-rubric/${rubricId}`);
             return response.data;
         } catch (error) {
-            console.error("Error al crear usuario:", error);
-            return null;
-        }
-    }
-
-    async updateUser(id: number, user: Partial<User>): Promise<User | null> {
-        try {
-            const response = await axios.put<User>(`${API_URL}/${id}`, user);
-            return response.data;
-        } catch (error) {
-            console.error("Error al actualizar usuario:", error);
-            return null;
-        }
-    }
-
-    async deleteUser(id: number): Promise<boolean> {
-        try {
-            await axios.delete(`${API_URL}/${id}`);
-            return true;
-        } catch (error) {
-            console.error("Error al eliminar usuario:", error);
-            return false;
+            console.error("Error al asociar rúbrica:", error);
+            throw error;
         }
     }
 }
