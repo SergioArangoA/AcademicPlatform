@@ -5,15 +5,31 @@
  * a /auth/signin antes de que el login de Google se complete.
  */
 
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-// Componente de Ruta Protegida
-const ProtectedRoute = () => {
-    const { user, loading } = useAuth();
 
-    if (loading) return null;
+interface ProtectedRouteProps {
+  allowedRoles?: string[];
+  children: React.ReactNode;
+}
 
-    return user ? <Outlet /> : <Navigate to="/auth/signin" replace />;
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ allowedRoles, children }) => {
+  const { user, loading, getRole } = useAuth();
+
+  if (loading) return null;
+
+  if (!user) {
+    return <Navigate to="/auth/signin" replace />;
+  }
+
+  if (allowedRoles) {
+    const role = getRole();
+    if (!role || !allowedRoles.includes(role)) {
+      return <Navigate to="/Acces-denied" replace />;
+    }
+  }
+
+  return <>{children}</>;
 };
 
 export default ProtectedRoute;

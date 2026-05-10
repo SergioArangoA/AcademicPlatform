@@ -76,7 +76,7 @@ const EvaluationDetails: React.FC = () => {
             <EvaluationCard
                 evaluation={evaluation}
                 subject={subject}
-                group={group}
+                group={group}gi
                 user={teacher}
             />
 
