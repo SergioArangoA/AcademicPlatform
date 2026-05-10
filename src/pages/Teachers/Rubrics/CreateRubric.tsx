@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { rubricService } from '../../../services/rubricService';
 import { subjectService } from '../../../services/subjectService';
 import { Subject } from '../../../models/Subject';
+import RubricInfoCard from '../../../components/evaluations/RubricCard';
 
 interface Scale {
   name: string;
@@ -375,39 +376,12 @@ const CreateRubric: React.FC = () => {
 
         {/* Right Sidebar Area */}
         <div className="w-full xl:w-[300px] flex flex-col gap-4">
-          <div className="bg-white border border-[#E5E7EB] rounded-lg p-5 shadow-sm dark:bg-boxdark dark:border-strokedark">
-            <h3 className="text-[16px] font-bold text-[#111827] mb-4 dark:text-white">Resumen de la rúbrica</h3>
-            <div className="flex flex-col gap-2">
-              <div className="flex justify-between items-start border-b border-stroke pb-2 dark:border-strokedark">
-                <span className="text-[13px] text-[#6B7280] dark:text-gray-400">Asignatura:</span>
-                <span className="text-[13px] text-[#111827] font-medium text-right dark:text-gray-200">
-                  {subjects.find(s => s.id === Number(rubric.subject_id))?.name || 'No seleccionada'}
-                </span>
-              </div>
-              <div className="flex justify-between items-start border-b border-stroke pb-2 dark:border-strokedark">
-                <span className="text-[13px] text-[#6B7280] dark:text-gray-400">Título:</span>
-                <span className="text-[13px] text-[#111827] font-medium text-right truncate max-w-[150px] dark:text-gray-200" title={rubric.title}>
-                  {rubric.title || 'Sin título'}
-                </span>
-              </div>
-              <div className="flex justify-between items-center border-b border-stroke pb-2 dark:border-strokedark">
-                <span className="text-[13px] text-[#6B7280] dark:text-gray-400">Estado:</span>
-                <span className="text-[11px] bg-[#F3F4F6] border border-[#D1D5DB] text-[#374151] px-2 py-0.5 rounded-full dark:bg-meta-4 dark:border-strokedark dark:text-gray-300">
-                  Borrador
-                </span>
-              </div>
-              <div className="flex justify-between items-center border-b border-stroke pb-2 dark:border-strokedark">
-                <span className="text-[13px] text-[#6B7280] dark:text-gray-400">Criterios:</span>
-                <span className="text-[13px] text-[#111827] font-medium dark:text-gray-200">{rubric.criteria.length}</span>
-              </div>
-              <div className="flex justify-between items-center pt-1">
-                <span className="text-[13px] text-[#6B7280] dark:text-gray-400">Suma de pesos:</span>
-                <span className={`text-[13px] font-bold ${totalWeight === 100 ? 'text-[#16A34A]' : 'text-[#EF4444]'}`}>
-                  {totalWeight} %
-                </span>
-              </div>
-            </div>
-          </div>
+          <RubricInfoCard
+            rubric={{ ...rubric, id: undefined, is_archived: false } as any}
+            criteria={rubric.criteria as any[]}
+            subject={subjects.find(s => s.id === Number(rubric.subject_id))}
+            evaluation={undefined}
+          />
 
           <div className={`rounded-lg p-4 transition-colors ${totalWeight === 100 && rubric.title ? 'bg-[#F0FDF4] border border-[#D1FAE5]' : 'bg-white border border-[#E5E7EB] opacity-60 dark:bg-boxdark dark:border-strokedark'}`}>
             <div className="flex items-center gap-2 mb-1">

@@ -8,6 +8,7 @@
 import React, { useState, useEffect } from 'react';
 import Breadcrumb from '../../../components/Breadcrumb';
 import { useParams } from 'react-router-dom';
+import EvaluationCard from '../../../components/evaluations/EvaluationCard';
 
 interface Scale {
   id: string;
@@ -57,6 +58,12 @@ const GradeStudent: React.FC = () => {
   const [selectedStudent, setSelectedStudent] = useState('');
   const [grades, setGrades] = useState<Record<string, { scaleId: string, value: number, comment: string }>>({});
   const [finalGrade, setFinalGrade] = useState(0);
+
+  // Mocks para EvaluationCard
+  const mockSubject = { id: 1, name: 'Desarrollo Web', career_id: 1, current_semester: 5, credits: 3 } as any;
+  const mockGroup = { id: 1, name: 'Grupo A' } as any;
+  const mockTeacher = { id: 'u1', first_name: 'Juan', last_name: 'Pérez' } as any;
+  const mockEvaluation = { id: id, name: 'Proyecto Final', weight: 40, subject_id: 1, group_id: 1, teacher_id: 'u1', rubric_id: 'r1' } as any;
 
   const handleScaleSelect = (criterionId: string, scaleId: string, scaleValue: number) => {
     setGrades(prev => ({
@@ -110,6 +117,14 @@ const GradeStudent: React.FC = () => {
       <Breadcrumb pageName="Calificar Estudiante" />
 
       <div className="flex flex-col gap-9">
+        <EvaluationCard 
+          evaluation={mockEvaluation}
+          subject={mockSubject}
+          group={mockGroup}
+          user={mockTeacher}
+          rubric={rubricMock as any}
+        />
+
         <div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
           <div className="border-b border-stroke py-4 px-6.5 dark:border-strokedark">
             <h3 className="font-medium text-black dark:text-white">
