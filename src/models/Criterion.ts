@@ -1,6 +1,7 @@
 export interface Criterion{
-    rubric_id?: number;
-    name?: string;
-    description?: string;
-    weight?: number;
+    id?: string;
+    rubric_id: string;
+    name: string;
+    description: string;
+    weight: number;
 }

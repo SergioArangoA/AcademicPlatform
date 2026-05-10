@@ -7,8 +7,9 @@ import { Group } from "../../../models/Group";
 import { Rubric } from "../../../models/Rubric";
 import { Criterion } from "../../../models/Criterion";
 import { Scale } from "../../../models/Scale";
+import { Grade } from "../../../models/Grade";
 import RubricInfoCard from "../../../components/evaluations/RubricCard";
-import RubricEvaluationTable from "../../../components/evaluations/RubricTable";
+import GenericTable from "../../../components/GenericTable";
 import EvaluationCard from "../../../components/evaluations/EvaluationCard";
 import { evaluationService } from "../../../services/evaluationService";
 import { subjectService } from "../../../services/subjectService";
@@ -17,8 +18,20 @@ import { userService  } from "../../../services/userService";
 import { rubricService } from "../../../services/rubricService";
 import { criteriaService } from "../../../services/criterionService";
 import { scaleService } from "../../../services/scaleService";
+import { gradeService } from "../../../services/gradeService";
 
-const EvaluationDetails: React.FC = () => {
+export interface GradeRow {
+    rowNumber: number;
+    criterionName: string;
+    criterionDescription: string;
+    obtainedLevel: string;
+    scaleDescription: string;
+    scoreObtained: number;
+    maxScore: number;
+    comment: string;
+}
+
+const GradeDetails: React.FC = () => {
     const navigate = useNavigate();
     const { id } = useParams();
     const [evaluation, setEvaluation] = useState<Evaluation>();
@@ -28,12 +41,58 @@ const EvaluationDetails: React.FC = () => {
     const [rubric, setRubric] = useState<Rubric | null>(null);
     const [criteria, setCriteria] = useState<Criterion[] | null>(null);
     const [scales, setScales] = useState<Scale[] | null>(null);
+    const [grade, setGrade] = useState<Grade | null>(null);
+    const [gradeRows, setGradeRows] = useState<GradeRow[]>([]);
+
+    const normalizeDetails = (details: any) => {
+        if (!details) return [];
+        return Array.isArray(details) ? details : [details];
+    };
+
+    const buildGradeRows = (
+        details: any,
+        criteriaList: Criterion[],
+        scaleList: Scale[]
+    ): GradeRow[] => {
+        const normalizedDetails = normalizeDetails(details);
+
+        return criteriaList.map((criterion, index) => {
+            const criterionScales = scaleList.filter(
+                (scale) => scale.criterion_id === criterion.id
+            );
+            const selectedDetail = normalizedDetails.find((detail: any) => {
+                const scale = scaleList.find(
+                    (scale) => String(scale.id) === String(detail.scale_id)
+                );
+                return scale?.criterion_id === criterion.id;
+            });
+            const selectedScale = selectedDetail
+                ? scaleList.find(
+                      (scale) => String(scale.id) === String(selectedDetail.scale_id)
+                  )
+                : undefined;
+            const maxScore = criterionScales.length
+                ? Math.max(...criterionScales.map((scale) => scale.value))
+                : 0;
+
+            return {
+                rowNumber: index + 1,
+                criterionName: criterion.name,
+                criterionDescription: criterion.description || "-",
+                obtainedLevel: selectedScale?.name || "-",
+                scaleDescription: selectedScale?.description || "-",
+                scoreObtained: selectedScale?.value || 0,
+                maxScore,
+                comment: selectedDetail?.comment || "-",
+            };
+        });
+    };
 
     // 🔹 Llamar `fetchData` cuando el componente se monta
     useEffect(() => {
         fetchData();
     }, []);
-
+    const nota = 3;
     // 🔹 Obtiene los datos necesarios
     const fetchData = async () => {
         const evaluationData = await evaluationService.getEvaluationById(id);
@@ -51,6 +110,13 @@ const EvaluationDetails: React.FC = () => {
         setRubric(rubricData);
         setCriteria(criteriaData);
         setScales(scalesData);
+
+        const gradeData = await gradeService.getGradeById(id || "");
+        setGrade(gradeData);
+
+        if (gradeData && criteriaData && scalesData) {
+            setGradeRows(buildGradeRows(gradeData.details, criteriaData, scalesData));
+        }
     };
 
     return (
@@ -80,10 +146,23 @@ const EvaluationDetails: React.FC = () => {
                 user={teacher}
             />
 
-            <RubricEvaluationTable
-            criteria={mockCriteria}
-            scales={mockScales}
-            />
+            <div className="rounded-sm border border-stroke bg-white dark:bg-boxdark dark:border-strokedark shadow-default">
+                <GenericTable
+                    data={gradeRows}
+                    columns={[
+                        { key: "rowNumber", label: "#" },
+                        { key: "criterionName", label: "Criterio" },
+                        { key: "criterionDescription", label: "Descripción" },
+                        { key: "obtainedLevel", label: "Nivel obtenido" },
+                        { key: "scaleDescription", label: "Descripción escala" },
+                        { key: "scoreObtained", label: "Puntaje obtenido" },
+                        { key: "maxScore", label: "Puntaje máximo" },
+                        { key: "comment", label: "Comentario" },
+                    ]}
+                    actions={[]}
+                    onAction={() => {}}
+                />
+            </div>
 
             </div>
 
@@ -96,7 +175,22 @@ const EvaluationDetails: React.FC = () => {
               subject={subject}
               evaluation={evaluation}
             />
+            <div className="w-full rounded-2xl bg-gray-900 text-white dark:bg-boxdark dark:text-white border border-gray-200 dark:border-gray-700 shadow-lg p-5 flex flex-col items-center justify-center">
 
+            {/* Número grande */}
+            <span
+                className={`text-6xl font-extrabold leading-none
+                ${nota >= 4 ? "text-success" : nota >= 3 ? "text-warning" : "text-danger"}
+                `}
+            >
+                {nota.toFixed(1)}
+            </span>
+
+            {/* Etiqueta */}
+            <span className="text-sm text-gray-200 mt-2">
+                Nota final
+            </span>
+            </div>
             </div>
 
         </div>
@@ -119,7 +213,7 @@ const mockEvaluations: Evaluation[] = [
         weight: 50,
     },
 ];
-export default EvaluationDetails;
+export default GradeDetails;
 const mockCriteria: Criterion[] = [
   {
     id: "c1",
