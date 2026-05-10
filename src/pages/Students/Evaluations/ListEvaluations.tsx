@@ -22,7 +22,7 @@ const Evaluations: React.FC = () => {
     const handleAction = (action: string, item: Evaluation) => {
         if (action === "view") {
             console.log("View evaluation:", item);
-            navigate(`/students/evaluation/${item.id}`);
+            navigate(`/students/evaluations/${item.id}`);
         }
     };
 

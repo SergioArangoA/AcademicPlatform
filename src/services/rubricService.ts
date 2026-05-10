@@ -15,7 +15,7 @@ class RubricService {
         }
     }
 
-    async getRubricById(id: number): Promise<Rubric | null> {
+    async getRubricById(id: string): Promise<Rubric | null> {
         try {
             const response = await api.get<Rubric>(`${API_URL}/${id}`);
             return response.data.data;
