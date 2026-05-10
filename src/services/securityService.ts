@@ -5,12 +5,21 @@ import { LocalStorageProvider } from "../storage/LocalStorageProvider";
 import { store } from "../store/store";
 import { setUser } from "../store/userSlice";
 
+interface LoginCredentials {
+  email: string;
+  password: string;
+}
+
+interface LoginResponse {
+  user: User;
+  token: string;
+}
+
 class SecurityService extends EventTarget {
     private readonly keyToken: string;
     private readonly userKey: string;
     private readonly API_URL: string;
     private user: User | null;
-    private theAuthProvider: any;
     private storage: StorageProvider;
 
     constructor(storage: StorageProvider = new LocalStorageProvider()) {
@@ -19,7 +28,7 @@ class SecurityService extends EventTarget {
         this.storage = storage;
         this.keyToken = "token";
         this.userKey = "user";
-        this.API_URL = import.meta.env.VITE_API_URL_SECURITY || "";
+        this.API_URL = import.meta.env.VITE_API_URL || "";
         this.user = this.loadStoredUser();
     }
 
@@ -39,9 +48,11 @@ class SecurityService extends EventTarget {
         }
     }
 
-    async login(user: User) {
-        console.log("llamando api " + `${this.API_URL}/login`);
-        const response = await axios.post(`${this.API_URL}/login`, user, {
+    async login(credentials: LoginCredentials): Promise<LoginResponse> {
+        // Paso 1: Se realiza la peticion HTTP POST al endpoint de login del backend.
+        // Esto enviara las credenciales al API de Flask para su verificacion.
+        console.log("llamando api " + `${this.API_URL}/auth/login`);
+        const response = await axios.post(`${this.API_URL}/auth/login`, credentials, {
             headers: {
                 "Content-Type": "application/json",
             },
@@ -50,21 +61,36 @@ class SecurityService extends EventTarget {
             throw new Error(`Login failed with status ${response.status}`);
         }
 
-        const data = response.data;
+        // Paso 2: El backend Flask retorna la informacion envuelta en un objeto data.
+        // Debido a que axios tambien envuelve la respuesta en data, extraemos usando response.data.data.
+        const payload = response.data.data;
 
-        this.user = data.user;
+        // Paso 3: Se extrae el objeto usuario del payload devuelto por el API.
+        this.user = payload?.user;
 
-        // Ajusta esto según la estructura real de la respuesta
-        this.storage.setItem(this.userKey, JSON.stringify(this.user));
-
-        if (data?.token) {
-            this.storage.setItem(this.keyToken, data.token);
+        if (!this.user) {
+            throw new Error("La respuesta de login no contiene un usuario válido.");
         }
 
+        // Paso 4: Se guarda el usuario localmente para mantener la sesion activa.
+        this.storage.setItem(this.userKey, JSON.stringify(this.user));
+
+        // Paso 5: Se obtiene el token de acceso que el API de Flask genera para el usuario.
+        // Notese que el backend devuelve la propiedad como access_token.
+        const token = payload?.access_token;
+        if (!token) {
+            throw new Error("La respuesta de login no contiene token.");
+        }
+
+        // Paso 6: Se guarda el token de forma local para futuras peticiones autenticadas.
+        this.storage.setItem(this.keyToken, token);
+
+        // Paso 7: Se actualiza el estado global de la aplicacion y se notifica el inicio de sesion exitoso.
         store.dispatch(setUser(this.user));
         this.dispatchEvent(new CustomEvent("userChange", { detail: this.user }));
 
-        return this.user;
+        // Se retorna el usuario y su respectivo token.
+        return { user: this.user, token };
     }
 
     getUser() {

@@ -1,19 +1,58 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 import UserOne from '../images/user/user-01.png';
 //Importar la torre de control para obtener el usuario actual
 import { useSelector } from "react-redux";
 import { RootState } from "../store/store";
+import { useAuth } from '../context/AuthContext';
 
 const DropdownUser = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const navigate = useNavigate();
+  const { logout } = useAuth();
   const user = useSelector((state: RootState) => state.user.user);
+  const { user: authUser } = useAuth();
   
+  const authU = authUser as any || {};
+  const reduxU = user as any || {};
+
+  const safeReduxU = reduxU?.user || reduxU;
+  const safeAuthU = authU?.user || authU;
+
+  const firstName = safeAuthU?.first_name || safeAuthU?.firstName || safeReduxU?.first_name || safeReduxU?.firstName || '';
+  const lastName = safeAuthU?.last_name || safeAuthU?.lastName || safeReduxU?.last_name || safeReduxU?.lastName || '';
+
+  const fullName = firstName || lastName
+    ? `${firstName} ${lastName}`.trim()
+    : authU?.displayName || safeAuthU?.email || safeReduxU?.email || 'Usuario';
+
+  const profilePhoto = authUser && 'photoURL' in authUser && authUser.photoURL 
+    ? authUser.photoURL 
+    : null;
+
+  const getInitials = (name: string) => {
+    const names = name.trim().split(' ');
+    if (names.length >= 2) {
+      return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase();
+    }
+    return names[0] ? names[0][0].toUpperCase() : 'U';
+  };
+
   const trigger = useRef<any>(null);
   const dropdown = useRef<any>(null);
 
-  // close on click outside
+  /**
+   * Llama a la función logout() del contexto de autenticación
+   */
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/auth/signin');
+    } catch (error) {
+      console.error('Error during logout:', error);
+    }
+  };
   useEffect(() => {
     const clickHandler = ({ target }: MouseEvent) => {
       if (!dropdown.current) return;
@@ -48,14 +87,22 @@ const DropdownUser = () => {
         to="#"
       >
         <span className="hidden text-right lg:block">
-          <span className="block text-sm font-medium text-black dark:text-white">
-            {user?.name || 'Guest'}
+          <span className="block text-sm font-bold text-[#374151] dark:text-white">
+            {fullName}
           </span>
-          <span className="block text-xs">UX Designer</span>
+          <span className="block text-[12px] text-[#9CA3AF] font-medium">{safeAuthU?.role || safeReduxU?.role || 'Docente'}</span>
         </span>
 
-        <span className="h-12 w-12 rounded-full">
-          <img src={UserOne} alt="User" />
+        <span className="h-10 w-10 rounded-full overflow-hidden flex items-center justify-center bg-[#6D28D9] text-white font-bold text-sm">
+          {profilePhoto ? (
+            <img
+              src={profilePhoto}
+              alt="User"
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            getInitials(fullName)
+          )}
         </span>
 
         <svg
@@ -159,7 +206,10 @@ const DropdownUser = () => {
             </Link>
           </li>
         </ul>
-        <button className="flex items-center gap-3.5 py-4 px-6 text-sm font-medium duration-300 ease-in-out hover:text-primary lg:text-base">
+        <button 
+          onClick={handleLogout}
+          className="flex items-center gap-3.5 py-4 px-6 text-sm font-medium duration-300 ease-in-out hover:text-primary lg:text-base"
+        >
           <svg
             className="fill-current"
             width="22"
