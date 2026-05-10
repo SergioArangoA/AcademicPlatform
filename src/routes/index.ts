@@ -19,12 +19,15 @@ const Alerts = lazy(() => import('../pages/UiElements/Alerts'));
 const Buttons = lazy(() => import('../pages/UiElements/Buttons'));
 const Demo= lazy(() => import('../pages/Demo'));
 const ImageEditor= lazy(() => import('../pages/ImageEditor'));
-const UserList= lazy(() => import('../pages/Users/ListUsers'));
 const UserCreate= lazy(() => import('../pages/Users/Create'));
 const UserUpdate= lazy(() => import('../pages/Users/Update'));
 const RoleList= lazy(() => import('../pages/Roles/List'));
 const Posts= lazy(() => import('../pages/Posts/List'));
 const StudentsEvaluations= lazy(() => import('../pages/Students/Evaluations/ListEvaluations'));
+const UserList = lazy(() => import('../pages/Admin/userList'));
+const CreateUser = lazy(() => import('../pages/Admin/createUser'));
+const UpdateUser = lazy(() => import('../pages/Admin/updateUser'));
+const ViewUser = lazy(() => import('../pages/Admin/viewUser'));
 const ViewEvaluation = lazy(()=> import('../pages/Students/Evaluations/ViewEvaluation'));
 const StudentsRubrics = lazy(()=> import ('../pages/Students/Rubrics/ListRubrics'));
 const GradesList = lazy(()=> import ('../pages/Students/Evaluations/ListGrades'));
@@ -44,6 +47,8 @@ const coreRoutes = [
     component: StudentsEvaluations,
   },
   {
+    path: '/admin/user-list',
+    title: 'Lista Usuarios',
     path: '/students/evaluations/rubrics/list',
     title: 'Rúbricas',
     component: Rubrics,
@@ -67,6 +72,21 @@ const coreRoutes = [
     path: '/users/list',
     title: 'Users',
     component: UserList,
+  },
+  {
+    path: '/admin/users/create',
+    title: 'Create User',
+    component: CreateUser,
+  },
+  {
+    path: '/admin/users/edit/:id',
+    title: 'Update User',
+    component: UpdateUser,
+  },
+  {
+    path: '/admin/users/view/:id',
+    title: 'View User',
+    component: ViewUser,
   },
   {
     path: '/users/create',
