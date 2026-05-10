@@ -20,7 +20,7 @@ import firebaseAuthService from "../services/firebaseAuthService";
 import { User as AppUser } from "../models/User";
 import SecurityService from "../services/securityService";
 import { store } from "../store/store";
-import { setUser as setReduxUser } from "../store/userSlice";
+import { setUser as setReduxUser, clearUser } from "../store/userSlice";
 
 type AuthUser = FirebaseUser | AppUser;
 
@@ -136,6 +136,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setToken(idToken);
       localStorage.setItem("user", JSON.stringify(firebaseUser));
       localStorage.setItem("token", idToken);
+      store.dispatch(setReduxUser(JSON.parse(JSON.stringify(firebaseUser)) as any));
     } catch (error) {
       console.error(" Error en login con Google:", error);
       throw error;
@@ -150,6 +151,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       setUser(firebaseUser);
       setToken(idToken);
+      localStorage.setItem("user", JSON.stringify(firebaseUser));
+      localStorage.setItem("token", idToken);
+      store.dispatch(setReduxUser(JSON.parse(JSON.stringify(firebaseUser)) as any));
     } catch (error) {
       console.error("Error en login con GitHub:", error);
       throw error;
@@ -167,6 +171,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       localStorage.setItem("user", JSON.stringify(firebaseUser));
       localStorage.setItem("token", idToken);
+      store.dispatch(setReduxUser(JSON.parse(JSON.stringify(firebaseUser)) as any));
 
     } catch (error) {
       console.error("Error en login con Microsoft:", error);
@@ -190,21 +195,50 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const response = await SecurityService.login(credentials);
       const appUser = response.user;
 
-      // Paso 3: Unimos la data de Firebase con la del Backend para no perder el rol.
-      // Ponemos firebaseUser al final para que sus datos reales (como el email) 
-      // sobrescriban los datos falsos del Mock de Postman.
-      const mergedUser = { ...appUser, ...firebaseUser, role: appUser.role };
+      // Paso 3: Obtener el perfil completo desde el backend usando el token
+      let firstName = "";
+      let lastName = "";
+      try {
+          const profileRes = await fetch(`${import.meta.env.VITE_API_URL}/users/${appUser.id}`, {
+              headers: { 'Authorization': `Bearer ${response.token}` }
+          });
+          if (profileRes.ok) {
+              const data = await profileRes.json();
+              const profile = data?.data?.profile;
+              if (profile) {
+                  firstName = profile.first_name || "";
+                  lastName = profile.last_name || "";
+              } else if (appUser.role === 'ADMIN') {
+                  // Los administradores no tienen tabla de perfil en la BD, así que usamos un nombre genérico
+                  // o su código de usuario, tal cual hace el transformUsersForList
+                  firstName = "Administrador";
+                  lastName = `(${appUser.code || ''})`;
+              }
+          }
+      } catch (err) {
+          console.error("No se pudo obtener el perfil extra del usuario", err);
+      }
 
-      // Paso 4: Actualizar el estado de React Context con el usuario combinado y el token de Firebase.
+      // Paso 4: Unimos la data de Firebase con la del Backend para no perder el rol y el nombre.
+      const firebaseUserJson = JSON.parse(JSON.stringify(firebaseUser));
+      const mergedUser = { 
+          ...appUser, 
+          ...firebaseUserJson, 
+          role: appUser.role, 
+          first_name: firstName, 
+          last_name: lastName 
+      };
+
+      // Paso 5: Actualizar el estado de React Context con el usuario combinado y el token de Firebase.
       setUser(mergedUser);
       setToken(idToken);
       
-      // Paso 5: Guardamos el usuario del backend en Redux y LocalStorage para la UI.
+      // Paso 6: Guardamos el usuario del backend en Redux y LocalStorage para la UI.
       // Persistir la sesion guardando el usuario y el token en localStorage asegura que 
       // la sesion sobreviva a recargas de pagina.
       localStorage.setItem("user", JSON.stringify(mergedUser));
       localStorage.setItem("token", idToken);
-      store.dispatch(setReduxUser(mergedUser));
+      store.dispatch(setReduxUser(JSON.parse(JSON.stringify(mergedUser)) as any));
       
     } catch (error) {
       console.error("Error en login con credenciales:", error);
@@ -218,6 +252,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await firebaseAuthService.logout();
     setUser(null);
     setToken(null);
+    store.dispatch(clearUser());
   };
 
   return (
