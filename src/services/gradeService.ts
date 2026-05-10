@@ -91,6 +91,29 @@ class GradeService {
     }
 
     async getGradeById(id: string): Promise<Grade | null> {
+        if (id === "g1"){
+            return {
+    id: "g1",
+    enrollment_id: "enr1",
+    rubric_id: "5d84071e-96cd-4ae8-8141-31a0511f6103",
+    status: "completed",
+    observations: "Buen desempeño general",
+    details: [
+      {
+        scale_id: "s1", // Knowledge - Excellent
+        comment: "Domina completamente los conceptos",
+      },
+      {
+        scale_id: "s5", // Application - Good
+        comment: "Pequeños errores en la aplicación",
+      },
+      {
+        scale_id: "s8", // Presentation - Good
+        comment: "Claro, pero puede mejorar estructura",
+      },
+    ],
+  }
+        }
         try {
             const response = await api.get<Grade>(`${API_URL}/${id}`);
             return response.data.data;

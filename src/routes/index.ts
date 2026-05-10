@@ -22,6 +22,7 @@ const StudentsEvaluations= lazy(() => import('../pages/Students/Evaluations/List
 const ViewEvaluation = lazy(()=> import('../pages/Students/Evaluations/ViewEvaluation'));
 const StudentsRubrics = lazy(()=> import ('../pages/Students/Rubrics/ListRubrics'));
 const GradesList = lazy(()=> import ('../pages/Students/Evaluations/ListGrades'));
+const GradeDetails = lazy(()=> import ('../pages/Students/Evaluations/ViewGrade'));
 
 const coreRoutes = [
   {
@@ -40,9 +41,14 @@ const coreRoutes = [
     component: Grades,
   },
   {
-    path: '/students/evaluation/:id',
+    path: '/students/evaluations/:id',
     title: 'Información evaluación',
     component: ViewEvaluation,
+  },
+    {
+    path: '/students/evaluations/grades/:id',
+    title: 'Información nota',
+    component: GradeDetails,
   },
   {
     path: '/users/list',

@@ -124,7 +124,7 @@ const Grades: React.FC = () => {
 
     const handleAction = (action: string, item: GradeRow) => {
         if (action === "view") {
-            navigate(`/students/evaluation/grade/${item.id}`);
+            navigate(`/students/evaluations/grades/${item.id}`);
         }
     };
 
