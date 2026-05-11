@@ -1,60 +1,66 @@
-import axios from "axios";
 import { api } from "../interceptors/authInterceptor";
 import { Subject } from "../models/Subject";
+import { SubjectPayload } from "../models/SubjectPayload";
+import { SubjectApiResponse } from "../models/SubjectApiResponse";
+import { SubjectListApiResponse } from "../models/SubjectListApiResponse";
 
 const API_URL = "/academic/subjects";
+
 
 class SubjectService {
     async getSubjects(): Promise<Subject[]> {
         try {
-            const response = await api.get<Subject[]>(`${API_URL}`);
-            return response.data.data;
+            const response = await api.get<SubjectListApiResponse>(API_URL);
+            return response.data.data ?? [];
         } catch (error) {
             console.error("Error al obtener materias:", error);
             return [];
         }
     }
 
-    async getSubjectById(id: number): Promise<Subject | null> {
+    async getSubjectById(id: number | string | null | undefined): Promise<Subject | null> {
+        if (id === null || id === undefined) {
+            return null;
+        }
+
         try {
-            const response = await api.get<Subject>(`${API_URL}/${id}`);
-            return response.data.data;
+            const response = await api.get<SubjectApiResponse>(`${API_URL}/${id}`);
+            return response.data.data ?? null;
         } catch (error) {
             console.error("Materia no encontrada:", error);
             return null;
         }
     }
 
-    async createUser(user: Omit<User, "id">): Promise<User | null> {
+    async createSubject(subject: SubjectPayload): Promise<Subject | null> {
         try {
-            const response = await axios.post<User>(API_URL, user);
-            return response.data;
+            const response = await api.post<SubjectApiResponse>(API_URL, subject);
+            return response.data.data ?? null;
         } catch (error) {
-            console.error("Error al crear usuario:", error);
+            console.error("Error al crear materia:", error);
             return null;
         }
     }
 
-    async updateUser(id: number, user: Partial<User>): Promise<User | null> {
+    async updateSubject(id: number | string, subject: SubjectPayload): Promise<Subject | null> {
         try {
-            const response = await axios.put<User>(`${API_URL}/${id}`, user);
-            return response.data;
+            const response = await api.put<SubjectApiResponse>(`${API_URL}/${id}`, subject);
+            return response.data.data ?? null;
         } catch (error) {
-            console.error("Error al actualizar usuario:", error);
+            console.error("Error al actualizar materia:", error);
             return null;
         }
     }
 
-    async deleteUser(id: number): Promise<boolean> {
+    async deleteSubject(id: number | string): Promise<boolean> {
         try {
-            await axios.delete(`${API_URL}/${id}`);
+            await api.delete(`${API_URL}/${id}`);
             return true;
         } catch (error) {
-            console.error("Error al eliminar usuario:", error);
+            console.error("Error al eliminar materia:", error);
             return false;
         }
     }
 }
 
-// Exportamos una instancia de la clase para reutilizarla
 export const subjectService = new SubjectService();

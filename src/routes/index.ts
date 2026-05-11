@@ -26,6 +26,10 @@ const RoleList= lazy(() => import('../pages/Roles/List'));
 const Posts= lazy(() => import('../pages/Posts/List'));
 const StudentsEvaluations= lazy(() => import('../pages/Students/Evaluations/ListEvaluations'));
 const UserList = lazy(() => import('../pages/Admin/userList'));
+const SubjectList = lazy(() => import('../pages/Admin/subjectList'));
+const CreateSubject = lazy(() => import('../pages/Admin/createSubject'));
+const UpdateSubject = lazy(() => import('../pages/Admin/updateSubject'));
+const ViewSubject = lazy(() => import('../pages/Admin/viewSubject'));
 const CreateUser = lazy(() => import('../pages/Admin/createUser'));
 const UpdateUser = lazy(() => import('../pages/Admin/updateUser'));
 const ViewUser = lazy(() => import('../pages/Admin/viewUser'));
@@ -74,6 +78,30 @@ const coreRoutes = [
     path: '/admin/user-list',
     title: 'Lista Usuarios',
     component: UserList,
+    allowedRoles: ['ADMIN'],
+  },
+  {
+    path: '/admin/subjects/list',
+    title: 'Lista Materias',
+    component: SubjectList,
+    allowedRoles: ['ADMIN'],
+  },
+  {
+    path: '/admin/subjects/create',
+    title: 'Nueva Asignatura',
+    component: CreateSubject,
+    allowedRoles: ['ADMIN'],
+  },
+  {
+    path: '/admin/subjects/edit/:id',
+    title: 'Editar Asignatura',
+    component: UpdateSubject,
+    allowedRoles: ['ADMIN'],
+  },
+  {
+    path: '/admin/subjects/view/:id',
+    title: 'Ver Asignatura',
+    component: ViewSubject,
     allowedRoles: ['ADMIN'],
   },
   {
