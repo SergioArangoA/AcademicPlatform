@@ -5,15 +5,16 @@ import { UserApiResponse } from "../models/Users/UserApiResponse";
 import { UpdateUserPayload } from "../models/Users/UpdateUserPayload";
 import extractApiMessage from "../utils/extractApiMessage";
 import { UserMutationResult } from "../utils/userMutationResult";
+import { api } from "../interceptors/authInterceptor";
 
 
-const API_URL = import.meta.env.VITE_API_URL + "/users/" || "";
+const API_URL = "/users/";
 
 class UserPService {
     async getUsers(): Promise<UserResponse[]> {
         try {
             // El backend responde con un envelope { data, message }
-            const response = await axios.get<UsersApiResponse>(API_URL);
+            const response = await api.get<UsersApiResponse>(API_URL);
             return response.data.data;
         } catch (error) {
             // Manejo de errores más descriptivo
@@ -27,7 +28,7 @@ class UserPService {
     }
     async getUserById(userId: string): Promise<UserResponse | null> {
         try {
-            const response = await axios.get<UserApiResponse>(`${API_URL}${userId}`);
+            const response = await api.get<UserApiResponse>(`${API_URL}${userId}`);
             return response.data.data;
         } catch (error) {
             if (axios.isAxiosError(error)) {
@@ -41,13 +42,7 @@ class UserPService {
 
     async updateUser(userId: string, payload: UpdateUserPayload): Promise<UserResponse | null> {
         try {
-            // Normalizar `is_active` a boolean cuando esté presente
-            const normalizedPayload: UpdateUserPayload = {
-                ...payload,
-                is_active: payload.is_active === undefined ? undefined : Boolean(payload.is_active),
-            };
-
-            const response = await axios.put(`${API_URL}${userId}`, normalizedPayload);
+            const response = await api.put(`${API_URL}${userId}`, payload);
             
             // Manejar tanto envelope { data: ... } como respuesta directa
             if (response.data && typeof response.data === 'object' && 'data' in response.data) {
@@ -66,7 +61,7 @@ class UserPService {
     }
     async deactivateUser(userId: string): Promise<boolean> {
         try {
-            const response = await axios.patch(`${API_URL}${userId}/deactivate`);
+            const response = await api.patch(`${API_URL}${userId}/deactivate`);
             return response.status >= 200 && response.status < 300;
         } catch (error) {
             if (axios.isAxiosError(error)) {
@@ -83,7 +78,7 @@ class UserPService {
         payload: UpdateUserPayload,
     ): Promise<UserMutationResult> {
         try {
-            const response = await axios.post(`${API_URL}${endpoint}`, payload);
+            const response = await api.post(`${API_URL}${endpoint}`, payload);
 
             if (response.data && typeof response.data === "object" && "data" in response.data) {
                 const responsePayload = response.data as { data: UserResponse; message?: string };

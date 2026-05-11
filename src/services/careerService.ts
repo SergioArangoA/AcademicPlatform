@@ -3,15 +3,16 @@ import { Career } from "../models/Careers/Career";
 import { CareerPayload } from "../models/Careers/CareerPayload";
 import { CareersApiResponse } from "../models/Careers/CareersApiResponse"
 import { CareerApiResponse } from "../models/Careers/CareerApiResponse";
+import { api } from "../interceptors/authInterceptor";
 
-const API_URL = import.meta.env.VITE_API_URL + "/academic/careers/" || "";
-const API_URL1 = import.meta.env.VITE_API_URL + "/academic/careers" || "";
+const API_URL = "/academic/careers/";
+const API_URL1 = "/academic/careers";
 
 class CareerService {
     async getCareers(): Promise<Career[]> {
         try {
             // El backend responde con un envelope { data, message }
-            const response = await axios.get<CareersApiResponse>(API_URL1);
+            const response = await api.get<CareersApiResponse>(API_URL1);
             return response.data.data;
         } catch (error) {
             // Manejo de errores más descriptivo
@@ -26,7 +27,7 @@ class CareerService {
 
     async getCareerById(careerId: string): Promise<Career | null> {
         try {
-            const response = await axios.get<CareerApiResponse>(`${API_URL}${careerId}`);
+            const response = await api.get<CareerApiResponse>(`${API_URL}${careerId}`);
             return response.data.data;
         } catch (error) {
             if (axios.isAxiosError(error)) {
@@ -40,7 +41,7 @@ class CareerService {
 
     async createCareer(payload: CareerPayload): Promise<Career | null> {
         try {
-            const response = await axios.post<CareerApiResponse>(API_URL1, payload);
+            const response = await api.post<CareerApiResponse>(API_URL1, payload);
             return response.data.data;
         } catch (error) {
             if (axios.isAxiosError(error)) {
@@ -54,7 +55,7 @@ class CareerService {
 
     async updateCareer(careerId: string, payload: CareerPayload): Promise<Career | null> {
         try {
-            const response = await axios.put<CareerApiResponse>(`${API_URL}${careerId}`, payload);
+            const response = await api.put<CareerApiResponse>(`${API_URL}${careerId}`, payload);
             return response.data.data;
         } catch (error) {
             if (axios.isAxiosError(error)) {
