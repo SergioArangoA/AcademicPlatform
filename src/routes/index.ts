@@ -40,6 +40,7 @@ const ViewCareer = lazy(() => import('../pages/Admin/viewCareer.tsx'));
 const CreateSemester = lazy(() => import('../pages/Admin/createSemester.tsx'));
 const UpdateSemester = lazy(() => import('../pages/Admin/updateSemester.tsx'));
 const ViewSemester = lazy(() => import('../pages/Admin/viewSemester.tsx'));
+const PlanStudios = lazy(() => import('../pages/Admin/planStudios'));
 const ViewEvaluation = lazy(()=> import('../pages/Students/Evaluations/ViewEvaluation'));
 const StudentsRubrics = lazy(()=> import ('../pages/Students/Rubrics/ListRubrics'));
 const GradesList = lazy(()=> import ('../pages/Students/Evaluations/ListGrades'));
@@ -54,6 +55,7 @@ const TeacherFinalGrades = lazy(() => import('../pages/Teachers/Evaluations/Fina
 
 // Admin routes
 const UserRegistrationList = lazy(()=>import('../pages/Admin/userRegistrationList.tsx'));
+const AssignTeacher = lazy(() => import('../pages/Admin/assignTeacher'));
 
 const coreRoutes = [
   {
@@ -72,6 +74,12 @@ const coreRoutes = [
     path: '/admin/registration/users/list',
     title: 'Matrículas',
     component: UserRegistrationList,
+    allowedRoles: ['ADMIN'],
+  },
+  {
+    path: '/admin/assign-teacher',
+    title: 'Asignar docente',
+    component: AssignTeacher,
     allowedRoles: ['ADMIN'],
   },
   {
@@ -138,6 +146,12 @@ const coreRoutes = [
     path: '/admin/careers-semesters',
     title: 'Carreras y Semestres',
     component: CareerAndSemesterList,
+    allowedRoles: ['ADMIN'],
+  },
+  {
+    path: '/admin/study-plans',
+    title: 'Plan de estudios',
+    component: PlanStudios,
     allowedRoles: ['ADMIN'],
   },
   {
