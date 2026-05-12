@@ -813,6 +813,23 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                     <span>Matrículas</span>
                   </NavLink>
                   <NavLink
+                    to="/admin/study-plans"
+                    className={`group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${
+                      pathname.includes('/admin/study-plans') && 'bg-graydark dark:bg-meta-4'
+                    }`}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                      className="w-4 h-4 fill-current"
+                    >
+                      <path d="M4.5 3.75A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V6a2.25 2.25 0 0 0-2.25-2.25h-15Zm0 1.5h15A.75.75 0 0 1 20.25 6v1.5H3.75V6a.75.75 0 0 1 .75-.75Zm-.75 3.75h16.5V18a.75.75 0 0 1-.75.75h-15A.75.75 0 0 1 3.75 18V9Zm3 1.5a.75.75 0 0 0 0 1.5h10.5a.75.75 0 0 0 0-1.5H6.75Zm0 3a.75.75 0 0 0 0 1.5h6.75a.75.75 0 0 0 0-1.5H6.75Z" />
+                    </svg>
+
+                    <span>Plan de estudios</span>
+                  </NavLink>
+                  <NavLink
                     to="/students/evaluations/grades/list"
                     className={`group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${
                       pathname.includes('students/evaluations/grades') && 'bg-graydark dark:bg-meta-4'

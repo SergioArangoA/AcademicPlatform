@@ -15,9 +15,11 @@ interface GenericTableProps {
     columns: Column[];
     actions: Action[];
     onAction: (name: string, item: Record<string, any>) => void;
+    renderCell?: (key: string, item: Record<string, any>) => React.ReactNode;
+    rowClassName?: (item: Record<string, any>) => string;
 }
 
-const GenericTable: React.FC<GenericTableProps> = ({ data, columns, actions, onAction }) => {
+const GenericTable: React.FC<GenericTableProps> = ({ data, columns, actions, onAction, renderCell, rowClassName }) => {
     return (
         <div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
             <div className="max-w-full overflow-x-auto">
@@ -42,7 +44,7 @@ const GenericTable: React.FC<GenericTableProps> = ({ data, columns, actions, onA
 
                     <tbody>
                         {data.map((item, index) => (
-                            <tr key={index}>
+                            <tr key={index} className={rowClassName?.(item)}>
                                 {columns.map((col, colIndex) => (
                                     <td
                                         key={col.key}
@@ -50,9 +52,13 @@ const GenericTable: React.FC<GenericTableProps> = ({ data, columns, actions, onA
                                             colIndex === 0 ? "pl-9 xl:pl-11" : ""
                                         }`}
                                     >
-                                        <p className="text-black dark:text-white">
-                                            {item[col.key] === true ? "Activo" : (item[col.key] === false ? "Inactivo" : item[col.key])}
-                                        </p>
+                                        {renderCell ? (
+                                            renderCell(col.key, item)
+                                        ) : (
+                                            <p className="text-black dark:text-white">
+                                                {item[col.key] === true ? "Activo" : (item[col.key] === false ? "Inactivo" : item[col.key])}
+                                            </p>
+                                        )}
                                     </td>
                                 ))}
 
