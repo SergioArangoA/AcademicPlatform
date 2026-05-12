@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Evaluation } from "../../../models/Evaluation";
 import { Subject } from "../../../models/Subject";
 import { User } from "../../../models/User";
-import { Group } from "../../../models/Group";
+import { Group } from "../../../models/Groups/Group";
 import { Rubric } from "../../../models/Rubric";
 import { Criterion } from "../../../models/Criterion";
 import { Scale } from "../../../models/Scale";

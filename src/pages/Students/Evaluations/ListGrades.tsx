@@ -3,7 +3,7 @@ import { Grade } from "../../../models/Grade";
 import { GradeDetails } from "../../../models/GradeDetails";
 import { Rubric } from "../../../models/Rubric";
 import { Subject } from "../../../models/Subject";
-import { Group } from "../../../models/Group";
+import { Group } from "../../../models/Groups/Group";
 import { Evaluation } from "../../../models/Evaluation";
 import { Scale } from "../../../models/Scale";
 import { Criterion } from "../../../models/Criterion";
