@@ -1,13 +1,16 @@
 import axios from "axios";
 import { api } from "../interceptors/authInterceptor";
-import { Group } from "../models/Group";
+import { Group } from "../models/Groups/Group";
+import { GroupsApiResponse } from "../models/Groups/GroupsApiResponse";
+import { GroupApiResponse } from "../models/Groups/GroupApiResponse";
+import { GroupPayload } from "../models/Groups/GroupPayload";
 
 const API_URL = "/academic/groups";
 
 class GroupService {
     async getGroups(): Promise<Group[]> {
         try {
-            const response = await api.get<Group[]>(`${API_URL}`);
+            const response = await api.get<GroupsApiResponse>(`${API_URL}`);
             return response.data.data;
         } catch (error) {
             console.error("Error al obtener grupos:", error);
@@ -17,7 +20,7 @@ class GroupService {
 
     async getGroupById(id: number): Promise<Group | null> {
         try {
-            const response = await api.get<Group>(`${API_URL}/${id}`);
+            const response = await api.get<GroupApiResponse>(`${API_URL}/${id}`);
             return response.data.data;
         } catch (error) {
             console.error("Grupo no encontrado:", error);
@@ -25,35 +28,75 @@ class GroupService {
         }
     }
 
-    async createUser(user: Omit<User, "id">): Promise<User | null> {
+    async searchGroup(name?: string, semester_id?: string): Promise<Group[]> {
         try {
-            const response = await axios.post<User>(API_URL, user);
-            return response.data;
+            const response = await api.get<GroupsApiResponse>(`${API_URL}/search`, {
+                params: {
+                    name,
+                    semester_id,
+                },
+            });
+            return response.data.data;
         } catch (error) {
-            console.error("Error al crear usuario:", error);
+            console.error("Error al buscar grupos:", error);
+            return [];
+        }
+    }
+
+    async createGroup(payload: GroupPayload): Promise<Group | null> {
+        try {
+            const response = await api.post<GroupApiResponse>(API_URL, payload);
+            return response.data.data;
+        } catch (error) {
+            if (axios.isAxiosError(error)) {
+                console.error("Error al crear grupo:", error.response?.data || error.message);
+            } else {
+                console.error("Error inesperado al crear grupo:", error);
+            }
             return null;
         }
     }
 
-    async updateUser(id: number, user: Partial<User>): Promise<User | null> {
+    async updateGroup(groupId: string, payload: GroupPayload): Promise<Group | null> {
         try {
-            const response = await axios.put<User>(`${API_URL}/${id}`, user);
-            return response.data;
+            const response = await api.put<GroupApiResponse>(`${API_URL}${groupId}`, payload);
+            return response.data.data;
         } catch (error) {
-            console.error("Error al actualizar usuario:", error);
+            if (axios.isAxiosError(error)) {
+                console.error("Error al actualizar Plan de Estudio:", error.response?.data || error.message);
+            } else {
+                console.error("Error inesperado al actualizar Plan de Estudio:", error);
+            }
             return null;
         }
     }
 
-    async deleteUser(id: number): Promise<boolean> {
+    async assignTeacherToGroup(groupId: string, teacherId: string): Promise<boolean> {
         try {
-            await axios.delete(`${API_URL}/${id}`);
+            await api.patch(`${API_URL}/${groupId}/assign-teacher/${teacherId}`);
             return true;
         } catch (error) {
-            console.error("Error al eliminar usuario:", error);
+            if (axios.isAxiosError(error)) {
+                console.error("Error al asignar docente al grupo:", error.response?.data || error.message);
+            } else {
+                console.error("Error inesperado al asignar docente al grupo:", error);
+            }
             return false;
         }
     }
+
+    async deleteGroup(id: number | string): Promise<boolean> {
+        try {
+            await api.delete(`${API_URL}/${id}`);
+            return true;
+        } catch (error) {
+            console.error("Error al eliminar materia:", error);
+            return false;
+        }
+    }
+
+    
+
 }
 
 // Exportamos una instancia de la clase para reutilizarla
