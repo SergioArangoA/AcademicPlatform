@@ -84,6 +84,7 @@ const SubjectList = () => {
 		{ key: "credits", label: "Créditos" },
 		{ key: "description", label: "Descripción" },
 		{ key: "is_active", label: "Estado" },
+		{ key: "updated_at", label: "Última Actualización"},
 	];
 
 	const actions = [
