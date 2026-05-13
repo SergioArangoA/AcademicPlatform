@@ -4,6 +4,8 @@ import { api } from "../interceptors/authInterceptor";
 import { StudyPlansResponse } from "../models/StudyPlan/StudyPlansResponse";
 import { StudyPlanResponse } from "../models/StudyPlan/StudyPlanResponse";
 import { StudyPlanPayload } from "../models/StudyPlan/StudyPlanPayload";
+import { StudyPlanSubjectResponse } from "../models/StudyPlan/StudyPlanSubjectResponse";
+import { StudyPlanSubject } from "../models/StudyPlan/StudyPlanSubject";
 
 const API_URL = "academic/study-plans/";
 const API_URL1 = "academic/study-plans";
@@ -92,6 +94,22 @@ class StudyPlanService{
             return false;
         }
     }
+
+    async getSubjectsByStudyPlan(study_plan_id: string | number): Promise<StudyPlanSubject[]> {
+        try {
+            const response = await api.get<StudyPlanSubjectResponse>(`${API_URL}${study_plan_id}/subjects`);
+            return response.data.data || response.data;
+        } catch (error) {
+            if (axios.isAxiosError(error)) {
+                console.error("Error al obtener sujetos del Plan de Estudio:", error.response?.data || error.message);
+            } else {
+                console.error("Error inesperado al obtener sujetos del Plan de Estudio:", error);
+            }
+            return [];
+        }
+    }
+
+    
 }
 
 export const studyplanService = new StudyPlanService();
