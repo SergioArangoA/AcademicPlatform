@@ -4,7 +4,6 @@ export interface StudyPlan{
     id: string;
     is_published: boolean;
     name: string;
-    subject_id: string;
     suggested_semester: number;
     updated_at: string;
     year: number;

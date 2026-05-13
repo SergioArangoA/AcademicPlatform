@@ -15,38 +15,21 @@ type StudyPlanRow = {
 
 const normalizeText = (value: string) => value.trim().toLowerCase();
 
-const buildYearOptions = () => {
-    const currentYear = new Date().getFullYear();
-    return Array.from({ length: 8 }, (_, index) => String(currentYear + 2 - index));
-};
-
 const PlanStudios = () => {
     const [subjects, setSubjects] = useState<Subject[]>([]);
     const [subjectSearch, setSubjectSearch] = useState("");
     const [subjectPage, setSubjectPage] = useState(1);
 
-    const [planName, setPlanName] = useState("");
-    const [planYear, setPlanYear] = useState("");
-    const [studyPlanRows, setStudyPlanRows] = useState<StudyPlan[]>([]);
+    const [plans, setPlans] = useState<StudyPlan[]>([]);
+    const [selectedPlanId, setSelectedPlanId] = useState<string>("");
+    const [selectedPlanName, setSelectedPlanName] = useState<string>("");
+    const [selectedPlanSemester, setSelectedPlanSemester] = useState<number>(0);
+    const [studyPlanRows, setStudyPlanRows] = useState<any[]>([]);
 
     const [isLoadingSubjects, setIsLoadingSubjects] = useState(false);
     const [isLoadingPlan, setIsLoadingPlan] = useState(false);
 
     const [hasSearched, setHasSearched] = useState(false);
-
-    const yearOptions = useMemo(() => buildYearOptions(), []);
-
-    const subjectMap = useMemo(() => {
-        const map = new Map<string, Subject>();
-
-        subjects.forEach((subject) => {
-            if (subject.id !== null && subject.id !== undefined) {
-                map.set(String(subject.id), subject);
-            }
-        });
-
-        return map;
-    }, [subjects]);
 
     const fetchSubjects = async () => {
         setIsLoadingSubjects(true);
@@ -58,25 +41,40 @@ const PlanStudios = () => {
         }
     };
 
+    const fetchPlans = async () => {
+        try {
+            const data = await studyplanService.getStudyPlan();
+            setPlans(data);
+        } catch (error) {
+            console.error("Error al cargar planes:", error);
+        }
+    };
+
     useEffect(() => {
         fetchSubjects();
+        fetchPlans();
     }, []);
 
     const handleSearchPlan = async () => {
+        if (!selectedPlanId) {
+            return;
+        }
+
         setIsLoadingPlan(true);
         setHasSearched(true);
 
         try {
-            const data = await studyplanService.searchStudyPlan(planName, planYear);
+            const data = await studyplanService.getSubjectsByStudyPlan(selectedPlanId);
             setStudyPlanRows(data);
         } finally {
             setIsLoadingPlan(false);
         }
     };
 
-    const handleClearPlanFilters = async () => {
-        setPlanName("");
-        setPlanYear("");
+    const handleClearPlanFilters = () => {
+        setSelectedPlanId("");
+        setSelectedPlanName("");
+        setSelectedPlanSemester(0);
         setHasSearched(false);
         setStudyPlanRows([]);
     };
@@ -144,20 +142,15 @@ const PlanStudios = () => {
     }, [filteredSubjects, subjectPage]);
 
     const studyPlanTableRows = useMemo<StudyPlanRow[]>(() => {
-        return studyPlanRows.map((row) => {
-            const relatedSubject = subjectMap.get(String(row.subject_id));
+        return studyPlanRows.map((row: any) => ({
+            id: String(row.id),
+            suggestedSemester: selectedPlanSemester,
+            code: row.code || "-",
+            subjectName: row.name || row.subject_name || "-",
+            credits: row.credits || 0,
+        }));
+    }, [studyPlanRows, selectedPlanSemester]);
 
-            return {
-                id: String(row.id),
-                suggestedSemester: row.suggested_semester,
-                code: relatedSubject?.code ?? "-",
-                subjectName: relatedSubject?.name ?? row.subject_id,
-                credits: relatedSubject?.credits ?? 0,
-            };
-        });
-    }, [studyPlanRows, subjectMap]);
-
-    const planTitle = planName.trim() !== "" ? planName : "Plan de estudios";
 
     return (
         <div className="space-y-6">
@@ -165,29 +158,25 @@ const PlanStudios = () => {
                 <h1 className="text-xl font-semibold text-black dark:text-white">Plan de estudios</h1>
                 <p className="mt-1 text-sm text-gray-500">Define y versiona las asignaturas por semestre.</p>
 
-                <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-3">
+                <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
                     <div>
-                        <label className="mb-2 block text-sm font-medium text-black dark:text-white">Nombre del plan</label>
-                        <input
-                            type="text"
-                            value={planName}
-                            onChange={(event) => setPlanName(event.target.value)}
-                            placeholder="Ej: Ingeniería de Sistemas"
-                            className="w-full rounded-lg border border-stroke bg-transparent px-4 py-2.5 text-black outline-none transition focus:border-primary dark:border-strokedark dark:text-white"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="mb-2 block text-sm font-medium text-black dark:text-white">Versión (año)</label>
+                        <label className="mb-2 block text-sm font-medium text-black dark:text-white">Seleccionar plan</label>
                         <select
-                            value={planYear}
-                            onChange={(event) => setPlanYear(event.target.value)}
+                            value={selectedPlanId}
+                            onChange={(event) => {
+                                const planId = event.target.value;
+                                setSelectedPlanId(planId);
+                                
+                                const plan = plans.find(p => String(p.id) === planId);
+                                setSelectedPlanSemester(plan?.suggested_semester ?? 0);
+                                setSelectedPlanName(plan ? `${plan.name || "Plan"} - ${plan.year || ""}` : "");
+                            }}
                             className="w-full rounded-lg border border-stroke bg-transparent px-4 py-2.5 text-black outline-none transition focus:border-primary dark:border-strokedark dark:text-white"
                         >
-                            <option value="">Todas</option>
-                            {yearOptions.map((year) => (
-                                <option key={year} value={year}>
-                                    {year}
+                            <option value="">-- Seleccionar un plan --</option>
+                            {plans.map((plan) => (
+                                <option key={plan.id} value={String(plan.id)}>
+                                    {plan.name} - {plan.year}
                                 </option>
                             ))}
                         </select>
@@ -197,10 +186,10 @@ const PlanStudios = () => {
                         <button
                             type="button"
                             onClick={handleSearchPlan}
-                            disabled={isLoadingPlan}
+                            disabled={isLoadingPlan || !selectedPlanId}
                             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-white hover:bg-opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
                         >
-                            {isLoadingPlan ? "Buscando..." : "Buscar"}
+                            {isLoadingPlan ? "Cargando..." : "Cargar"}
                         </button>
 
                         <button
@@ -277,7 +266,7 @@ const PlanStudios = () => {
 
                 <div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark xl:col-span-2">
                     <div className="flex flex-wrap items-center justify-between border-b border-stroke px-5 py-4 dark:border-strokedark">
-                        <h2 className="font-semibold text-black dark:text-white">{planTitle} {planYear ? `- Versión ${planYear}` : ""}</h2>
+                        <h2 className="font-semibold text-black dark:text-white">{selectedPlanName || "Plan de estudios"}</h2>
                         <span className="text-sm text-gray-500">{studyPlanTableRows.length} asignaturas</span>
                     </div>
 
