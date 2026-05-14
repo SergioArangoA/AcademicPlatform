@@ -28,6 +28,7 @@ const PlanStudios = () => {
 
     const [isLoadingSubjects, setIsLoadingSubjects] = useState(false);
     const [isLoadingPlan, setIsLoadingPlan] = useState(false);
+    const [isPerformingAction, setIsPerformingAction] = useState(false);
 
     const [hasSearched, setHasSearched] = useState(false);
 
@@ -79,14 +80,97 @@ const PlanStudios = () => {
         setStudyPlanRows([]);
     };
 
-    const handleSubjectAction = (actionName: string, subject: Record<string, any>) => {
-        console.log(`Subject action: ${actionName}`, subject);
-        // Aquí puedes implementar lógica como agregar a plan, editar, etc.
+    const handleSubjectAction = async (actionName: string, subject: Record<string, any>) => {
+        if (actionName !== "add") return;
+
+        if (!selectedPlanId) {
+            const Swal = (await import("sweetalert2")).default;
+            Swal.fire({
+                icon: "warning",
+                title: "Selecciona un plan",
+                text: "Debes seleccionar un plan de estudios primero.",
+            });
+            return;
+        }
+
+        setIsPerformingAction(true);
+        try {
+            const ok = await studyplanService.addSubjectToStudyPlan(selectedPlanId, subject.id);
+            const Swal = (await import("sweetalert2")).default;
+
+            if (ok) {
+                await Swal.fire({
+                    icon: "success",
+                    title: "Asignatura agregada",
+                    text: "La asignatura se agregó correctamente al plan de estudios.",
+                    timer: 1500,
+                    showConfirmButton: false,
+                });
+                await handleSearchPlan();
+                return;
+            }
+
+            Swal.fire({
+                icon: "error",
+                title: "No se pudo agregar",
+                text: "Revisa la conexión o la respuesta de la API.",
+            });
+        } finally {
+            setIsPerformingAction(false);
+        }
     };
 
-    const handleStudyPlanAction = (actionName: string, plan: Record<string, any>) => {
-        console.log(`Study plan action: ${actionName}`, plan);
-        // Aquí puedes implementar lógica como editar, eliminar, etc.
+    const handleStudyPlanAction = async (actionName: string, plan: Record<string, any>) => {
+        if (actionName !== "delete") return;
+
+        if (!selectedPlanId) {
+            const Swal = (await import("sweetalert2")).default;
+            Swal.fire({
+                icon: "warning",
+                title: "Error",
+                text: "No hay un plan seleccionado.",
+            });
+            return;
+        }
+
+        const Swal = (await import("sweetalert2")).default;
+        const result = await Swal.fire({
+            icon: "warning",
+            title: "Eliminar asignatura",
+            text: "¿Estás seguro de que deseas eliminar esta asignatura del plan de estudios?",
+            showCancelButton: true,
+            confirmButtonColor: "#dc2626",
+            cancelButtonColor: "#6b7280",
+            confirmButtonText: "Eliminar",
+            cancelButtonText: "Cancelar",
+        });
+
+        if (!result.isConfirmed) return;
+
+        setIsPerformingAction(true);
+        try {
+            const ok = await studyplanService.removeSubjectFromStudyPlan(selectedPlanId, plan.id);
+
+            if (ok) {
+                await Swal.fire({
+                    icon: "success",
+                    title: "Asignatura eliminada",
+                    text: "La asignatura se eliminó correctamente del plan de estudios.",
+                    timer: 1500,
+                    showConfirmButton: false,
+                });
+                await handleSearchPlan();
+                return;
+            }
+
+            Swal.fire({
+                icon: "error",
+                title: "No se pudo eliminar",
+                text: "Revisa la conexión o la respuesta de la API.",
+            });
+        } finally {
+            setIsPerformingAction(false);
+        }
     };
 
     const subjectColumns = [
@@ -186,7 +270,7 @@ const PlanStudios = () => {
                         <button
                             type="button"
                             onClick={handleSearchPlan}
-                            disabled={isLoadingPlan || !selectedPlanId}
+                            disabled={isLoadingPlan || !selectedPlanId || isPerformingAction}
                             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-white hover:bg-opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
                         >
                             {isLoadingPlan ? "Cargando..." : "Cargar"}
@@ -218,7 +302,8 @@ const PlanStudios = () => {
                                 setSubjectPage(1);
                             }}
                             placeholder="Buscar por nombre o código..."
-                            className="mb-4 w-full rounded-lg border border-stroke bg-transparent px-4 py-2.5 text-black outline-none transition focus:border-primary dark:border-strokedark dark:text-white"
+                            disabled={isPerformingAction}
+                            className="mb-4 w-full rounded-lg border border-stroke bg-transparent px-4 py-2.5 text-black outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:opacity-50 dark:border-strokedark dark:text-white"
                         />
 
                         {isLoadingSubjects ? (
@@ -230,6 +315,7 @@ const PlanStudios = () => {
                                     columns={subjectColumns}
                                     actions={subjectActions}
                                     onAction={handleSubjectAction}
+                                    isLoading={isPerformingAction}
                                 />
 
                                 <div className="mt-4 flex items-center justify-between text-xs text-gray-500">
@@ -278,6 +364,7 @@ const PlanStudios = () => {
                             columns={studyPlanColumns}
                             actions={studyPlanActions}
                             onAction={handleStudyPlanAction}
+                            isLoading={isPerformingAction}
                         />
                     )}
 

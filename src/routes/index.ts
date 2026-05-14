@@ -40,7 +40,7 @@ const ViewCareer = lazy(() => import('../pages/Admin/viewCareer.tsx'));
 const CreateSemester = lazy(() => import('../pages/Admin/createSemester.tsx'));
 const UpdateSemester = lazy(() => import('../pages/Admin/updateSemester.tsx'));
 const ViewSemester = lazy(() => import('../pages/Admin/viewSemester.tsx'));
-const PlanStudios = lazy(() => import('../pages/Admin/planStudios'));
+const PlanStudios = lazy(() => import('../pages/Admin/StudyPlans.tsx'));
 const ViewEvaluation = lazy(()=> import('../pages/Students/Evaluations/ViewEvaluation'));
 const StudentsRubrics = lazy(()=> import ('../pages/Students/Rubrics/ListRubrics'));
 const GradesList = lazy(()=> import ('../pages/Students/Evaluations/ListGrades'));
