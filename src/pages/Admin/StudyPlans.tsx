@@ -315,7 +315,6 @@ const PlanStudios = () => {
                                     columns={subjectColumns}
                                     actions={subjectActions}
                                     onAction={handleSubjectAction}
-                                    isLoading={isPerformingAction}
                                 />
 
                                 <div className="mt-4 flex items-center justify-between text-xs text-gray-500">
@@ -364,7 +363,6 @@ const PlanStudios = () => {
                             columns={studyPlanColumns}
                             actions={studyPlanActions}
                             onAction={handleStudyPlanAction}
-                            isLoading={isPerformingAction}
                         />
                     )}
 
