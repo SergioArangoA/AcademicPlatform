@@ -19,7 +19,7 @@ const CreateSubject = () => {
                     icon: "success",
                     timer: 3000,
                 });
-                navigate("/admin/subjects/list");
+                navigate("/admin/subjects-list");
                 return;
             }
 

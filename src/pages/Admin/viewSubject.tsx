@@ -56,7 +56,7 @@ const ViewSubject = () => {
                     <p className="text-gray-600">No se encontró la asignatura solicitada.</p>
                     <button
                         type="button"
-                        onClick={() => navigate("/admin/subjects/list")}
+                        onClick={() => navigate("/admin/subjects-list")}
                         className="mt-4 rounded-lg bg-green-600 px-5 py-2 text-sm font-semibold text-black transition hover:bg-green-700"
                     >
                         Volver
@@ -137,7 +137,7 @@ const ViewSubject = () => {
                 <div className="flex justify-end border-t border-gray-200 bg-gray-50 px-6 py-4 dark:border-gray-700 dark:bg-gray-900/40">
                     <button
                         type="button"
-                        onClick={() => navigate("/admin/subjects/list")}
+                        onClick={() => navigate("/admin/subjects-list")}
                         className="rounded-lg bg-green-600 px-6 py-2.5 text-sm font-semibold text-black transition hover:bg-green-700"
                     >
                         Volver
