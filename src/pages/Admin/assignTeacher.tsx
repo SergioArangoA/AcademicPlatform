@@ -13,7 +13,6 @@ import { AssignTeacherTableRow } from "../../models/Teachers/AssignTeacherTableR
 const initialFilters: FilterValues = {
     search: "",
     subject: "all",
-    career: "all",
 };
 
 const normalizeText = (value: string) => value.trim().toLowerCase();
@@ -101,23 +100,21 @@ const AssignTeacher = () => {
     const filteredGroups = useMemo(() => {
         const search = normalizeText(filters.search ?? "");
         const subjectFilter = filters.subject ?? "all";
-        const careerFilter = filters.career ?? "all";
 
         return groupRows.filter((group) => {
             const matchesSearch =
                 search === "" ||
-                [group.group_code, group.group_name, group.subject_name, group.subject_code, group.career_name, group.teacher_name]
+                [group.group_code, group.group_name, group.subject_name, group.subject_code, group.teacher_name]
                     .filter(Boolean)
                     .join(" ")
                     .toLowerCase()
                     .includes(search);
 
             const matchesSubject = subjectFilter === "all" || String(group.subject_id ?? "") === subjectFilter;
-            const matchesCareer = careerFilter === "all" || String(group.career_id ?? "") === careerFilter;
 
-            return matchesSearch && matchesSubject && matchesCareer;
+            return matchesSearch && matchesSubject;
         });
-    }, [groupRows, filters.career, filters.search, filters.subject]);
+    }, [groupRows, filters.search, filters.subject]);
 
     const subjectOptions = useMemo(
         () => [
@@ -133,15 +130,7 @@ const AssignTeacher = () => {
         [groupRows]
     );
 
-    const careerOptions = useMemo(
-        () => [
-            { value: "all", label: "Todas" },
-            ...Array.from(
-                new Map(groupRows.filter((group) => group.career_id).map((group) => [group.career_id, group.career_name])).entries()
-            ).map(([value, label]) => ({ value, label })),
-        ],
-        [groupRows]
-    );
+
 
     const filterConfigs = useMemo(
         () => [
@@ -157,14 +146,8 @@ const AssignTeacher = () => {
                 type: "select" as const,
                 options: subjectOptions,
             },
-            {
-                key: "career",
-                label: "Programa / Carrera",
-                type: "select" as const,
-                options: careerOptions,
-            },
         ],
-        [careerOptions, subjectOptions]
+        [subjectOptions]
     );
 
     const handleFilterChange = (key: string, value: string) => {
@@ -322,10 +305,9 @@ const AssignTeacher = () => {
                             columns={[
                                 { key: "selected", label: "" },
                                 { key: "group_code", label: "Código grupo" },
-                                    { key: "group_name", label: "Nombre del grupo" },
+                                { key: "group_name", label: "Nombre del grupo" },
                                 { key: "subject_name", label: "Asignatura" },
                                 { key: "subject_code", label: "Código asignatura" },
-                                { key: "career_name", label: "Carrera / Programa" },
                                 { key: "teacher_name", label: "Docente actual" },
                             ]}
                             actions={[{ name: "select", label: "Seleccionar" }]}
