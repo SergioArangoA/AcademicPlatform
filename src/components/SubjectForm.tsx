@@ -66,7 +66,7 @@ const SubjectForm: React.FC<SubjectFormProps> = ({ mode, subject, loading = fals
                         </div>
                         <button
                             type="button"
-                            onClick={() => navigate("/admin/subjects/list")}
+                            onClick={() => navigate("/admin/subjects-list")}
                             className="rounded-md p-1 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-700 dark:hover:text-white"
                             aria-label="Cerrar formulario"
                         >
@@ -160,7 +160,7 @@ const SubjectForm: React.FC<SubjectFormProps> = ({ mode, subject, loading = fals
                     <div className="flex items-center justify-end gap-3 border-t border-gray-200 bg-gray-50 px-6 py-5 dark:border-gray-700 dark:bg-gray-900/40">
                         <button
                             type="button"
-                            onClick={() => navigate("/admin/subjects/list")}
+                            onClick={() => navigate("/admin/subjects-list")}
                             className="rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700"
                         >
                             Cancelar
