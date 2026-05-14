@@ -43,7 +43,7 @@ const UpdateSubject = () => {
                     icon: "success",
                     timer: 3000,
                 });
-                navigate("/admin/subjects/list");
+                navigate("/admin/subjects-list");
                 return;
             }
 
@@ -77,7 +77,7 @@ const UpdateSubject = () => {
                     <p className="text-gray-600">No se encontró la asignatura solicitada.</p>
                     <button
                         type="button"
-                        onClick={() => navigate("/admin/subjects/list")}
+                        onClick={() => navigate("/admin/subjects-list")}
                         className="mt-4 rounded-lg bg-green-600 px-5 py-2 text-sm font-semibold text-black transition hover:bg-green-700"
                     >
                         Volver

@@ -109,6 +109,34 @@ class StudyPlanService{
         }
     }
 
+    async addSubjectToStudyPlan(study_plan_id: string | number, subject_id: string | number): Promise<boolean> {
+        try {
+            await api.post(`${API_URL}${study_plan_id}/subjects/${subject_id}`);
+            return true;
+        } catch (error) {
+            if (axios.isAxiosError(error)) {
+                console.error("Error al agregar asignatura al Plan de Estudio:", error.response?.data || error.message);
+            } else {
+                console.error("Error inesperado al agregar asignatura al Plan de Estudio:", error);
+            }
+            return false;
+        }
+    }
+
+    async removeSubjectFromStudyPlan(study_plan_id: string | number, subject_id: string | number): Promise<boolean> {
+        try {
+            await api.delete(`${API_URL}${study_plan_id}/subjects/${subject_id}`);
+            return true;
+        } catch (error) {
+            if (axios.isAxiosError(error)) {
+                console.error("Error al eliminar asignatura del Plan de Estudio:", error.response?.data || error.message);
+            } else {
+                console.error("Error inesperado al eliminar asignatura del Plan de Estudio:", error);
+            }
+            return false;
+        }
+    }
+
     
 }
 
