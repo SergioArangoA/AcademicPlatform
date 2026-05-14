@@ -89,7 +89,7 @@ const coreRoutes = [
     allowedRoles: ['ADMIN'],
   },
   {
-    path: '/admin/subjects/list',
+    path: '/admin/subjects-list',
     title: 'Lista Materias',
     component: SubjectList,
     allowedRoles: ['ADMIN'],
