@@ -56,7 +56,7 @@ const SubjectForm: React.FC<SubjectFormProps> = ({ mode, subject, loading = fals
                 })
             }
         >
-            {({ values, setFieldValue, errors, touched }) => (
+            {({ values, setFieldValue}) => (
                 <Form className="mx-auto max-w-2xl rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
                     <div className="flex items-start justify-between border-b border-gray-200 px-6 py-5 dark:border-gray-700">
                         <div>
