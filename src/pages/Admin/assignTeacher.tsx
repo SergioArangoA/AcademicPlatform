@@ -191,15 +191,15 @@ const AssignTeacher = () => {
                 : "el docente seleccionado";
             const subjectLabel = selectedGroup
                 ? {
-                      subjectName: selectedGroup.subject_name,
-                      subjectCode: selectedGroup.subject_code,
-                      groupName: selectedGroup.group_name,
-                  }
+                    subjectName: selectedGroup.subject_name,
+                    subjectCode: selectedGroup.subject_code,
+                    groupName: selectedGroup.group_name,
+                }
                 : {
-                      subjectName: "la asignatura seleccionada",
-                      subjectCode: "",
-                      groupName: "",
-                  };
+                    subjectName: "la asignatura seleccionada",
+                    subjectCode: "",
+                    groupName: "",
+                };
 
             if (ok) {
                 socket.emit("assign_teacher_notification", {
