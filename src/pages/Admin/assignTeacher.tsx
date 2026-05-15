@@ -9,6 +9,10 @@ import { semesterService } from "../../services/semesterService";
 import { teacherService } from "../../services/teacherService";
 import { mapTableAssignTeacher } from "../../utils/mapTableAssignTeacher";
 import { AssignTeacherTableRow } from "../../models/Teachers/AssignTeacherTableRow";
+import { io } from "socket.io-client";
+
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL;
+const socket = io(SOCKET_URL);
 
 const initialFilters: FilterValues = {
     search: "",
@@ -58,7 +62,6 @@ const AssignTeacher = () => {
         setIsLoadingGroups(true);
         try {
             const groups = await mapTableAssignTeacher(selectedSemesterId);
-            console.log(groups);
             setGroupRows(groups);
         } finally {
             setIsLoadingGroups(false);
@@ -182,8 +185,33 @@ const AssignTeacher = () => {
         try {
             const ok = await groupService.assignTeacherToGroup(selectedGroupId, selectedTeacherId);
             const Swal = (await import("sweetalert2")).default;
+            const selectedTeacher = teacherRows.find((teacher) => String(teacher.id) === selectedTeacherId);
+            const teacherName = selectedTeacher
+                ? `${selectedTeacher.first_name} ${selectedTeacher.last_name}`.trim()
+                : "el docente seleccionado";
+            const subjectLabel = selectedGroup
+                ? {
+                      subjectName: selectedGroup.subject_name,
+                      subjectCode: selectedGroup.subject_code,
+                      groupName: selectedGroup.group_name,
+                  }
+                : {
+                      subjectName: "la asignatura seleccionada",
+                      subjectCode: "",
+                      groupName: "",
+                  };
 
             if (ok) {
+                socket.emit("assign_teacher_notification", {
+                    teacherId: selectedTeacherId,
+                    teacherUserId: selectedTeacher?.user_id ?? "",
+                    teacherName,
+                    subjectName: subjectLabel.subjectName,
+                    subjectCode: subjectLabel.subjectCode,
+                    groupName: subjectLabel.groupName,
+                    createdAt: new Date().toISOString(),
+                });
+
                 await Swal.fire({
                     icon: "success",
                     title: "Docente asignado",
