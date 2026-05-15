@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { io } from 'socket.io-client';
+import { useAuth } from '../context/AuthContext';
 
 const SOCKET_URL = import.meta.env.VITE_SOCKET_URL;
 const socket = io(SOCKET_URL);
@@ -10,35 +11,80 @@ interface Notification {
   id: number;
   message: string;
   time: string;
+  subjectName?: string;
+  subjectCode?: string;
+  teacherName?: string;
+  groupName?: string;
+}
+
+interface NotificationPayload {
+  message?: string;
+  teacherId?: string;
+  teacherName?: string;
+  subjectName?: string;
+  subjectCode?: string;
+  groupName?: string;
 }
 
 const DropdownNotification = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [teacherRoomId, setTeacherRoomId] = useState<string | null>(null);
+  const { user: authUser } = useAuth();
 
   const trigger = useRef<any>(null);
   const dropdown = useRef<any>(null);
 
+  useEffect(() => {
+    // use the authenticated user's backend id (user_id) or id to join the teacher room
+    const userId = String((authUser as any)?.user_id || (authUser as any)?.id || '').trim();
+    const role = String((authUser as any)?.role || '').toUpperCase();
+
+    if (role === 'TEACHER' && userId !== '') {
+      setTeacherRoomId(userId);
+    } else {
+      setTeacherRoomId(null);
+    }
+  }, [authUser]);
+
+  useEffect(() => {
+    if (!teacherRoomId) {
+      return;
+    }
+
+    socket.emit('join_teacher_room', { teacherUserId: teacherRoomId });
+  }, [teacherRoomId]);
+
   // WebSocket listener
   useEffect(() => {
-    socket.on('new_notification', (data: any) => {
+    const handleNewNotification = (data: NotificationPayload) => {
       const now = new Date();
-      console.log('Notificación recibida:', data);
+
+      const subjectLabel = [data?.subjectCode, data?.subjectName].filter(Boolean).join(' - ');
+      const message =
+        data?.message ||
+        `Se asignó ${data?.teacherName || 'un docente'} a ${subjectLabel || 'una asignatura'}.`;
 
       const newNotification: Notification = {
         id: Date.now(),
-        message: data?.message || 'Nueva notificación',
+        message,
         time: now.toLocaleTimeString(), // hora
+        subjectName: data?.subjectName,
+        subjectCode: data?.subjectCode,
+        teacherName: data?.teacherName,
+        groupName: data?.groupName,
       };
 
       setNotifications((prev) => {
         const updated = [newNotification, ...prev];
         return updated.slice(0, 5); // máximo 5
       });
-    });
+    };
+
+    socket.on('new_notification', handleNewNotification);
 
     return () => {
-      socket.off('new_notification');
+      socket.off('new_notification', handleNewNotification);
     };
   }, []);
 
@@ -56,7 +102,7 @@ const DropdownNotification = () => {
     };
     document.addEventListener('click', clickHandler);
     return () => document.removeEventListener('click', clickHandler);
-  });
+  }, [dropdownOpen]);
 
   // ESC key
   useEffect(() => {
@@ -66,7 +112,7 @@ const DropdownNotification = () => {
     };
     document.addEventListener('keydown', keyHandler);
     return () => document.removeEventListener('keydown', keyHandler);
-  });
+  }, [dropdownOpen]);
 
   return (
     <li className="relative">
@@ -112,6 +158,13 @@ const DropdownNotification = () => {
                 className="flex flex-col gap-1 border-t px-4 py-3 hover:bg-gray-100"
               >
                 <p className="text-sm">{n.message}</p>
+                {(n.teacherName || n.subjectName) && (
+                  <p className="text-xs text-gray-500">
+                    {n.teacherName ? `Docente: ${n.teacherName}` : ''}
+                    {n.teacherName && n.subjectName ? ' · ' : ''}
+                    {n.subjectName ? `Materia: ${[n.subjectCode, n.subjectName].filter(Boolean).join(' - ')}` : ''}
+                  </p>
+                )}
                 <p className="text-xs text-gray-500">{n.time}</p>
               </Link>
             </li>
