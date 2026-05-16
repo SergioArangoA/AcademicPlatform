@@ -8,14 +8,20 @@ import { GroupPayload } from "../models/Groups/GroupPayload";
 const API_URL = "/academic/groups";
 
 class GroupService {
-    async getGroups(): Promise<Group[]> {
+    async getGroups(teacherId?: string): Promise<Group[]> {
         try {
-            const response = await api.get<GroupsApiResponse>(`${API_URL}`);
+            const response = await api.get<GroupsApiResponse>(`${API_URL}`, {
+                params: teacherId ? { teacher_id: teacherId } : undefined,
+            });
             return response.data.data;
         } catch (error) {
             console.error("Error al obtener grupos:", error);
             return [];
         }
+    }
+
+    async getGroupsByTeacher(teacherId: string): Promise<Group[]> {
+        return this.getGroups(teacherId);
     }
 
     async getGroupById(id: number): Promise<Group | null> {

@@ -1,60 +1,47 @@
-import axios from "axios";
 import { api } from "../interceptors/authInterceptor";
 import { Criterion } from "../models/Criterion";
+import { ApiEnvelope } from "../types/ApiResponse";
+import { unwrapApiData } from "../utils/unwrapApiResponse";
 
 const API_URL = "/evaluation/criteria";
 
 class CriterionService {
-    async getCriteria(): Promise<Criterion[]> {
+    async getCriteria(rubricId?: string): Promise<Criterion[]> {
         try {
-            const response = await api.get<Criterion[]>(`${API_URL}`);
-            return response.data.data;
+            const response = await api.get<ApiEnvelope<Criterion[]>>(`${API_URL}`, {
+                params: rubricId ? { rubric_id: rubricId } : undefined,
+            });
+            let list = unwrapApiData(response);
+
+            if (!Array.isArray(list)) {
+                list = [];
+            }
+
+            if (rubricId) {
+                list = list.filter((c) => String(c.rubric_id) === String(rubricId));
+            }
+
+            return list;
         } catch (error) {
             console.error("Error al obtener criterios:", error);
             return [];
         }
     }
 
+    async getCriteriaByRubricId(rubricId: string): Promise<Criterion[]> {
+        return this.getCriteria(rubricId);
+    }
+
     async getCriterionById(id: string): Promise<Criterion | null> {
         try {
-            const response = await api.get<Criterion>(`${API_URL}/${id}`);
-            return response.data.data;
+            const response = await api.get<ApiEnvelope<Criterion>>(`${API_URL}/${id}`);
+            return unwrapApiData(response);
         } catch (error) {
             console.error("Criterio no encontrado:", error);
             return null;
         }
     }
-
-    async createUser(user: Omit<User, "id">): Promise<User | null> {
-        try {
-            const response = await axios.post<User>(API_URL, user);
-            return response.data;
-        } catch (error) {
-            console.error("Error al crear usuario:", error);
-            return null;
-        }
-    }
-
-    async updateUser(id: number, user: Partial<User>): Promise<User | null> {
-        try {
-            const response = await axios.put<User>(`${API_URL}/${id}`, user);
-            return response.data;
-        } catch (error) {
-            console.error("Error al actualizar usuario:", error);
-            return null;
-        }
-    }
-
-    async deleteUser(id: number): Promise<boolean> {
-        try {
-            await axios.delete(`${API_URL}/${id}`);
-            return true;
-        } catch (error) {
-            console.error("Error al eliminar usuario:", error);
-            return false;
-        }
-    }
 }
 
-// Exportamos una instancia de la clase para reutilizarla
-export const criteriaService = new CriterionService();
+export const criterionService = new CriterionService();
+export const criteriaService = criterionService;
