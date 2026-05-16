@@ -37,8 +37,10 @@ class RegistrationService {
 
     async updateRegistration(id: string, registration: Partial<Registration>): Promise<Registration | null> {
         try {
-            const response = await axios.put<Registration>(`${API_URL}/${id}`, registration);
-            return response.data;
+            // Exclude server-managed fields to avoid SQLAlchemy datetime errors
+            const { created_at, updated_at, id: _id, ...updateData } = registration as any;
+            const response = await api.put<Registration>(`${API_URL}/${id}`, updateData);
+            return response.data.data;
         } catch (error) {
             console.error("Error al actualizar matrícula:", error);
             return null;
@@ -47,7 +49,7 @@ class RegistrationService {
 
     async deleteRegistration(id: number): Promise<boolean> {
         try {
-            await axios.delete(`${API_URL}/${id}`);
+            await api.delete(`${API_URL}/${id}`);
             return true;
         } catch (error) {
             console.error("Error al eliminar matrícula:", error);

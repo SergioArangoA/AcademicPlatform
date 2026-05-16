@@ -15,6 +15,7 @@ export const transformUsersForList = (users: UserResponse[]): UserForList[] => {
       role: user.role,
       is_active: user.is_active,
       created_at: user.created_at,
+      registration_id: user.registration_id ?? profile?.registrationId ?? null,
       profile,
     };
   });
