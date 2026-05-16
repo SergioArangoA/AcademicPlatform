@@ -38,8 +38,9 @@ const ConfigurateUserRegistration = () => {
     const fetchData = async () => {
         const careersData = await careerService.getCareers();
         const semestersData = await semesterService.getSemesters();
-        const rawUser: UserResponse = await userPService.getUserById(id);
-        console.log(rawUser);
+        const rawUser: UserResponse | null = await userPService.getUserById(id);
+        if (!rawUser) return;
+        console.log(rawUser.profile);
         const users = [rawUser];
         const formattedUser: UserForList[] = transformUsersForList(users);
         const registrationData = await registrationService.getRegistrations();
@@ -54,7 +55,7 @@ const ConfigurateUserRegistration = () => {
     if (!selectedCareer || !selectedSemester) return;
 
     const found = registrationList.find((reg) =>
-        reg.student_id === user.id &&
+        reg.student_id === user.profile?.id &&
         reg.career_id === selectedCareer
     );
 
@@ -86,7 +87,7 @@ const ConfigurateUserRegistration = () => {
             return;
         }
         const registration: Registration = {
-            student_id: user.id,
+            student_id: user.profile?.id ?? user.id,
             career_id: selectedCareer,
             admission_period: selectedSemester,
             academic_status: selectedAcademicStatus,
@@ -165,7 +166,7 @@ const ConfigurateUserRegistration = () => {
         bg-white
         text-gray-900
 
-        dark:bg-b-900
+        dark:bg-black
         dark:text-gray-100
         "
     >
