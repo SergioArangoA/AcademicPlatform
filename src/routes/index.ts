@@ -49,6 +49,8 @@ const GradeDetails = lazy(()=> import ('../pages/Students/Evaluations/ViewGrade'
 // Teacher routes
 const TeacherListRubrics = lazy(() => import('../pages/Teachers/Rubrics/ListRubrics'));
 const TeacherCreateRubric = lazy(() => import('../pages/Teachers/Rubrics/CreateRubric'));
+const TeacherReviewRubric = lazy(() => import('../pages/Teachers/Rubrics/ReviewRubric'));
+const TeacherDefineScales = lazy(() => import('../pages/Teachers/Rubrics/DefineScales'));
 const TeacherListEvaluations = lazy(() => import('../pages/Teachers/Evaluations/ListEvaluations'));
 const TeacherGradeStudent = lazy(() => import('../pages/Teachers/Evaluations/GradeStudent'));
 const TeacherFinalGrades = lazy(() => import('../pages/Teachers/Evaluations/FinalGrades'));
@@ -298,7 +300,8 @@ const coreRoutes = [
     component: ImageEditor,
     allowedRoles: ['STUDENT', 'TEACHER', 'ADMIN'],
   },
-  // Rutas del Docente
+
+  // Rutas del Docente --------------------------------------------------------------------------------
   {
     path: '/teachers/rubrics/list',
     title: 'Mis Rúbricas',
@@ -309,6 +312,18 @@ const coreRoutes = [
     path: '/teachers/rubrics/create',
     title: 'Crear Rúbrica',
     component: TeacherCreateRubric,
+    allowedRoles: ['TEACHER'],
+  },
+  {
+    path: '/teachers/rubrics/:id/revision',
+    title: 'Revisión de Rúbrica',
+    component: TeacherReviewRubric,
+    allowedRoles: ['TEACHER'],
+  },
+  {
+    path: '/teachers/rubrics/:id/escalas',
+    title: 'Definir Escalas',
+    component: TeacherDefineScales,
     allowedRoles: ['TEACHER'],
   },
   {

@@ -3,33 +3,38 @@ import { Rubric } from "../../models/Rubric";
 import { Criterion } from "../../models/Criterion";
 import { Subject } from "../../models/Subject";
 import { Evaluation } from "../../models/Evaluation";
+import { getCriterionWeight } from "../../utils/criterionWeight";
 
 interface RubricInfoCardProps {
   rubric: Rubric | null;
   criteria: Criterion[] | null;
   subject?: Subject;
+  subjectLabel?: string;
   evaluation?: Evaluation;
+  title?: string;
 }
 
 const RubricInfoCard: React.FC<RubricInfoCardProps> = ({
   rubric,
   criteria,
   subject,
+  subjectLabel,
   evaluation,
+  title = "Información de la rúbrica",
 }) => {
   const totalWeight =
-    criteria?.reduce((acc, c) => acc + (c.weight || 0), 0) || 0;
+    criteria?.reduce((acc, c) => acc + getCriterionWeight(c), 0) || 0;
 
   return (
     <div className="rounded-sm border border-stroke bg-white dark:bg-boxdark dark:border-strokedark shadow-default p-6">
       {/* Título */}
       <h3 className="text-lg font-semibold text-black dark:text-white mb-4">
-        Información de la rúbrica
+        {title}
       </h3>
 
       {!rubric ? (
         <div className="text-center text-sm text-gray-600 dark:text-gray-300 py-6">
-          Rúbrica sin publicar
+          Completa los datos de la rúbrica
         </div>
       ) : (
         <div className="space-y-3 text-sm">
@@ -37,7 +42,7 @@ const RubricInfoCard: React.FC<RubricInfoCardProps> = ({
           <div className="flex justify-between">
             <span className="text-gray-600 dark:text-gray-300">Título</span>
             <span className="font-medium text-black dark:text-white">
-              {rubric.title}
+              {rubric.title || "—"}
             </span>
           </div>
 
@@ -48,10 +53,10 @@ const RubricInfoCard: React.FC<RubricInfoCardProps> = ({
               className={`px-2 py-1 rounded text-xs font-medium ${
                 rubric.is_public
                   ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
-                  : "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300"
+                  : "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200"
               }`}
             >
-              {rubric.is_public ? "Pública" : "No publicada"}
+              {rubric.is_public ? "Publicada" : "Borrador (no publicada)"}
             </span>
           </div>
 
@@ -75,7 +80,7 @@ const RubricInfoCard: React.FC<RubricInfoCardProps> = ({
           <div className="flex justify-between">
             <span className="text-gray-600 dark:text-gray-300">Asignatura</span>
             <span className="font-medium text-black dark:text-white">
-              {subject?.name || "-"}
+              {subjectLabel || subject?.name || "-"}
             </span>
           </div>
 
