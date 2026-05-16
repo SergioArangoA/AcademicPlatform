@@ -813,6 +813,17 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                     <span>Matrículas</span>
                   </NavLink>
                   <NavLink
+                    to="/admin/groups/list"
+                    className={`group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${
+                      pathname.includes('/admin/groups') && 'bg-graydark dark:bg-meta-4'
+                    }`}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 fill-current">
+                      <path d="M4.5 6.75A2.25 2.25 0 0 1 6.75 4.5h2.25A2.25 2.25 0 0 1 11.25 6.75v2.25A2.25 2.25 0 0 1 9 11.25H6.75A2.25 2.25 0 0 1 4.5 9V6.75ZM13.5 6.75A2.25 2.25 0 0 1 15.75 4.5h2.25A2.25 2.25 0 0 1 20.25 6.75v2.25A2.25 2.25 0 0 1 18 11.25h-2.25A2.25 2.25 0 0 1 13.5 9V6.75ZM4.5 15.75A2.25 2.25 0 0 1 6.75 13.5H9a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6.75A2.25 2.25 0 0 1 4.5 18v-2.25ZM13.5 15.75A2.25 2.25 0 0 1 15.75 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z" />
+                    </svg>
+                    <span>Grupos</span>
+                  </NavLink>
+                  <NavLink
                     to="/admin/study-plans"
                     className={`group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${
                       pathname.includes('/admin/study-plans') && 'bg-graydark dark:bg-meta-4'

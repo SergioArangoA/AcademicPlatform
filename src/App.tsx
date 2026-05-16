@@ -4,7 +4,7 @@
  * mostrar una pantalla de inicio distinta dependiendo del rol del usuario.
  */
 import { Suspense, lazy, useEffect, useState } from 'react';
-import { Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 
 import DashboardIndex from './pages/Dashboard/Index';
@@ -39,6 +39,10 @@ function App() {
 
         <Route element={<DefaultLayout />}>
           <Route index element={<DashboardIndex />} />
+          <Route
+            path="/admin/groups"
+            element={<Navigate to="/admin/groups/list" replace />}
+          />
           {routes.map((routes, index) => {
             const { path, component: Component, allowedRoles } = routes;
             return (

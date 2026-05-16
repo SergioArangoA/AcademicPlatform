@@ -1,4 +1,4 @@
-export interface GroupPayload{
+export interface GroupPayload {
     subject_id: string;
     semester_id: string;
     teacher_id: string;

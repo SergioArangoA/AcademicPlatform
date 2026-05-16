@@ -58,6 +58,9 @@ const TeacherFinalGrades = lazy(() => import('../pages/Teachers/Evaluations/Fina
 // Admin routes
 const UserRegistrationList = lazy(()=>import('../pages/Admin/userRegistrationList.tsx'));
 const AssignTeacher = lazy(() => import('../pages/Admin/assignTeacher'));
+const GroupList = lazy(() => import('../pages/Admin/groupList'));
+const CreateGroup = lazy(() => import('../pages/Admin/createGroup'));
+const UpdateGroup = lazy(() => import('../pages/Admin/updateGroup'));
 
 const coreRoutes = [
   {
@@ -82,6 +85,24 @@ const coreRoutes = [
     path: '/admin/assign-teacher',
     title: 'Asignar docente',
     component: AssignTeacher,
+    allowedRoles: ['ADMIN'],
+  },
+  {
+    path: '/admin/groups/list',
+    title: 'Grupos',
+    component: GroupList,
+    allowedRoles: ['ADMIN'],
+  },
+  {
+    path: '/admin/groups/create',
+    title: 'Nuevo grupo',
+    component: CreateGroup,
+    allowedRoles: ['ADMIN'],
+  },
+  {
+    path: '/admin/groups/edit/:id',
+    title: 'Editar grupo',
+    component: UpdateGroup,
     allowedRoles: ['ADMIN'],
   },
   {
