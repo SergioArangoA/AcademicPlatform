@@ -1,8 +1,8 @@
 import { api } from "../interceptors/authInterceptor";
-import { Subject } from "../models/Subject";
-import { SubjectPayload } from "../models/SubjectPayload";
-import { SubjectApiResponse } from "../models/SubjectApiResponse";
-import { SubjectListApiResponse } from "../models/SubjectListApiResponse";
+import { Subject } from "../models/Subjects/Subject";
+import { SubjectPayload } from "../models/Subjects/SubjectPayload";
+import { SubjectApiResponse } from "../models/Subjects/SubjectApiResponse";
+import { SubjectListApiResponse } from "../models/Subjects/SubjectListApiResponse";
 
 const API_URL = "/academic/subjects";
 

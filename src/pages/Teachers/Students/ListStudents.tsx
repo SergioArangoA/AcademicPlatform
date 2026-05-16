@@ -1,0 +1,117 @@
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useAuth } from '../../../context/AuthContext';
+import Breadcrumb from '../../../components/Breadcrumb';
+import FilterBar, { FilterValues } from '../../../components/FilterBar';
+import GenericTable from '../../../components/GenericTable';
+import { loadTeacherStudentsData, TeacherStudentRow } from '../../../utils/teacherTableData';
+
+const initialFilters: FilterValues = {
+    search: '',
+    group_label: 'all',
+    status: 'all',
+};
+
+const TeacherStudentList = () => {
+    const { user } = useAuth();
+    const [students, setStudents] = useState<TeacherStudentRow[]>([]);
+    const [filters, setFilters] = useState<FilterValues>(initialFilters);
+    const [loading, setLoading] = useState(true);
+
+    const loadData = useCallback(async () => {
+        setLoading(true);
+        const rows = await loadTeacherStudentsData(user);
+        setStudents(rows);
+        setLoading(false);
+    }, [user]);
+
+    useEffect(() => {
+        void loadData();
+    }, [loadData]);
+
+    const groupOptions = useMemo(() => {
+        const labels = new Map<string, string>();
+        students.forEach((s) => labels.set(s.group_label, s.group_label));
+        return [{ value: 'all', label: 'Todos' }, ...Array.from(labels.keys()).map((g) => ({ value: g, label: g }))];
+    }, [students]);
+
+    const filterConfigs = useMemo(
+        () => [
+            {
+                key: 'search',
+                label: 'Buscar',
+                type: 'text' as const,
+                placeholder: 'Nombre, código o correo...',
+            },
+            {
+                key: 'group_label',
+                label: 'Grupo',
+                type: 'select' as const,
+                options: groupOptions,
+            },
+            {
+                key: 'status',
+                label: 'Inscripción',
+                type: 'select' as const,
+                options: [
+                    { value: 'all', label: 'Todas' },
+                    { value: 'Activa', label: 'Activas' },
+                    { value: 'ACTIVE', label: 'ACTIVE' },
+                ],
+            },
+        ],
+        [groupOptions]
+    );
+
+    const tableData = useMemo(() => {
+        const search = (filters.search ?? '').trim().toLowerCase();
+        return students.filter((row) => {
+            if (filters.group_label && filters.group_label !== 'all' && row.group_label !== filters.group_label) {
+                return false;
+            }
+            if (filters.status && filters.status !== 'all' && row.status !== filters.status) {
+                return false;
+            }
+            if (search) {
+                const haystack = `${row.student_name} ${row.student_code} ${row.student_email} ${row.subject_label}`.toLowerCase();
+                if (!haystack.includes(search)) return false;
+            }
+            return true;
+        });
+    }, [filters, students]);
+
+    const columns = [
+        { key: 'student_code', label: 'Código' },
+        { key: 'student_name', label: 'Estudiante' },
+        { key: 'student_email', label: 'Correo' },
+        { key: 'group_label', label: 'Grupo' },
+        { key: 'subject_label', label: 'Asignatura' },
+        { key: 'status', label: 'Estado' },
+    ];
+
+    return (
+        <>
+            <Breadcrumb pageName="Mis estudiantes" />
+
+            <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
+                Estudiantes inscritos en tus grupos asignados.
+            </p>
+
+            <FilterBar
+                filters={filterConfigs}
+                values={filters}
+                onChange={(key, value) => setFilters((c) => ({ ...c, [key]: value }))}
+                onClear={() => setFilters(initialFilters)}
+            />
+
+            {loading ? (
+                <p className="mt-4 text-gray-500">Cargando estudiantes...</p>
+            ) : tableData.length === 0 ? (
+                <p className="mt-4 text-gray-500">No hay estudiantes en tus grupos o no se pudo cargar la información.</p>
+            ) : (
+                <GenericTable data={tableData} columns={columns} actions={[]} onAction={() => {}} />
+            )}
+        </>
+    );
+};
+
+export default TeacherStudentList;

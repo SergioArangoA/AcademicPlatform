@@ -5,7 +5,7 @@ import * as Yup from "yup";
 import { Group } from "../models/Groups/Group";
 import { GroupPayload } from "../models/Groups/GroupPayload";
 import { Semester } from "../models/Semesters/Semester";
-import { Subject } from "../models/Subject";
+import { Subject } from "../models/Subjects/Subject";
 import { Teacher } from "../models/Teachers/Teacher";
 import { semesterService } from "../services/semesterService";
 import { subjectService } from "../services/subjectService";

@@ -1,7 +1,7 @@
 import axios from "axios";
 import { api } from "../interceptors/authInterceptor";
-import { Rubric } from "../models/Rubric";
-import { Criterion } from "../models/Criterion";
+import { Rubric } from "../models/Evaluation/Rubric";
+import { Criterion } from "../models/Evaluation/Criterion";
 import { ApiEnvelope } from "../types/ApiResponse";
 import { unwrapApiData } from "../utils/unwrapApiResponse";
 

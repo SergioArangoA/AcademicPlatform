@@ -11,9 +11,9 @@ import { enrollmentService } from '../../../services/enrollmentService';
 import { semesterService } from '../../../services/semesterService';
 import { groupService } from '../../../services/groupService';
 import { loadTeacherGroupOptions } from '../../../utils/loadTeacherGroupOptions';
-import { SubjectGroupOption } from '../../../models/SubjectGroupOption';
-import { Evaluation } from '../../../models/Evaluation';
-import { Grade } from '../../../models/Grade';
+import { SubjectGroupOption } from '../../../models/Subjects/SubjectGroupOption';
+import { Evaluation } from '../../../models/Evaluation/Evaluation';
+import { Grade } from '../../../models/Evaluation/Grade';
 
 interface ConsolidatedRow {
   enrollment_id: string;

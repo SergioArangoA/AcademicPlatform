@@ -1,4 +1,4 @@
-import { Subject } from "../models/Subject";
+import { Subject } from "../models/Subjects/Subject";
 import { AssignTeacherTableRow } from "../models/Teachers/AssignTeacherTableRow";
 import { Teacher } from "../models/Teachers/Teacher";
 import { groupService } from "../services/groupService";

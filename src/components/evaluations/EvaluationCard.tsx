@@ -1,8 +1,8 @@
-import { Evaluation } from "../../models/Evaluation";
-import { Subject } from "../../models/Subject";
+import { Evaluation } from "../../models/Evaluation/Evaluation";
+import { Subject } from "../../models/Subjects/Subject";
 import { User } from "../../models/User";
 import { Group } from "../../models/Groups/Group";
-import { Rubric } from "../../models/Rubric";
+import { Rubric } from "../../models/Evaluation/Rubric";
 
 interface EvaluationCardProps{
     evaluation: Evaluation,

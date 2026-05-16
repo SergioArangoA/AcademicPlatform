@@ -11,8 +11,8 @@ import {
 } from '../../../services/evaluationService';
 import { rubricService } from '../../../services/rubricService';
 import { gradeService } from '../../../services/gradeService';
-import { Evaluation } from '../../../models/Evaluation';
-import { Rubric } from '../../../models/Rubric';
+import { Evaluation } from '../../../models/Evaluation/Evaluation';
+import { Rubric } from '../../../models/Evaluation/Rubric';
 
 const ListEvaluations: React.FC = () => {
   const [evaluations, setEvaluations] = useState<Evaluation[]>([]);

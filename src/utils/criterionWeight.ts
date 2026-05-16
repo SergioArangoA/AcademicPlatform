@@ -1,4 +1,4 @@
-import { Criterion } from '../models/Criterion';
+import { Criterion } from '../models/Evaluation/Criterion';
 
 type CriterionLike = Criterion & {
   peso_porcentual?: number;

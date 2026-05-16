@@ -1,4 +1,4 @@
-export interface Scale{
+export interface Scale {
     id?: string;
     criterion_id: string;
     name: string;

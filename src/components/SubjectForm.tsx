@@ -1,8 +1,8 @@
 import { ErrorMessage, Field, Form, Formik } from "formik";
 import { useNavigate } from "react-router-dom";
 import * as Yup from "yup";
-import { Subject } from "../models/Subject";
-import { SubjectPayload } from "../models/SubjectPayload";
+import { Subject } from "../models/Subjects/Subject";
+import { SubjectPayload } from "../models/Subjects/SubjectPayload";
 
 interface SubjectFormProps {
     mode: 1 | 2;

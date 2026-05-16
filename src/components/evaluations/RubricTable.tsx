@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
-import { Criterion } from "../../models/Criterion";
-import { Scale } from "../../models/Scale";
+import { Criterion } from "../../models/Evaluation/Criterion";
+import { Scale } from "../../models/Evaluation/Scale";
 
 interface RubricEvaluationTableProps {
   criteria: Criterion[];

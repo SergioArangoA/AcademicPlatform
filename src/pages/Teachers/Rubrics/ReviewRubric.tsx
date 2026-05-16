@@ -3,8 +3,8 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { rubricService } from '../../../services/rubricService';
 import { criterionService } from '../../../services/criterionService';
 import { subjectService } from '../../../services/subjectService';
-import { Rubric } from '../../../models/Rubric';
-import { Criterion } from '../../../models/Criterion';
+import { Rubric } from '../../../models/Evaluation/Rubric';
+import { Criterion } from '../../../models/Evaluation/Criterion';
 import { getCriterionWeight } from '../../../utils/criterionWeight';
 import RubricInfoCard from '../../../components/evaluations/RubricCard';
 

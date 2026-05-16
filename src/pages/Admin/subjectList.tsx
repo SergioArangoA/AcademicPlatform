@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import GenericTable from "../../components/GenericTable";
 import FilterBar, { FilterValues } from "../../components/FilterBar";
-import { Subject } from "../../models/Subject";
+import { Subject } from "../../models/Subjects/Subject";
 import { subjectService } from "../../services/subjectService";
 
 const initialFilterValues: FilterValues = {
