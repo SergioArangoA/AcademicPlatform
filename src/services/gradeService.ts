@@ -18,6 +18,7 @@ export interface GradeStudentPayload {
     evaluation_id?: string;
     rubric_id?: string;
     status: GradeStatus;
+    final_score?: number;
     observations?: string;
     details: GradeDetailInput[];
 }
@@ -27,6 +28,11 @@ export interface RegisterFinalScoreRow {
     student_id: string;
     official_final_score: number;
     evaluations_count: number;
+}
+
+export interface ConfirmGroupPayload {
+    group_id: string;
+    semester_id?: string;
 }
 
 class GradeService {
@@ -41,6 +47,24 @@ class GradeService {
         }
     }
 
+    async getGradesByEvaluation(evaluationId: string): Promise<Grade[]> {
+        const all = await this.getGrades();
+        return all.filter(
+            (g) =>
+                String(g.evaluation_id) === String(evaluationId) ||
+                (!g.evaluation_id && g.rubric_id)
+        );
+    }
+
+    async getGradesByGroup(_groupId: string, evaluationIds: string[], rubricIds: string[]): Promise<Grade[]> {
+        const all = await this.getGrades();
+        return all.filter(
+            (g) =>
+                (g.evaluation_id && evaluationIds.includes(String(g.evaluation_id))) ||
+                rubricIds.includes(String(g.rubric_id))
+        );
+    }
+
     async getGradeById(id: string): Promise<Grade | null> {
         try {
             const response = await api.get<ApiEnvelope<Grade>>(`${API_URL}/${id}`);
@@ -53,15 +77,18 @@ class GradeService {
 
     async findGradeForEnrollment(
         enrollmentId: string,
-        rubricId: string
+        rubricId: string,
+        evaluationId?: string
     ): Promise<Grade | null> {
         const grades = await this.getGrades();
         return (
-            grades.find(
-                (g) =>
-                    String(g.enrollment_id) === String(enrollmentId) &&
-                    String(g.rubric_id) === String(rubricId)
-            ) ?? null
+            grades.find((g) => {
+                if (String(g.enrollment_id) !== String(enrollmentId)) return false;
+                if (evaluationId && g.evaluation_id) {
+                    return String(g.evaluation_id) === String(evaluationId);
+                }
+                return String(g.rubric_id) === String(rubricId);
+            }) ?? null
         );
     }
 
@@ -70,12 +97,32 @@ class GradeService {
         return unwrapApiData(response);
     }
 
+    async updateGrade(gradeId: string, payload: GradeStudentPayload): Promise<Grade> {
+        const response = await api.patch<ApiEnvelope<Grade>>(`${API_URL}/${gradeId}`, payload);
+        return unwrapApiData(response);
+    }
+
+    async saveGrade(payload: GradeStudentPayload, existingGradeId?: string): Promise<Grade> {
+        if (existingGradeId) {
+            return this.updateGrade(existingGradeId, payload);
+        }
+        return this.gradeStudent(payload);
+    }
+
     async registerFinalScores(groupId: string): Promise<RegisterFinalScoreRow[]> {
         const response = await api.post<ApiEnvelope<RegisterFinalScoreRow[]>>(
             `/evaluation/groups/${groupId}/register-final-scores`
         );
         const data = unwrapApiData(response);
         return Array.isArray(data) ? data : [];
+    }
+
+    async confirmGroupOfficial(payload: ConfirmGroupPayload): Promise<void> {
+        try {
+            await api.patch(`${API_URL}/confirm-group`, payload);
+        } catch {
+            await this.registerFinalScores(payload.group_id);
+        }
     }
 }
 

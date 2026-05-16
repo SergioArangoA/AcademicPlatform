@@ -54,6 +54,9 @@ const TeacherDefineScales = lazy(() => import('../pages/Teachers/Rubrics/DefineS
 const TeacherListEvaluations = lazy(() => import('../pages/Teachers/Evaluations/ListEvaluations'));
 const TeacherGradeStudent = lazy(() => import('../pages/Teachers/Evaluations/GradeStudent'));
 const TeacherFinalGrades = lazy(() => import('../pages/Teachers/Evaluations/FinalGrades'));
+const AssociateRubricPage = lazy(() => import('../pages/Teachers/Evaluations/AssociateRubricPage'));
+const GradeStudentPage = lazy(() => import('../pages/Teachers/Evaluations/GradeStudentPage'));
+const RegisterFinalGradePage = lazy(() => import('../pages/Teachers/Evaluations/RegisterFinalGradePage'));
 const TeacherGroupList = lazy(() => import('../pages/Teachers/Groups/ListGroups'));
 const TeacherStudentList = lazy(() => import('../pages/Teachers/Students/ListStudents'));
 const TeacherScaleList = lazy(() => import('../pages/Teachers/Scales/ListScales'));
@@ -358,9 +361,33 @@ const coreRoutes = [
     allowedRoles: ['TEACHER'],
   },
   {
+    path: '/evaluaciones',
+    title: 'Evaluaciones',
+    component: TeacherListEvaluations,
+    allowedRoles: ['TEACHER'],
+  },
+  {
     path: '/teachers/evaluations/list',
     title: 'Calificar Evaluaciones',
     component: TeacherListEvaluations,
+    allowedRoles: ['TEACHER'],
+  },
+  {
+    path: '/evaluaciones/:evaluacionId/asociar-rubrica',
+    title: 'Asociar rúbrica',
+    component: AssociateRubricPage,
+    allowedRoles: ['TEACHER'],
+  },
+  {
+    path: '/evaluaciones/:evaluacionId/calificar/:inscripcionId',
+    title: 'Calificar estudiante',
+    component: GradeStudentPage,
+    allowedRoles: ['TEACHER'],
+  },
+  {
+    path: '/calificaciones/:grupoId/nota-final',
+    title: 'Nota final del grupo',
+    component: RegisterFinalGradePage,
     allowedRoles: ['TEACHER'],
   },
   {

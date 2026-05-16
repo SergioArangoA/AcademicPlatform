@@ -6,12 +6,23 @@ import { unwrapApiData } from "../utils/unwrapApiResponse";
 
 const API_URL = "/evaluation/evaluations";
 
+export interface UpdateEvaluationAssociationPayload {
+    rubric_id: string;
+    subject_id: string;
+}
+
 class EvaluationService {
-    async getEvaluations(): Promise<Evaluation[]> {
+    async getEvaluations(groupId?: string): Promise<Evaluation[]> {
         try {
-            const response = await api.get<ApiEnvelope<Evaluation[]>>(API_URL);
+            const response = await api.get<ApiEnvelope<Evaluation[]>>(API_URL, {
+                params: groupId ? { group_id: groupId } : undefined,
+            });
             const list = unwrapApiData(response);
-            return Array.isArray(list) ? list : [];
+            const arr = Array.isArray(list) ? list : [];
+            if (groupId) {
+                return arr.filter((e) => String(e.group_id) === String(groupId));
+            }
+            return arr;
         } catch (error) {
             console.error("Error al obtener evaluaciones:", error);
             return [];
@@ -33,6 +44,26 @@ class EvaluationService {
             `${API_URL}/${evaluationId}/associate-rubric/${rubricId}`
         );
         return unwrapApiData(response);
+    }
+
+    /** CU-10: asociar rúbrica y asignatura (PATCH cuerpo o fallback associate-rubric). */
+    async updateEvaluationAssociation(
+        evaluationId: string,
+        payload: UpdateEvaluationAssociationPayload
+    ): Promise<Evaluation> {
+        try {
+            const response = await api.patch<ApiEnvelope<Evaluation>>(
+                `${API_URL}/${evaluationId}`,
+                {
+                    rubric_id: payload.rubric_id,
+                    subject_id: payload.subject_id,
+                }
+            );
+            return unwrapApiData(response);
+        } catch (error) {
+            const updated = await this.associateRubric(evaluationId, payload.rubric_id);
+            return { ...updated, subject_id: payload.subject_id };
+        }
     }
 }
 
