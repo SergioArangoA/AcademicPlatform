@@ -7,4 +7,5 @@ export interface BaseProfile {
   first_name: string;
   last_name: string;
   identification: string;
+  registrationId: string | null;
 }

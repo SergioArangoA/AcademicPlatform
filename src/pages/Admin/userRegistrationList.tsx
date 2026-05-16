@@ -6,6 +6,10 @@ import { userPService } from "../../services/userPService";
 import { transformUsersForList } from "../../utils/userTransformers";
 import { UserResponse } from "../../models/Users/UserResponse";
 import { UserForList } from "../../models/Users/UserForList";
+import { Registration } from "../../models/Registration";
+import { registrationService } from "../../services/registrationService";
+import { Career } from "../../models/Careers/Career";
+import { careerService } from "../../services/careerService";
 import Swal from "sweetalert2";
 
 const initialFilterValues: FilterValues = {
@@ -19,29 +23,76 @@ const normalizeText = (value: string) => value.trim().toLowerCase();
 const UserRegistrationList = () => {
     const navigate = useNavigate();
     const [users, setUsers] = useState<UserForList[]>([]);
+    const [registrations, setRegistrations] = useState<Registration[]>([]);
+    const [careers, setCareers] = useState<Career[]>([]);
     const [filters, setFilters] = useState<FilterValues>(initialFilterValues);
 
     const fetchUsers = async () => {
         const rawData: UserResponse[] = await userPService.getUsers();
         const formattedData: UserForList[] = transformUsersForList(rawData);
+        const students = formattedData.filter((user) => user.role === "STUDENT");
 
-        const students = formattedData.filter((user) => (user.role === "STUDENT"));
+        const registrationsData = await registrationService.getRegistrations();
+        const careersData = await careerService.getCareers();
 
         setUsers(students);
+        setRegistrations(registrationsData);
+        setCareers(careersData);
     };
 
     useEffect(() => {
         fetchUsers();
     }, []);
 
+    const userRows = useMemo(() => {
+        return users.map((user) => {
+            const possibleStudentIds = [
+                user.id,
+                user.profile?.id,
+                user.profile?.user_id,
+            ].filter(Boolean) as string[];
+
+            const userRegistrations = registrations.filter((reg) =>
+                possibleStudentIds.includes(reg.student_id)
+            );
+            const selectedRegistration =
+                userRegistrations.find((reg) => reg.is_active) ||
+                userRegistrations[0] ||
+                null;
+            const careerName = selectedRegistration
+                ? careers.find(
+                      (career) =>
+                          career.id === selectedRegistration.career_id ||
+                          career.code === selectedRegistration.career_id
+                  )?.name ?? ""
+                : "";
+
+            return {
+                ...user,
+                registration_id: selectedRegistration?.id ?? null,
+                registration_state: selectedRegistration
+                    ? selectedRegistration.is_active
+                        ? "Activo"
+                        : "Inactivo"
+                    : "Sin matrícula",
+                registration_is_active: selectedRegistration?.is_active ?? false,
+                career_name: selectedRegistration
+                    ? careerName || "Sin matrícula"
+                    : "Sin matrícula",
+                admission_period: selectedRegistration?.admission_period ?? "",
+                academic_status: selectedRegistration?.academic_status ?? "",
+            };
+        });
+    }, [registrations, users, careers]);
+
     const filteredUsers = useMemo(() => {
         const search = normalizeText(filters.search ?? "");
         const status = filters.status ?? "all";
 
-        return users.filter((user) => {
+        return userRows.filter((user) => {
             const matchesSearch =
                 search === "" ||
-                [user.code, user.name, user.email]
+                [user.code, user.name, user.email, user.career_name]
                     .join(" ")
                     .toLowerCase()
                     .includes(search);
@@ -52,7 +103,7 @@ const UserRegistrationList = () => {
 
             return matchesSearch && matchesStatus;
         });
-    }, [filters.search, filters.role, filters.status, users]);
+    }, [filters.search, filters.role, filters.status, userRows]);
 
     const handleFilterChange = (key: string, value: string) => {
         setFilters((current) => ({
@@ -86,6 +137,7 @@ const UserRegistrationList = () => {
 
     const columns = [
         { key: "name", label: "Nombre" },
+        { key: "career_name", label: "Carrera" },
         { key: "is_active", label: "Estado" },
     ];
 
@@ -96,18 +148,7 @@ const UserRegistrationList = () => {
     const handleAction = async (name: string, item: Record<string, any>) => {
         switch (name) {
             case "view":
-                if (item.is_active){
-                    navigate(`/admin/users/view/${item.id}`);
-                }
-                else{
-                    Swal.fire({
-                        title: "Error",
-                        text: "El usuario no se encuentra activo actualmente",
-                        icon: "error",
-                        timer: 3000,
-                    });
-                    return;
-                }
+                navigate(`/admin/registration/users/${item.id}`);
                 break;
             default:
                 console.log(`Acción desconocida: ${name}`);

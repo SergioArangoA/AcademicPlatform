@@ -5,6 +5,8 @@ import {
   onAuthStateChanged,
   User,
   getIdToken,
+  getAuth,
+  createUserWithEmailAndPassword,
 } from "firebase/auth";
 import { auth, google, github, microsoft } from "../firebaseConfig";
 
@@ -21,6 +23,21 @@ class FirebaseAuthService {
         callback(null, null);
       }
     });
+  }
+
+  /**
+   * Registra al usuario en firebase automáticamente
+   */
+  async registerWithEmailPassword(email: string, password: string) {
+
+    const result =
+      await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+
+    return result.user;
   }
 
   /**
