@@ -5,7 +5,7 @@ import { Registration } from "../models/Registration";
 const API_URL = "/academic/registrations";
 
 class RegistrationService {
-    async getRegistration(): Promise<Registration[]> {
+    async getRegistrations(): Promise<Registration[]> {
         try {
             const response = await api.get<Registration[]>(`${API_URL}`);
             return response.data.data;
@@ -27,7 +27,7 @@ class RegistrationService {
 
     async createRegistration(registration: Omit<Registration, "id">): Promise<Registration | null> {
         try {
-            const response = await axios.post<Registration>(API_URL, registration);
+            const response = await api.post<Registration>(`${API_URL}`, registration);
             return response.data;
         } catch (error) {
             console.error("Error al crear matrícula:", error);
@@ -57,4 +57,4 @@ class RegistrationService {
 }
 
 // Exportamos una instancia de la clase para reutilizarla
-export const criteriaService = new CriterionService();
+export const registrationService = new RegistrationService();
