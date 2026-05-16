@@ -97,7 +97,7 @@ const UserRegistrationList = () => {
         switch (name) {
             case "view":
                 if (item.is_active){
-                    navigate(`/admin/users/view/${item.id}`);
+                    navigate(`/admin/registration/users/${item.id}`);
                 }
                 else{
                     Swal.fire({
