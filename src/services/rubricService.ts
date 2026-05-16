@@ -8,9 +8,8 @@ import { unwrapApiData } from "../utils/unwrapApiResponse";
 const API_URL = "/evaluation/rubrics";
 const CRITERIA_URL = "/evaluation/criteria";
 
-/** Payload de POST /evaluation/rubrics según contrato del backend. */
+/** Payload de POST /evaluation/rubrics (sin subject_id: el backend no lo persiste). */
 export interface CreateRubricPayload {
-    subject_id: string;
     title: string;
     description: string;
     is_public: boolean;
@@ -25,23 +24,13 @@ export interface CreateCriterionPayload {
 }
 
 class RubricService {
-    async getRubrics(teacherId?: string, isPublic?: boolean): Promise<Rubric[]> {
+    async getRubrics(isPublic?: boolean): Promise<Rubric[]> {
         try {
-            const params: Record<string, string | boolean> = {};
-            if (teacherId) params.teacher_id = teacherId;
-            if (isPublic !== undefined) params.is_public = isPublic;
-
-            const response = await api.get<ApiEnvelope<Rubric[]>>(`${API_URL}`, { params });
+            const response = await api.get<ApiEnvelope<Rubric[]>>(API_URL);
             let list = unwrapApiData(response);
-
-            if (!Array.isArray(list)) {
-                list = [];
-            }
-
-            if (isPublic === true) {
-                list = list.filter((r) => r.is_public === true);
-            }
-
+            if (!Array.isArray(list)) list = [];
+            if (isPublic === true) list = list.filter((r) => r.is_public === true);
+            if (isPublic === false) list = list.filter((r) => !r.is_public);
             return list;
         } catch (error) {
             console.error("Error al obtener rúbricas:", error);
@@ -49,9 +38,8 @@ class RubricService {
         }
     }
 
-    async getRubricsByTeacher(teacherId: string, isPublic?: boolean): Promise<Rubric[]> {
-        const list = await this.getRubrics(teacherId, isPublic);
-        return list;
+    async getPublicRubrics(): Promise<Rubric[]> {
+        return this.getRubrics(true);
     }
 
     async getRubricById(id: string): Promise<Rubric | null> {
@@ -69,20 +57,29 @@ class RubricService {
         return unwrapApiData(response);
     }
 
+    async updateRubric(rubricId: string, payload: Partial<CreateRubricPayload>): Promise<Rubric> {
+        const response = await api.put<ApiEnvelope<Rubric>>(`${API_URL}/${rubricId}`, payload);
+        return unwrapApiData(response);
+    }
+
     async createCriterion(payload: CreateCriterionPayload): Promise<Criterion> {
         const response = await api.post<ApiEnvelope<Criterion>>(CRITERIA_URL, payload);
         return unwrapApiData(response);
     }
 
-    async publishRubric(rubricId: string): Promise<void> {
-        await api.patch(`${API_URL}/${rubricId}/publish`);
+    async publishRubric(rubricId: string): Promise<Rubric> {
+        const response = await api.patch<ApiEnvelope<Rubric>>(`${API_URL}/${rubricId}/publish`);
+        return unwrapApiData(response);
     }
 
     async saveRubricWithCriteria(
         rubricPayload: CreateRubricPayload,
         criteria: Omit<CreateCriterionPayload, "rubric_id">[]
     ): Promise<Rubric> {
-        const rubric = await this.createRubric(rubricPayload);
+        const rubric = await this.createRubric({
+            ...rubricPayload,
+            is_public: false,
+        });
 
         const rubricId = String(rubric.id);
         if (!rubricId || rubricId === "undefined") {
@@ -91,7 +88,6 @@ class RubricService {
 
         for (const criterion of criteria) {
             if (!criterion.name.trim()) continue;
-
             await this.createCriterion({
                 rubric_id: rubricId,
                 name: criterion.name.trim(),
@@ -101,33 +97,6 @@ class RubricService {
         }
 
         return rubric;
-    }
-
-    /** @deprecated Usar saveRubricWithCriteria */
-    async createFullRubric(payload: any): Promise<Rubric | null> {
-        try {
-            const criteria = (payload.criteria ?? []).map((c: any) => ({
-                name: c.name,
-                description: c.description ?? "",
-                weight: Number(c.weight ?? 0),
-            }));
-
-            const isPublic = Boolean(payload.is_public);
-
-            return await this.saveRubricWithCriteria(
-                {
-                    subject_id: String(payload.subject_id),
-                    title: payload.title,
-                    description: payload.description ?? "",
-                    is_public: isPublic,
-                    is_archived: false,
-                },
-                criteria
-            );
-        } catch (error) {
-            console.error("Error al crear la rúbrica completa:", error);
-            throw error;
-        }
     }
 }
 
