@@ -1,3 +1,4 @@
+import { BaseProfile } from "./BaseProfile";
 export interface UserForList {
   id: string;
   code: string;
@@ -6,4 +7,6 @@ export interface UserForList {
   role:string;
   is_active: boolean;
   created_at: string;
+  registration_id?: string | null;
+  profile?: BaseProfile;
 }

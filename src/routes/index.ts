@@ -57,6 +57,7 @@ const TeacherFinalGrades = lazy(() => import('../pages/Teachers/Evaluations/Fina
 
 // Admin routes
 const UserRegistrationList = lazy(()=>import('../pages/Admin/userRegistrationList.tsx'));
+const UserRegistration = lazy(()=>import('../pages/Admin/userRegistration.tsx'));
 const AssignTeacher = lazy(() => import('../pages/Admin/assignTeacher'));
 const GroupList = lazy(() => import('../pages/Admin/groupList'));
 const CreateGroup = lazy(() => import('../pages/Admin/createGroup'));
@@ -79,6 +80,12 @@ const coreRoutes = [
     path: '/admin/registration/users/list',
     title: 'Matrículas',
     component: UserRegistrationList,
+    allowedRoles: ['ADMIN'],
+  },
+  {
+    path: '/admin/registration/users/:id',
+    title: 'Gestionar matrícula',
+    component: UserRegistration,
     allowedRoles: ['ADMIN'],
   },
   {
