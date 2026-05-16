@@ -1,14 +1,22 @@
-export interface Grade{
+export interface GradeDetail {
+    id?: string;
+    scale_id: string;
+    student_id?: string;
+    score?: number;
+    comment?: string;
+    created_at?: string;
+    updated_at?: string;
+}
+
+export interface Grade {
     id?: string;
     enrollment_id: string;
     rubric_id: string;
-    status?: string;
+    final_score?: number;
+    status?: "DRAFT" | "SENT" | string;
     observations?: string;
-    details:[
-        {
-            scale_id: string;
-            comment?: string;
-        }
-    ]
-
+    is_locked?: boolean;
+    details?: GradeDetail[];
+    created_at?: string;
+    updated_at?: string;
 }

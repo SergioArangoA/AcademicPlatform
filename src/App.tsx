@@ -43,6 +43,10 @@ function App() {
             path="/admin/groups"
             element={<Navigate to="/admin/groups/list" replace />}
           />
+          <Route
+            path="/teachers/rubrics"
+            element={<Navigate to="/teachers/rubrics/list" replace />}
+          />
           {routes.map((routes, index) => {
             const { path, component: Component, allowedRoles } = routes;
             return (

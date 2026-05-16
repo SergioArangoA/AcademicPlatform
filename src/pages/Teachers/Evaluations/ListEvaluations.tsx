@@ -1,155 +1,180 @@
 /*
- * Componente ListEvaluations
- * Muestra el listado de evaluaciones pendientes de calificar por el docente.
- * Implementa el caso de uso CU-10 (Asociar rubrica a evaluacion) permitiendo
- * vincular una rubrica existente a una evaluacion a traves de un menu desplegable.
+ * CU-10 – Asociar rúbrica publicada a evaluación
  */
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Breadcrumb from '../../../components/Breadcrumb';
 import { Link } from 'react-router-dom';
-import { evaluationService } from '../../../services/evaluationService';
+import toast from 'react-hot-toast';
+import {
+  evaluationService,
+  getEvaluationErrorMessage,
+} from '../../../services/evaluationService';
 import { rubricService } from '../../../services/rubricService';
+import { gradeService } from '../../../services/gradeService';
 import { Evaluation } from '../../../models/Evaluation';
 import { Rubric } from '../../../models/Rubric';
 
 const ListEvaluations: React.FC = () => {
   const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
-  const [rubrics, setRubrics] = useState<Rubric[]>([]);
+  const [publicRubrics, setPublicRubrics] = useState<Rubric[]>([]);
+  const [grades, setGrades] = useState<{ rubric_id?: string; enrollment_id?: string }[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const evalsData = await evaluationService.getEvaluations();
-        const rubricsData = await rubricService.getRubrics();
+        const [evalsData, rubricsData, gradesData] = await Promise.all([
+          evaluationService.getEvaluations(),
+          rubricService.getPublicRubrics(),
+          gradeService.getGrades(),
+        ]);
         setEvaluations(evalsData);
-        setRubrics(rubricsData);
-      } catch (error) {
-        console.error("Error al cargar evaluaciones o rubricas:", error);
+        setPublicRubrics(rubricsData);
+        setGrades(gradesData);
       } finally {
         setLoading(false);
       }
     };
-    fetchData();
+    void fetchData();
   }, []);
 
-  const handleAssociateRubric = async (evalId: any, rubricId: string) => {
+  const rubricTitleById = useMemo(() => {
+    const map = new Map<string, string>();
+    publicRubrics.forEach((r) => {
+      if (r.id) map.set(String(r.id), r.title ?? 'Sin título');
+    });
+    return map;
+  }, [publicRubrics]);
+
+  const evaluationHasGrades = (evaluation: Evaluation): boolean => {
+    if (!evaluation.rubric_id) return false;
+    return grades.some((g) => String(g.rubric_id) === String(evaluation.rubric_id));
+  };
+
+  const handleAssociateRubric = async (evalId: string, rubricId: string) => {
     if (!rubricId) return;
-    
+
+    const evaluation = evaluations.find((e) => String(e.id) === String(evalId));
+    if (
+      evaluation?.rubric_id &&
+      evaluationHasGrades(evaluation) &&
+      String(evaluation.rubric_id) !== rubricId
+    ) {
+      toast.error(
+        'E2: Ya existen notas vinculadas a esta evaluación. No se puede cambiar la rúbrica.'
+      );
+      return;
+    }
+
     try {
-      // Endpoint sugerido en el backend para asociar rubrica a evaluacion
-      // @evaluation_bp.patch('/evaluations/<evaluation_id>/associate-rubric/<rubric_id>')
-      await evaluationService.associateRubric(evalId, rubricId);
-      
-      setEvaluations(evals => evals.map(e => 
-        e.id === evalId ? { ...e, rubric_id: rubricId } : e
-      ));
-      alert('Rúbrica asociada exitosamente a la evaluación.');
+      const updated = await evaluationService.associateRubric(evalId, rubricId);
+      setEvaluations((evals) =>
+        evals.map((e) => (String(e.id) === String(evalId) ? { ...e, ...updated } : e))
+      );
+      toast.success('Rúbrica asociada a la evaluación y asignatura actualizadas.');
     } catch (error) {
-      console.error("Error al asociar la rubrica:", error);
-      alert('Hubo un error al asociar la rúbrica.');
+      toast.error(getEvaluationErrorMessage(error));
     }
   };
 
   return (
     <>
-      <Breadcrumb pageName="Evaluaciones a Calificar" />
+      <Breadcrumb pageName="Evaluaciones (CU-10)" />
 
-      <div className="flex flex-col gap-10">
-        <div className="rounded-sm border border-stroke bg-white px-5 pt-6 pb-2.5 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:pb-1">
-          <div className="mb-6 flex justify-between items-center">
-            <h4 className="text-xl font-semibold text-black dark:text-white">
-              Mis Evaluaciones
-            </h4>
-          </div>
+      <div className="rounded-sm border border-stroke bg-white px-5 pt-6 pb-2.5 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5">
+        <h4 className="text-xl font-semibold text-black dark:text-white mb-4">
+          Asociar rúbrica a evaluación
+        </h4>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+          Solo se listan rúbricas publicadas (es_publica = true). Si no hay ninguna,{' '}
+          <Link to="/teachers/rubrics/create" className="text-primary hover:underline">
+            crea y publica una rúbrica (CU-08)
+          </Link>
+          .
+        </p>
 
-          <div className="flex flex-col">
-            <div className="grid grid-cols-4 rounded-sm bg-gray-2 dark:bg-meta-4 sm:grid-cols-5">
-              <div className="p-2.5 xl:p-5">
-                <h5 className="text-sm font-medium uppercase xsm:text-base">
-                  Evaluación
-                </h5>
-              </div>
-              <div className="p-2.5 text-center xl:p-5">
-                <h5 className="text-sm font-medium uppercase xsm:text-base">
-                  Curso
-                </h5>
-              </div>
-              <div className="hidden p-2.5 text-center sm:block xl:p-5">
-                <h5 className="text-sm font-medium uppercase xsm:text-base">
-                  Fecha Límite
-                </h5>
-              </div>
-              <div className="p-2.5 text-center xl:p-5">
-                <h5 className="text-sm font-medium uppercase xsm:text-base">
-                  Rúbrica (CU-10)
-                </h5>
-              </div>
-              <div className="p-2.5 text-center xl:p-5">
-                <h5 className="text-sm font-medium uppercase xsm:text-base">
-                  Acciones
-                </h5>
-              </div>
-            </div>
-
-            {loading ? (
-              <div className="p-5 text-center text-black dark:text-white">Cargando...</div>
-            ) : evaluations.length === 0 ? (
-              <div className="p-5 text-center text-black dark:text-white">No hay evaluaciones pendientes.</div>
-            ) : (
-              evaluations.map((evaluation) => (
-              <div key={evaluation.id} className="grid grid-cols-4 border-b border-stroke dark:border-strokedark sm:grid-cols-5">
-                <div className="flex items-center p-2.5 xl:p-5">
-                  <p className="text-black dark:text-white sm:block">{evaluation.name}</p>
-                </div>
-                <div className="flex items-center justify-center p-2.5 xl:p-5">
-                  <p className="text-black dark:text-white">{evaluation.subject_id}</p>
-                </div>
-                <div className="hidden items-center justify-center p-2.5 sm:flex xl:p-5">
-                  <p className="text-black dark:text-white">N/A</p>
-                </div>
-                
-                {/* CU-10: Asociar Rúbrica */}
-                <div className="flex items-center justify-center p-2.5 xl:p-5">
-                  {evaluation.rubric_id ? (
-                    <span className="text-sm text-success font-medium flex flex-col items-center">
-                      Vinculada
-                      <select 
-                        className="mt-1 text-xs p-1 rounded border border-stroke bg-transparent dark:border-form-strokedark"
-                        value={evaluation.rubric_id}
-                        onChange={(e) => handleAssociateRubric(evaluation.id, e.target.value)}
-                      >
-                        {rubrics.map(r => <option key={r.id} value={r.id}>{r.title}</option>)}
-                      </select>
-                    </span>
-                  ) : (
-                    <select 
-                      className="w-full rounded border-[1.5px] border-stroke bg-transparent py-1 px-2 text-sm font-medium outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
-                      onChange={(e) => handleAssociateRubric(evaluation.id, e.target.value)}
-                      defaultValue=""
+        {loading ? (
+          <p className="py-6 text-center">Cargando...</p>
+        ) : evaluations.length === 0 ? (
+          <p className="py-6 text-center">No hay evaluaciones registradas.</p>
+        ) : publicRubrics.length === 0 ? (
+          <p className="py-6 text-center text-amber-600">
+            E1: No hay rúbricas publicadas. Publica una rúbrica antes de asociarla.
+          </p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full table-auto text-sm">
+              <thead>
+                <tr className="bg-gray-2 dark:bg-meta-4 text-left">
+                  <th className="py-3 px-4">Evaluación</th>
+                  <th className="py-3 px-4">Grupo</th>
+                  <th className="py-3 px-4">Rúbrica</th>
+                  <th className="py-3 px-4 text-center">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {evaluations.map((evaluation) => {
+                  const locked =
+                    !!evaluation.rubric_id && evaluationHasGrades(evaluation);
+                  return (
+                    <tr
+                      key={evaluation.id}
+                      className="border-b border-stroke dark:border-strokedark"
                     >
-                      <option value="" disabled>Asociar Rúbrica...</option>
-                      {rubrics.map(r => <option key={r.id} value={r.id}>{r.title}</option>)}
-                    </select>
-                  )}
-                </div>
-
-                <div className="flex items-center justify-center p-2.5 xl:p-5">
-                  {evaluation.rubric_id ? (
-                    <Link to={`/teachers/evaluations/${evaluation.id}/grade`} className="rounded bg-primary py-1 px-3 text-white hover:bg-opacity-90">
-                      Calificar
-                    </Link>
-                  ) : (
-                    <span className="text-sm text-warning cursor-not-allowed" title="Asocia una rúbrica primero">
-                      Requiere Rúbrica
-                    </span>
-                  )}
-                </div>
-              </div>
-            )))}
+                      <td className="py-4 px-4 font-medium text-black dark:text-white">
+                        {evaluation.name}
+                        <span className="block text-xs text-gray-500">
+                          Peso: {evaluation.weight}%
+                        </span>
+                      </td>
+                      <td className="py-4 px-4 text-gray-600 dark:text-gray-300">
+                        {evaluation.group_id}
+                      </td>
+                      <td className="py-4 px-4">
+                        {locked ? (
+                          <span className="text-xs text-gray-500">
+                            {rubricTitleById.get(String(evaluation.rubric_id)) ?? evaluation.rubric_id}
+                            <span className="block text-amber-600">Con notas — no editable</span>
+                          </span>
+                        ) : (
+                          <select
+                            className="w-full max-w-xs rounded border border-stroke py-1.5 px-2 text-sm dark:bg-form-input dark:border-strokedark"
+                            value={evaluation.rubric_id ?? ''}
+                            onChange={(e) =>
+                              handleAssociateRubric(String(evaluation.id), e.target.value)
+                            }
+                          >
+                            <option value="" disabled>
+                              {evaluation.rubric_id ? 'Cambiar rúbrica...' : 'Asociar rúbrica...'}
+                            </option>
+                            {publicRubrics.map((r) => (
+                              <option key={r.id} value={String(r.id)}>
+                                {r.title}
+                              </option>
+                            ))}
+                          </select>
+                        )}
+                      </td>
+                      <td className="py-4 px-4 text-center">
+                        {evaluation.rubric_id ? (
+                          <Link
+                            to={`/teachers/evaluations/${evaluation.id}/grade`}
+                            className="inline-flex rounded bg-primary py-1.5 px-3 text-xs text-white hover:bg-opacity-90"
+                          >
+                            Calificar (CU-11)
+                          </Link>
+                        ) : (
+                          <span className="text-xs text-gray-400">Asocia una rúbrica</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
-        </div>
+        )}
       </div>
     </>
   );
