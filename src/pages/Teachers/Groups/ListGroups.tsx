@@ -19,16 +19,25 @@ const TeacherGroupList = () => {
     const [semesters, setSemesters] = useState<{ id?: string; name: string }[]>([]);
     const [filters, setFilters] = useState<FilterValues>(initialFilters);
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState<string | null>(null);
     const [teacherId, setTeacherId] = useState<string | null>(null);
 
     const loadData = useCallback(async () => {
         setLoading(true);
-        const data = await loadTeacherGroupsData(user);
-        setTeacherId(data.teacherId);
-        setGroups(data.groups);
-        setSubjects(data.subjects);
-        setSemesters(data.semesters);
-        setLoading(false);
+        setLoadError(null);
+        try {
+            const data = await loadTeacherGroupsData(user);
+            setTeacherId(data.teacherId);
+            setGroups(data.groups);
+            setSubjects(data.subjects);
+            setSemesters(data.semesters);
+            setLoadError(data.error);
+        } catch {
+            setLoadError('No se pudieron cargar los grupos.');
+            setGroups([]);
+        } finally {
+            setLoading(false);
+        }
     }, [user]);
 
     useEffect(() => {
@@ -65,10 +74,12 @@ const TeacherGroupList = () => {
             type: 'select' as const,
             options: [
                 { value: 'all', label: 'Todas' },
-                ...subjects.map((s) => ({
-                    value: String(s.id),
-                    label: `${s.code} — ${s.name}`,
-                })),
+                ...subjects
+                    .filter((s) => s.id != null)
+                    .map((s) => ({
+                        value: String(s.id),
+                        label: `${s.code} — ${s.name}`,
+                    })),
             ],
         },
         {
@@ -77,7 +88,9 @@ const TeacherGroupList = () => {
             type: 'select' as const,
             options: [
                 { value: 'all', label: 'Todos' },
-                ...semesters.map((s) => ({ value: String(s.id), label: s.name })),
+                ...semesters
+                    .filter((s) => s.id != null)
+                    .map((s) => ({ value: String(s.id), label: s.name })),
             ],
         },
     ];
@@ -94,41 +107,56 @@ const TeacherGroupList = () => {
         <>
             <Breadcrumb pageName="Mis grupos" />
 
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Grupos asignados a tu perfil de docente.
-                </p>
-                <Link
-                    to="/teachers/evaluations/list"
-                    className="text-sm font-medium text-primary hover:underline"
-                >
-                    Ir a evaluaciones →
-                </Link>
-            </div>
+            <div className="flex flex-col gap-4">
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Grupos asignados a tu perfil de docente.
+                    </p>
+                    <Link
+                        to="/teachers/evaluations/list"
+                        className="text-sm font-medium text-primary hover:underline"
+                    >
+                        Ir a evaluaciones →
+                    </Link>
+                </div>
 
-            {!teacherId && !loading && (
-                <p className="mb-4 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-                    No se encontró tu registro de docente. Verifica que tu usuario esté vinculado en el sistema.
-                </p>
-            )}
+                {loadError && (
+                    <p className="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-200">
+                        {loadError}
+                    </p>
+                )}
 
-            <FilterBar
-                filters={filterConfigs}
-                values={filters}
-                onChange={(key, value) => setFilters((c) => ({ ...c, [key]: value }))}
-                onClear={() => setFilters(initialFilters)}
-            />
+                {!loadError && !teacherId && !loading && (
+                    <p className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                        No se encontró tu registro de docente. Si tienes grupos asignados, pide al administrador
+                        vincular tu usuario en la tabla de docentes.
+                    </p>
+                )}
 
-            {loading ? (
-                <p className="mt-4 text-gray-500">Cargando grupos...</p>
-            ) : (
-                <GenericTable
-                    data={tableData}
-                    columns={columns}
-                    actions={[]}
-                    onAction={() => {}}
+                {!loadError && teacherId && !loading && groups.length === 0 && (
+                    <p className="rounded-lg border border-stroke bg-white px-4 py-3 text-sm text-gray-600 dark:border-strokedark dark:bg-boxdark dark:text-gray-300">
+                        No tienes grupos asignados todavía.
+                    </p>
+                )}
+
+                <FilterBar
+                    filters={filterConfigs}
+                    values={filters}
+                    onChange={(key, value) => setFilters((c) => ({ ...c, [key]: value }))}
+                    onClear={() => setFilters(initialFilters)}
                 />
-            )}
+
+                {loading ? (
+                    <p className="mt-4 text-gray-500">Cargando grupos...</p>
+                ) : (
+                    <GenericTable
+                        data={tableData}
+                        columns={columns}
+                        actions={[]}
+                        onAction={() => {}}
+                    />
+                )}
+            </div>
         </>
     );
 };

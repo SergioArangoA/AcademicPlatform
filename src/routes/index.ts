@@ -56,6 +56,7 @@ const TeacherGradeStudent = lazy(() => import('../pages/Teachers/Evaluations/Gra
 const TeacherFinalGrades = lazy(() => import('../pages/Teachers/Evaluations/FinalGrades'));
 const TeacherGroupList = lazy(() => import('../pages/Teachers/Groups/ListGroups'));
 const TeacherStudentList = lazy(() => import('../pages/Teachers/Students/ListStudents'));
+const TeacherScaleList = lazy(() => import('../pages/Teachers/Scales/ListScales'));
 
 // Admin routes
 const UserRegistrationList = lazy(()=>import('../pages/Admin/userRegistrationList.tsx'));
@@ -384,6 +385,12 @@ const coreRoutes = [
     path: '/teachers/students',
     title: 'Mis Estudiantes',
     component: TeacherStudentList,
+    allowedRoles: ['TEACHER'],
+  },
+  {
+    path: '/teachers/scales',
+    title: 'Escalas',
+    component: TeacherScaleList,
     allowedRoles: ['TEACHER'],
   },
 ];
