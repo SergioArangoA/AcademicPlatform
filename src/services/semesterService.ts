@@ -12,7 +12,7 @@ class SemesterService {
     async getSemesters(): Promise<Semester[]>{
         try{
             const response = await api.get<SemestersApiResponse>(API_URL_LIST);
-            return response.data.data;
+            return response.data.data ?? [];
         }catch(error){
             if (axios.isAxiosError(error)) {
                 console.error("Error de la API:", error.response?.data || error.message);

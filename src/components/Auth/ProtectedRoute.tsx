@@ -6,6 +6,7 @@
  */
 
 import { Navigate } from "react-router-dom";
+import Loader from "../../common/Loader";
 import { useAuth } from "../../context/AuthContext";
 
 interface ProtectedRouteProps {
@@ -16,7 +17,7 @@ interface ProtectedRouteProps {
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ allowedRoles, children }) => {
   const { user, loading, getRole } = useAuth();
 
-  if (loading) return null;
+  if (loading) return <Loader />;
 
   if (!user) {
     return <Navigate to="/auth/signin" replace />;
