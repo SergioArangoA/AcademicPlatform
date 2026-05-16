@@ -123,12 +123,17 @@ const ReviewRubric: React.FC = () => {
         >
           Volver al listado
         </button>
-        <Link
-          to={`/teachers/rubrics/${id}/escalas`}
-          className="text-[14px] font-semibold text-white bg-[#6D28D9] rounded-md px-5 py-2.5 hover:bg-[#5B21B6]"
-        >
-          Definir escalas (CU-09) →
-        </Link>
+        <div className="flex gap-3">
+          <Link
+            to={`/teachers/rubrics/${id}/escalas`}
+            className="text-[14px] font-semibold text-white bg-[#6D28D9] rounded-md px-5 py-2.5 hover:bg-[#5B21B6]"
+          >
+            Definir escalas (CU-09) →
+          </Link>
+          {rubric.is_public && (
+            <span className="text-[13px] text-[#16A34A] self-center font-medium">Rúbrica publicada</span>
+          )}
+        </div>
       </div>
     </div>
   );

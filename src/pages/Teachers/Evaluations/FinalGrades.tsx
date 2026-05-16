@@ -1,115 +1,259 @@
 /*
- * Componente FinalGrades
- * Implementa el caso de uso CU-12 (Registrar nota final).
- * Muestra el consolidado de las calificaciones parciales de todos los estudiantes
- * de un grupo y permite al docente hacer el registro oficial e inmutable de la nota definitiva.
+ * CU-12 – Registrar nota final del grupo
  */
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Breadcrumb from '../../../components/Breadcrumb';
-import { gradeService } from '../../../services/gradeService';
+import toast from 'react-hot-toast';
+import { useAuth } from '../../../context/AuthContext';
+import { gradeService, getGradeErrorMessage } from '../../../services/gradeService';
+import { evaluationService } from '../../../services/evaluationService';
+import { enrollmentService } from '../../../services/enrollmentService';
+import { semesterService } from '../../../services/semesterService';
+import { groupService } from '../../../services/groupService';
+import { loadTeacherGroupOptions } from '../../../utils/loadTeacherGroupOptions';
+import { SubjectGroupOption } from '../../../models/SubjectGroupOption';
+import { Evaluation } from '../../../models/Evaluation';
+import { Grade } from '../../../models/Grade';
+
+interface ConsolidatedRow {
+  enrollment_id: string;
+  student_id: string;
+  official_score: number;
+  evaluations_graded: number;
+  evaluations_total: number;
+  incomplete: boolean;
+}
 
 const FinalGrades: React.FC = () => {
-  const [grades, setGrades] = useState<any[]>([]);
+  const { user } = useAuth();
+  const [groupOptions, setGroupOptions] = useState<SubjectGroupOption[]>([]);
+  const [selectedGroupId, setSelectedGroupId] = useState('');
+  const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
+  const [grades, setGrades] = useState<Grade[]>([]);
+  const [enrollments, setEnrollments] = useState<{ id: string; student_id: string }[]>([]);
+  const [semesterActive, setSemesterActive] = useState(true);
   const [loading, setLoading] = useState(true);
+  const [registering, setRegistering] = useState(false);
+  const [registered, setRegistered] = useState(false);
+  const [reportRows, setReportRows] = useState<ConsolidatedRow[]>([]);
 
   useEffect(() => {
-    const fetchGrades = async () => {
-      setLoading(true);
-      try {
-        const data = await gradeService.getGrades();
-        setGrades(data);
-      } catch (error) {
-        console.error("Error fetching grades:", error);
-      } finally {
-        setLoading(false);
-      }
+    const init = async () => {
+      const options = await loadTeacherGroupOptions(user);
+      setGroupOptions(options);
+      if (options[0]) setSelectedGroupId(options[0].group_id);
+      setLoading(false);
     };
-    fetchGrades();
-  }, []);
+    void init();
+  }, [user]);
 
-  const [isOfficial, setIsOfficial] = useState(false);
+  useEffect(() => {
+    if (!selectedGroupId) return;
+    const load = async () => {
+      setLoading(true);
+      const [evals, allGrades, enrolls, semesters, groupData] = await Promise.all([
+        evaluationService.getEvaluations(),
+        gradeService.getGrades(),
+        enrollmentService.getEnrollments(selectedGroupId),
+        semesterService.getSemesters(),
+        groupService.getGroupById(selectedGroupId),
+      ]);
 
-  const calculateFinalGrade = (evals: any[]) => {
-    const total = evals.reduce((sum, ev) => sum + (ev.grade * (ev.weight / 100)), 0);
-    return total.toFixed(2);
+      const groupEvals = evals.filter(
+        (e) => String(e.group_id) === selectedGroupId && e.rubric_id
+      );
+      setEvaluations(groupEvals);
+      setGrades(allGrades);
+      setEnrollments(
+        enrolls.map((e) => ({ id: String(e.id), student_id: String(e.student_id) }))
+      );
+
+      if (groupData?.semester_id) {
+        const sem = semesters.find((s) => String(s.id) === String(groupData.semester_id));
+        setSemesterActive(sem?.is_active !== false);
+      } else {
+        setSemesterActive(true);
+      }
+
+      setLoading(false);
+      setRegistered(false);
+    };
+    void load();
+  }, [selectedGroupId, groupOptions]);
+
+  const consolidated: ConsolidatedRow[] = useMemo(() => {
+    return enrollments.map((enrollment) => {
+      let official = 0;
+      let graded = 0;
+      const total = evaluations.length;
+
+      for (const ev of evaluations) {
+        const grade = grades.find(
+          (g) =>
+            String(g.enrollment_id) === enrollment.id &&
+            String(g.rubric_id) === String(ev.rubric_id) &&
+            g.status === 'SENT'
+        );
+        if (grade && grade.final_score != null) {
+          graded += 1;
+          official += Number(grade.final_score) * (Number(ev.weight) / 100);
+        }
+      }
+
+      return {
+        enrollment_id: enrollment.id,
+        student_id: enrollment.student_id,
+        official_score: Number(official.toFixed(2)),
+        evaluations_graded: graded,
+        evaluations_total: total,
+        incomplete: graded < total,
+      };
+    });
+  }, [enrollments, evaluations, grades]);
+
+  const handleRegisterOfficial = async () => {
+    if (!selectedGroupId) return;
+    if (!semesterActive) {
+      toast.error('E2: El semestre no está activo. Contacta al administrador.');
+      return;
+    }
+
+    const incomplete = consolidated.filter((r) => r.incomplete);
+    if (incomplete.length > 0) {
+      const ok = window.confirm(
+        `E1: ${incomplete.length} estudiante(s) tienen evaluaciones sin calificar enviadas. ¿Registrar notas finales parciales de todos modos?`
+      );
+      if (!ok) return;
+    } else {
+      const ok = window.confirm(
+        '¿Confirmar el registro oficial? Las notas quedarán bloqueadas (is_locked).'
+      );
+      if (!ok) return;
+    }
+
+    setRegistering(true);
+    try {
+      const result = await gradeService.registerFinalScores(selectedGroupId);
+      setReportRows(
+        result.map((r) => ({
+          enrollment_id: r.enrollment_id,
+          student_id: r.student_id,
+          official_score: r.official_final_score,
+          evaluations_graded: r.evaluations_count,
+          evaluations_total: evaluations.length,
+          incomplete: false,
+        }))
+      );
+      setRegistered(true);
+      toast.success('Notas finales registradas oficialmente.');
+    } catch (err) {
+      toast.error(getGradeErrorMessage(err));
+    } finally {
+      setRegistering(false);
+    }
   };
 
-  const handleRegisterOfficialGrades = () => {
-    const confirmIncomplete = window.confirm(
-      `¿Desea registrar oficialmente las notas? Ya no se podrán modificar.`
+  const downloadReport = () => {
+    const rows = (reportRows.length ? reportRows : consolidated).map((r) =>
+      [r.enrollment_id, r.student_id, r.official_score, r.evaluations_graded, r.evaluations_total].join(
+        ','
+      )
     );
-    if (!confirmIncomplete) return;
-
-    setIsOfficial(true);
-    alert('Las notas finales se han registrado oficialmente en el semestre. Ya no se pueden modificar.');
+    const csv = ['enrollment_id,student_id,nota_final,eval_calificadas,eval_total', ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `notas-finales-grupo-${selectedGroupId}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
     <>
-      <Breadcrumb pageName="Notas Finales (Consolidado)" />
+      <Breadcrumb pageName="Notas finales (CU-12)" />
 
-      <div className="flex flex-col gap-10">
-        <div className="rounded-sm border border-stroke bg-white px-5 pt-6 pb-2.5 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:pb-1">
-          <div className="mb-6 flex justify-between items-center">
-            <h4 className="text-xl font-semibold text-black dark:text-white">
-              Consolidado de Grupo: Ingeniería de Software
-            </h4>
-            {!isOfficial && (
-              <button 
-                onClick={handleRegisterOfficialGrades}
-                className="inline-flex items-center justify-center rounded-md bg-success py-2 px-6 text-center font-medium text-white hover:bg-opacity-90"
-              >
-                Confirmar Registro Oficial
-              </button>
-            )}
-            {isOfficial && (
-              <span className="inline-flex rounded-full bg-success bg-opacity-10 py-1 px-3 text-sm font-medium text-success border border-success">
-                Notas Oficiales Registradas
-              </span>
-            )}
+      <div className="rounded-sm border border-stroke bg-white px-5 pt-6 pb-6 shadow-default dark:border-strokedark dark:bg-boxdark">
+        <div className="mb-6 flex flex-wrap gap-4 justify-between items-end">
+          <div>
+            <label className="text-sm font-medium text-black dark:text-white">Grupo</label>
+            <select
+              value={selectedGroupId}
+              onChange={(e) => setSelectedGroupId(e.target.value)}
+              className="mt-1 block rounded border border-stroke py-2 px-3 dark:bg-form-input dark:border-strokedark"
+            >
+              {groupOptions.map((o) => (
+                <option key={o.group_id} value={o.group_id}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
           </div>
+          {!registered && semesterActive && (
+            <button
+              type="button"
+              disabled={registering || loading}
+              onClick={handleRegisterOfficial}
+              className="rounded-md bg-success px-5 py-2 text-sm font-medium text-white disabled:opacity-50"
+            >
+              {registering ? 'Registrando...' : 'Confirmar registro oficial'}
+            </button>
+          )}
+          {registered && (
+            <span className="rounded-full bg-success/10 text-success px-3 py-1 text-sm font-medium">
+              Registrado oficialmente
+            </span>
+          )}
+          {!semesterActive && (
+            <span className="text-sm text-red-500">Semestre inactivo — registro bloqueado</span>
+          )}
+        </div>
 
-          <div className="flex flex-col overflow-x-auto">
-            <table className="w-full table-auto">
+        {loading ? (
+          <p className="text-center py-6 text-gray-500">Cargando consolidado...</p>
+        ) : (
+          <>
+            <p className="text-sm text-gray-500 mb-4">
+              Nota consolidada = Σ (nota evaluación × peso evaluación / 100) solo con calificaciones
+              enviadas (SENT).
+            </p>
+            <table className="w-full table-auto text-sm">
               <thead>
-                <tr className="bg-gray-2 text-left dark:bg-meta-4">
-                  <th className="py-4 px-4 font-medium text-black dark:text-white">ID Inscripción</th>
-                  <th className="py-4 px-4 font-medium text-black dark:text-white">Rúbrica</th>
-                  <th className="py-4 px-4 font-medium text-black dark:text-white">Estado</th>
-                  <th className="py-4 px-4 font-medium text-black dark:text-white text-right">Nota Final</th>
+                <tr className="bg-gray-2 dark:bg-meta-4 text-left">
+                  <th className="py-3 px-4">Inscripción</th>
+                  <th className="py-3 px-4">Estudiante</th>
+                  <th className="py-3 px-4 text-center">Evaluaciones</th>
+                  <th className="py-3 px-4 text-right">Nota consolidada</th>
                 </tr>
               </thead>
               <tbody>
-                {loading ? (
-                  <tr><td colSpan={4} className="py-5 px-4 text-center">Cargando...</td></tr>
-                ) : grades.length === 0 ? (
-                  <tr><td colSpan={4} className="py-5 px-4 text-center">No hay notas registradas</td></tr>
-                ) : (
-                  grades.map((grade: any, key: number) => (
-                    <tr key={key} className={key === grades.length - 1 ? '' : 'border-b border-stroke dark:border-strokedark'}>
-                      <td className="py-5 px-4 dark:text-white">{grade.enrollment_id}</td>
-                      <td className="py-5 px-4 dark:text-white">{grade.rubric_id}</td>
-                      <td className="py-5 px-4 dark:text-white">{grade.status}</td>
-                      <td className="py-5 px-4 text-right">
-                        <span className={`font-bold ${Number(grade.final_score) >= 3.0 ? 'text-success' : 'text-danger'}`}>
-                          {grade.final_score !== undefined ? grade.final_score : 'N/A'}
-                        </span>
-                      </td>
-                    </tr>
-                  ))
-                )}
+                {consolidated.map((row) => (
+                  <tr key={row.enrollment_id} className="border-b border-stroke dark:border-strokedark">
+                    <td className="py-3 px-4 font-mono text-xs">{row.enrollment_id}</td>
+                    <td className="py-3 px-4 font-mono text-xs">{row.student_id}</td>
+                    <td className="py-3 px-4 text-center">
+                      {row.evaluations_graded}/{row.evaluations_total}
+                      {row.incomplete && (
+                        <span className="block text-xs text-amber-600">Incompleto</span>
+                      )}
+                    </td>
+                    <td className="py-3 px-4 text-right font-bold">{row.official_score.toFixed(2)}</td>
+                  </tr>
+                ))}
               </tbody>
             </table>
-          </div>
-          
-          {isOfficial && (
-            <div className="mt-6 mb-4 flex justify-end">
-              <button className="text-primary hover:underline font-medium">
-                Descargar Reporte (Excel)
+
+            {(registered || consolidated.length > 0) && (
+              <button
+                type="button"
+                onClick={downloadReport}
+                className="mt-6 text-primary text-sm font-medium hover:underline"
+              >
+                Descargar reporte (CSV)
               </button>
-            </div>
-          )}
-        </div>
+            )}
+          </>
+        )}
       </div>
     </>
   );

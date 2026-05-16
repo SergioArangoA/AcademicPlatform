@@ -1,60 +1,81 @@
 import axios from "axios";
 import { api } from "../interceptors/authInterceptor";
 import { Scale } from "../models/Scale";
+import { ApiEnvelope } from "../types/ApiResponse";
+import { unwrapApiData } from "../utils/unwrapApiResponse";
 
 const API_URL = "/evaluation/scales";
+
+export interface CreateScalePayload {
+    criterion_id: string;
+    name: string;
+    description: string;
+    value: number;
+}
 
 class ScaleService {
     async getScales(): Promise<Scale[]> {
         try {
-            const response = await api.get<Scale[]>(`${API_URL}`);
-            return response.data.data;
+            const response = await api.get<ApiEnvelope<Scale[]>>(API_URL);
+            const list = unwrapApiData(response);
+            return Array.isArray(list) ? list : [];
         } catch (error) {
             console.error("Error al obtener escalas:", error);
             return [];
         }
     }
 
-    async getScaleById(id: string): Promise<Scale | null> {
-        try {
-            const response = await api.get<Scale>(`${API_URL}/${id}`);
-            return response.data.data;
-        } catch (error) {
-            console.error("Escala no encontrada:", error);
-            return null;
-        }
+    async getScalesByCriterionId(criterionId: string): Promise<Scale[]> {
+        const all = await this.getScales();
+        return all
+            .filter((s) => String(s.criterion_id) === String(criterionId))
+            .sort((a, b) => a.value - b.value);
     }
 
-    async createUser(user: Omit<User, "id">): Promise<User | null> {
-        try {
-            const response = await axios.post<User>(API_URL, user);
-            return response.data;
-        } catch (error) {
-            console.error("Error al crear usuario:", error);
-            return null;
-        }
+    async getScalesByRubricId(_rubricId: string, criterionIds: string[]): Promise<Scale[]> {
+        const all = await this.getScales();
+        const idSet = new Set(criterionIds.map(String));
+        return all.filter((s) => idSet.has(String(s.criterion_id)));
     }
 
-    async updateUser(id: number, user: Partial<User>): Promise<User | null> {
-        try {
-            const response = await axios.put<User>(`${API_URL}/${id}`, user);
-            return response.data;
-        } catch (error) {
-            console.error("Error al actualizar usuario:", error);
-            return null;
-        }
+    async createScale(payload: CreateScalePayload): Promise<Scale> {
+        const response = await api.post<ApiEnvelope<Scale>>(API_URL, payload);
+        return unwrapApiData(response);
     }
 
-    async deleteUser(id: number): Promise<boolean> {
-        try {
-            await axios.delete(`${API_URL}/${id}`);
-            return true;
-        } catch (error) {
-            console.error("Error al eliminar usuario:", error);
-            return false;
+    async updateScale(scaleId: string, payload: Partial<CreateScalePayload>): Promise<Scale> {
+        const response = await api.put<ApiEnvelope<Scale>>(`${API_URL}/${scaleId}`, payload);
+        return unwrapApiData(response);
+    }
+
+    async deleteScale(scaleId: string): Promise<void> {
+        await api.delete(`${API_URL}/${scaleId}`);
+    }
+
+    /** Clona escalas de un criterio origen a otro (CU-09 flujo alternativo). */
+    async cloneScalesToCriterion(sourceCriterionId: string, targetCriterionId: string): Promise<Scale[]> {
+        const source = await this.getScalesByCriterionId(sourceCriterionId);
+        const created: Scale[] = [];
+        for (const scale of source) {
+            const copy = await this.createScale({
+                criterion_id: targetCriterionId,
+                name: scale.name,
+                description: scale.description ?? "",
+                value: scale.value,
+            });
+            created.push(copy);
         }
+        return created;
     }
 }
 
-// Exportamos una instancia de la clase para reutilizarla
+export function getScaleErrorMessage(error: unknown): string {
+    if (axios.isAxiosError(error)) {
+        const data = error.response?.data as { message?: string } | undefined;
+        return data?.message ?? error.message;
+    }
+    if (error instanceof Error) return error.message;
+    return "Error al guardar la escala.";
+}
+
 export const scaleService = new ScaleService();
