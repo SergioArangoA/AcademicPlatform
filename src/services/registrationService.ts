@@ -28,7 +28,7 @@ class RegistrationService {
     async createRegistration(registration: Omit<Registration, "id">): Promise<Registration | null> {
         try {
             const response = await api.post<Registration>(`${API_URL}`, registration);
-            return response.data;
+            return response.data.data;
         } catch (error) {
             console.error("Error al crear matrícula:", error);
             return null;
