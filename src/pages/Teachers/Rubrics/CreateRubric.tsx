@@ -159,11 +159,9 @@ const CreateRubric: React.FC = () => {
       return;
     }
 
-    if (asPublic) {
-      if (criterios.length === 0 || sumaTotal !== 100) {
-        setErrorBanner(PUBLISH_ERROR);
-        return;
-      }
+    if (asPublic && (criterios.length === 0 || sumaTotal !== 100)) {
+      setErrorBanner(PUBLISH_ERROR);
+      return;
     }
 
     const setLoading = asPublic ? setSavingPublish : setSavingDraft;
@@ -172,10 +170,9 @@ const CreateRubric: React.FC = () => {
     try {
       const saved = await rubricService.saveRubricWithCriteria(
         {
-          subject_id: rubric.subject_id,
           title: rubric.title.trim(),
           description: rubric.description.trim(),
-          is_public: asPublic,
+          is_public: false,
           is_archived: false,
         },
         buildCriteriaPayload()
@@ -184,9 +181,16 @@ const CreateRubric: React.FC = () => {
       setSavedRubricId(String(saved.id));
       setIsDirty(false);
 
+      if (saved.id) {
+        localStorage.setItem(`rubric_meta_${saved.id}_subject`, selectedSubjectLabel);
+        const groupLabel =
+          subjectOptions.find((o) => o.group_id === rubric.group_id)?.groupName ?? rubric.group_id;
+        localStorage.setItem(`rubric_meta_${saved.id}_group`, groupLabel);
+      }
+
       if (asPublic) {
-        toast.success('Rúbrica lista para revisión.');
-        navigate(`/teachers/rubrics/${saved.id}/revision`);
+        toast.success('Criterios guardados. Continúa con las escalas (CU-09).');
+        navigate(`/teachers/rubrics/${saved.id}/escalas`);
       } else {
         toast.success('Rúbrica guardada como borrador.');
       }
@@ -609,7 +613,7 @@ const CreateRubric: React.FC = () => {
                 : 'text-[#9CA3AF] bg-[#E5E7EB] cursor-not-allowed'
             }`}
           >
-            {savingPublish ? 'Procesando...' : 'Revisar y continuar →'}
+            {savingPublish ? 'Procesando...' : 'Guardar y definir escalas →'}
           </button>
         </div>
       </div>

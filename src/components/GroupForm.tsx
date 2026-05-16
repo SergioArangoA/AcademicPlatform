@@ -97,7 +97,7 @@ const GroupForm: React.FC<GroupFormProps> = ({ mode, group, loading = false, onS
                     </p>
                     {!isEditMode && (
                         <p className="mt-1 text-xs text-amber-600">
-                            Nota: el backend actual requiere docente al crear. Para dejarlo sin docente, usa Asignar docente después.
+                            Nota: el backend actual requiere docente al crear (PRG FELIPE).
                         </p>
                     )}
                 </div>

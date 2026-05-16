@@ -36,7 +36,7 @@ const RubricTemplatesModal: React.FC<RubricTemplatesModalProps> = ({
 
     const load = async () => {
       setLoading(true);
-      const data = await rubricService.getRubricsByTeacher(teacherId, true);
+      const data = await rubricService.getPublicRubrics();
       setTemplates(data);
       setLoading(false);
     };

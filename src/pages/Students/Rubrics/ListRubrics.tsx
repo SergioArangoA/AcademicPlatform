@@ -15,14 +15,14 @@ const Rubrics: React.FC = () => {
 
     // 🔹 Obtiene los datos de las rúbricas
     const fetchData = async () => {
-        const rubrics = await rubricService.getRubrics();
+        const rubrics = await rubricService.getPublicRubrics();
         setData(rubrics);
     };
 
     const handleAction = (action: string, item: Rubric) => {
         if (action === "view") {
             console.log("View rubric:", item);
-            navigate(`/students/evaluation/${item.id}`);
+            navigate(`/students/evaluations/list`);
         }
     };
 
