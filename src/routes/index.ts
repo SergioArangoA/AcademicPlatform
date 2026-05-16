@@ -54,6 +54,8 @@ const TeacherDefineScales = lazy(() => import('../pages/Teachers/Rubrics/DefineS
 const TeacherListEvaluations = lazy(() => import('../pages/Teachers/Evaluations/ListEvaluations'));
 const TeacherGradeStudent = lazy(() => import('../pages/Teachers/Evaluations/GradeStudent'));
 const TeacherFinalGrades = lazy(() => import('../pages/Teachers/Evaluations/FinalGrades'));
+const TeacherGroupList = lazy(() => import('../pages/Teachers/Groups/ListGroups'));
+const TeacherStudentList = lazy(() => import('../pages/Teachers/Students/ListStudents'));
 
 // Admin routes
 const UserRegistrationList = lazy(()=>import('../pages/Admin/userRegistrationList.tsx'));
@@ -371,7 +373,19 @@ const coreRoutes = [
     title: 'Calificaciones Finales',
     component: TeacherFinalGrades,
     allowedRoles: ['TEACHER'],
-  }
+  },
+  {
+    path: '/teachers/groups',
+    title: 'Mis Grupos',
+    component: TeacherGroupList,
+    allowedRoles: ['TEACHER'],
+  },
+  {
+    path: '/teachers/students',
+    title: 'Mis Estudiantes',
+    component: TeacherStudentList,
+    allowedRoles: ['TEACHER'],
+  },
 ];
 
 const routes = [...coreRoutes];

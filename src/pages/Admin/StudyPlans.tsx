@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Subject } from "../../models/Subject";
+import { Subject } from "../../models/Subjects/Subject";
 import { StudyPlan } from "../../models/StudyPlan/StudyPlan";
 import { studyplanService } from "../../services/studyplanService";
 import { subjectService } from "../../services/subjectService";

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
-import { Rubric } from '../../models/Rubric';
-import { Criterion } from '../../models/Criterion';
+import { Rubric } from '../../models/Evaluation/Rubric';
+import { Criterion } from '../../models/Evaluation/Criterion';
 import { rubricService } from '../../services/rubricService';
 import { criterionService } from '../../services/criterionService';
 import { getCriterionWeight } from '../../utils/criterionWeight';

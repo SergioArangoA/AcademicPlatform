@@ -1,5 +1,5 @@
 import { api } from "../interceptors/authInterceptor";
-import { Criterion } from "../models/Criterion";
+import { Criterion } from "../models/Evaluation/Criterion";
 import { ApiEnvelope } from "../types/ApiResponse";
 import { unwrapApiData } from "../utils/unwrapApiResponse";
 

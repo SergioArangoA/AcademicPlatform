@@ -3,8 +3,8 @@ import { User as FirebaseUser } from 'firebase/auth';
 import { groupService } from '../services/groupService';
 import { subjectService } from '../services/subjectService';
 import { teacherService } from '../services/teacherService';
-import { Subject } from '../models/Subject';
-import { SubjectGroupOption } from '../models/SubjectGroupOption';
+import { Subject } from '../models/Subjects/Subject';
+import { SubjectGroupOption } from '../models/Subjects/SubjectGroupOption';
 import { resolveTeacherRecord } from './resolveTeacherId';
 
 type AuthUser = FirebaseUser | AppUser | null;

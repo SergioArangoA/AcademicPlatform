@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import Breadcrumb from "../../components/Breadcrumb";
 import SubjectForm from "../../components/SubjectForm";
-import { SubjectPayload } from "../../models/SubjectPayload";
+import { SubjectPayload } from "../../models/Subjects/SubjectPayload";
 import { subjectService } from "../../services/subjectService";
 
 const CreateSubject = () => {

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Evaluation } from "../../../models/Evaluation";
+import { Evaluation } from "../../../models/Evaluation/Evaluation";
 import GenericTable from "../../../components/GenericTable";
 import { evaluationService } from "../../../services/evaluationService";
 import { useNavigate } from "react-router-dom";

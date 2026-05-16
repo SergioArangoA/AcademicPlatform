@@ -4,12 +4,12 @@ import toast from 'react-hot-toast';
 import Swal from 'sweetalert2';
 import { useAuth } from '../../../context/AuthContext';
 import { rubricService, getRubricErrorMessage } from '../../../services/rubricService';
-import { SubjectGroupOption } from '../../../models/SubjectGroupOption';
+import { SubjectGroupOption } from '../../../models/Subjects/SubjectGroupOption';
 import { resolveTeacherId } from '../../../utils/resolveTeacherId';
 import { loadTeacherGroupOptions } from '../../../utils/loadTeacherGroupOptions';
 import RubricInfoCard from '../../../components/evaluations/RubricCard';
 import RubricTemplatesModal, { LocalCriterionDraft } from '../../../components/evaluations/RubricTemplatesModal';
-import { Criterion } from '../../../models/Criterion';
+import { Criterion } from '../../../models/Evaluation/Criterion';
 
 const PUBLISH_ERROR =
   'la rúbrica debe tener al menos un criterio y la suma de los pesos debe ser 100 %.';

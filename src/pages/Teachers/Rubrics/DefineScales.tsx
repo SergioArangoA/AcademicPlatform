@@ -1,9 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { Criterion } from '../../../models/Criterion';
-import { Scale } from '../../../models/Scale';
-import { Rubric } from '../../../models/Rubric';
+import { Criterion } from '../../../models/Evaluation/Criterion';
+import { Scale } from '../../../models/Evaluation/Scale';
+import { Rubric } from '../../../models/Evaluation/Rubric';
 import { criterionService } from '../../../services/criterionService';
 import { rubricService, getRubricErrorMessage } from '../../../services/rubricService';
 import { scaleService, getScaleErrorMessage } from '../../../services/scaleService';

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Rubric } from "../../../models/Rubric";
+import { Rubric } from "../../../models/Evaluation/Rubric";
 import GenericTable from "../../../components/GenericTable";
 import { rubricService } from "../../../services/rubricService";
 import { useNavigate } from "react-router-dom";

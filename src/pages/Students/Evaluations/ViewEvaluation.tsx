@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Evaluation } from "../../../models/Evaluation";
-import { Subject } from "../../../models/Subject";
+import { Evaluation } from "../../../models/Evaluation/Evaluation";
+import { Subject } from "../../../models/Subjects/Subject";
 import { User } from "../../../models/User";
 import { Group } from "../../../models/Groups/Group";
-import { Rubric } from "../../../models/Rubric";
-import { Criterion } from "../../../models/Criterion";
-import { Scale } from "../../../models/Scale";
+import { Rubric } from "../../../models/Evaluation/Rubric";
+import { Criterion } from "../../../models/Evaluation/Criterion";
+import { Scale } from "../../../models/Evaluation/Scale";
 import RubricInfoCard from "../../../components/evaluations/RubricCard";
 import RubricEvaluationTable from "../../../components/evaluations/RubricTable";
 import EvaluationCard from "../../../components/evaluations/EvaluationCard";

@@ -15,8 +15,8 @@ import { criterionService } from '../../../services/criterionService';
 import { scaleService } from '../../../services/scaleService';
 import { enrollmentService } from '../../../services/enrollmentService';
 import { gradeService, getGradeErrorMessage } from '../../../services/gradeService';
-import { Criterion } from '../../../models/Criterion';
-import { Scale } from '../../../models/Scale';
+import { Criterion } from '../../../models/Evaluation/Criterion';
+import { Scale } from '../../../models/Evaluation/Scale';
 import {
   calculateFinalScoreFromSelections,
   scalesByCriterion,

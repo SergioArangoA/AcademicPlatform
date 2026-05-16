@@ -1,8 +1,8 @@
 import React from "react";
-import { Rubric } from "../../models/Rubric";
-import { Criterion } from "../../models/Criterion";
-import { Subject } from "../../models/Subject";
-import { Evaluation } from "../../models/Evaluation";
+import { Rubric } from "../../models/Evaluation/Rubric";
+import { Criterion } from "../../models/Evaluation/Criterion";
+import { Subject } from "../../models/Subjects/Subject";
+import { Evaluation } from "../../models/Evaluation/Evaluation";
 import { getCriterionWeight } from "../../utils/criterionWeight";
 
 interface RubricInfoCardProps {

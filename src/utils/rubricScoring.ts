@@ -1,5 +1,5 @@
-import { Criterion } from "../models/Criterion";
-import { Scale } from "../models/Scale";
+import { Criterion } from "../models/Evaluation/Criterion";
+import { Scale } from "../models/Evaluation/Scale";
 
 /** Puntaje ponderado: valor × (peso / 100), igual que el backend. */
 export function weightedScore(scaleValue: number, criterionWeight: number): number {

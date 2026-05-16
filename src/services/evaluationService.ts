@@ -1,6 +1,6 @@
 import axios from "axios";
 import { api } from "../interceptors/authInterceptor";
-import { Evaluation } from "../models/Evaluation";
+import { Evaluation } from "../models/Evaluation/Evaluation";
 import { ApiEnvelope } from "../types/ApiResponse";
 import { unwrapApiData } from "../utils/unwrapApiResponse";
 

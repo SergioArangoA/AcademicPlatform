@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Breadcrumb from '../../../components/Breadcrumb';
 import { Link } from 'react-router-dom';
-import { Rubric } from '../../../models/Rubric';
-import { Criterion } from '../../../models/Criterion';
+import { Rubric } from '../../../models/Evaluation/Rubric';
+import { Criterion } from '../../../models/Evaluation/Criterion';
 import { rubricService } from '../../../services/rubricService';
 import { criterionService } from '../../../services/criterionService';
 
