@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { userPService } from "../../../services/userPService";
 import Swal from "sweetalert2";
+import Breadcrumb from "../../../components/Breadcrumb";
 import GenericTable from "../../../components/GenericTable";
 import UserCard from "../../../components/users/UserInformationCard";
 import RegistrationCard from "../../../components/registrations/RegistrationCard";
@@ -56,8 +57,6 @@ const ManageUserEnrollments = () => {
         const subjectsData = await subjectService.getSubjects();
         const studyPlans = await studyplanService.getStudyPlan();
 
-        console.log(studyPlans);
-
         // Build a map of subject_id -> study plan for efficient lookup
         const subjectToStudyPlan = new Map<string, any>();
         for (const sp of studyPlans) {
@@ -100,11 +99,20 @@ const ManageUserEnrollments = () => {
             };
         });
 
+        const filteredGroups = formattedGroups.filter(
+            (group) =>
+                !selectedGroups.some(
+                    (selected) => selected.id === group.id
+                )
+        );
+
+        setGroups(filteredGroups);
+
         setUser(formattedUser[0]);
         setCareers(careersData);
         setSemester(currentSemester ?? null);
         setRegistrations(activeRegistrations);
-        setGroups(formattedGroups);
+        setGroups(filteredGroups);
         setSubjects(subjectsData);
     };
     const columns = [
@@ -237,6 +245,13 @@ const ManageUserEnrollments = () => {
     }
     return (
         <div className="w-full max-w-6xl mx-auto p-6">
+            <button
+                type="button"
+                onClick={() => navigate(-1)}
+                className="px-4 py-2 mt-2 rounded-md border border-stroke bg-white shadow-sm hover:bg-gray-100 dark:bg-boxdark dark:border-strokedark"
+            >
+                Volver
+            </button>
 
             <h2 className="text-xl font-semibold mb-6 text-gray-900 dark:text-white">
             Gestionar Inscripciones
@@ -292,12 +307,20 @@ const ManageUserEnrollments = () => {
             {/* 🔻 TABLAS ABAJO */}
             <div className="mt-8 space-y-6">
 
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            Grupos del semestre
+            </h3>
+
             <GenericTable
                 data={groups}
                 columns={columns}
                 actions={actionsGeneral}
                 onAction={handleAction}
             />
+
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            Grupos seleccionados
+            </h3>
 
             <GenericTable
                 data={selectedGroups}
@@ -307,6 +330,14 @@ const ManageUserEnrollments = () => {
             />
 
             </div>
+
+            <button
+                type="button"
+                onClick={() => navigate(-1)}
+                className="px-4 py-2 mt-2 rounded-md border border-stroke bg-white shadow-sm hover:bg-gray-100 dark:bg-boxdark dark:border-strokedark"
+            >
+                Inscribir
+            </button>
 
         </div>
     );
