@@ -1,12 +1,15 @@
 import React from "react";
 import { Registration } from "../../models/Registration";
+import { Career } from "../../models/Careers/Career";
 
 interface RegistrationCardProps {
   registration: Registration | null;
+  career?: Career;
 }
 
 const RegistrationCard: React.FC<RegistrationCardProps> = ({
   registration,
+  career,
 }) => {
   if (!registration) {
     return (
@@ -41,7 +44,7 @@ const RegistrationCard: React.FC<RegistrationCardProps> = ({
         <div className="flex justify-between">
           <span className="text-gray-600 dark:text-gray-300">Carrera</span>
           <span className="font-medium text-black dark:text-white">
-            {registration.career_id}
+            {career?.code || registration.career_id || "-"}
           </span>
         </div>
 
