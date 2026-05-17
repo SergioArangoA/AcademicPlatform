@@ -1,21 +1,21 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { userPService } from "../../services/userPService";
+import { userPService } from "../../../services/userPService";
 import Swal from "sweetalert2";
-import Breadcrumb from "../../components/Breadcrumb";
-import UserFormValidator from "../../components/UserForm";
-import UserCard from "../../components/users/UserInformationCard";
-import RegistrationCard from "../../components/registrations/RegistrationCard";
-import DropdownForm from "../../components/DropdownForm";
-import { UserResponse } from "../../models/Users/UserResponse";
-import { Semester } from "../../models/Semesters/Semester";
-import { semesterService } from "../../services/semesterService";
-import { Career } from "../../models/Careers/Career";
-import { careerService } from "../../services/careerService";
-import { transformUsersForList } from "../../utils/userTransformers";
-import { UserForList } from "../../models/Users/UserForList";
-import { Registration } from "../../models/Registration";
-import { registrationService } from "../../services/registrationService";
+import Breadcrumb from "../../../components/Breadcrumb";
+import UserFormValidator from "../../../components/UserForm";
+import UserCard from "../../../components/users/UserInformationCard";
+import RegistrationCard from "../../../components/registrations/RegistrationCard";
+import DropdownForm from "../../../components/DropdownForm";
+import { UserResponse } from "../../../models/Users/UserResponse";
+import { Semester } from "../../../models/Semesters/Semester";
+import { semesterService } from "../../../services/semesterService";
+import { Career } from "../../../models/Careers/Career";
+import { careerService } from "../../../services/careerService";
+import { transformUsersForList } from "../../../utils/userTransformers";
+import { UserForList } from "../../../models/Users/UserForList";
+import { Registration } from "../../../models/Registration";
+import { registrationService } from "../../../services/registrationService";
 
 
 
@@ -46,10 +46,7 @@ const ConfigurateUserRegistration = () => {
         const users = [rawUser];
         const formattedUser: UserForList[] = transformUsersForList(users);
         const registrationData = await registrationService.getRegistrations();
-        console.log("Formatted user:", formattedUser[0]);
-        console.log("Registrations:", registrationData);
-        console.log("Careers:", careersData);
-                setUser(formattedUser[0]);
+        setUser(formattedUser[0]);
         setCareers(careersData);
         setSemesters(semestersData);
         setRegistrations(registrationData)
@@ -100,6 +97,16 @@ const ConfigurateUserRegistration = () => {
             academic_status: selectedAcademicStatus,
             is_active: true
         }
+        const duplicates = alreadyExists("NEW");
+        if (duplicates) {
+            Swal.fire({
+                icon: "error",
+                title: "Error",
+                text: "El usuario ya tiene una matrícula existente en esa carrera.",
+            });
+            return;
+        }
+
         Swal.fire({
             title: "¿Estás seguro?",
             html: `
@@ -117,7 +124,7 @@ const ConfigurateUserRegistration = () => {
                 </p>
 
                 <p class="mb-2 text-green-900 dark:text-green-100">
-                    <span class="font-semibold">Carrera:</span> ${career}
+                    <span class="font-semibold">Carrera:</span> ${career?.code || selectedCareer}
                 </p>
 
                 <p class="mb-2 text-green-900 dark:text-green-100">
@@ -139,16 +146,6 @@ const ConfigurateUserRegistration = () => {
                 registrationService.createRegistration(registration).then((response)=>{
                     user.registration_id = response?.id;
                     userPService.updateUser(user.id,user);
-
-                    const duplicates = alreadyExists("NEW");
-                    if (duplicates){
-                        Swal.fire({
-                            icon: "error",
-                            title: "Error",
-                            text: "El usuario ya tiene una matrícula existente en esa carrera.",
-                        });
-                        return;
-                    }
 
                     if (response){
                         Swal.fire({
@@ -218,11 +215,11 @@ const ConfigurateUserRegistration = () => {
                 </p>
 
                 <p class="mb-2 text-green-900 dark:text-green-100">
-                    <span class="font-semibold">Nueva carrera:</span> ${newCareerInstance.code}
+                    <span class="font-semibold">Nueva carrera:</span> ${newCareerInstance?.code || ""}
                 </p>
 
                 <p class="mb-2 text-green-900 dark:text-green-100">
-                    <span class="font-semibold">Periodo de ingreso:</span> ${selectedSemester}
+                    <span class="font-semibold">Periodo de ingreso:</span> ${registration?.admission_period}
                 </p>
                 
                 <p class="mb-2 text-green-900 dark:text-green-100">
@@ -242,14 +239,16 @@ const ConfigurateUserRegistration = () => {
         }).then((result) => {
             
             if (result.isConfirmed) {
-                const duplicates = alreadyExists("EDIT");
-                if (duplicates){
-                    Swal.fire({
-                        icon: "error",
-                        title: "Error",
-                        text: "El usuario ya tiene una matrícula existente en esa carrera.",
-                    });
-                    return;
+                if (newCareer) {
+                    const duplicates = alreadyExists("EDIT");
+                    if (duplicates){
+                        Swal.fire({
+                            icon: "error",
+                            title: "Error",
+                            text: "El usuario ya tiene una matrícula existente en esa carrera.",
+                        });
+                        return;
+                    }
                 }
 
                 if (newAcademicStatus) selectedRegistration.academic_status = newAcademicStatus;
@@ -286,7 +285,12 @@ const ConfigurateUserRegistration = () => {
         }
 
         else if (key === "EDIT"){
-            const duplicates = filtered.filter(r => r.career_id === selectedCareer);
+            // Check if user already has a registration in the NEW career
+            // but exclude the current registration being edited
+            const duplicates = filtered.filter(r => 
+                r.career_id === newCareer && 
+                r.id !== selectedRegistration?.id
+            );
             return (duplicates.length > 0);
         }
         return true;
@@ -295,6 +299,13 @@ const ConfigurateUserRegistration = () => {
     if (!user) {
         return (
             <div className="flex items-center justify-center min-h-screen">
+                <button
+                    type="button"
+                    onClick={() => navigate(-1)}
+                    className="px-4 py-2 rounded-md border border-stroke bg-white shadow-sm hover:bg-gray-100 dark:bg-boxdark dark:border-strokedark"
+                >
+                    Volver
+                </button>
                 <div className="text-center">
                     <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
                     <p className="mt-4 text-gray-600">Cargando usuario...</p>
@@ -305,6 +316,13 @@ const ConfigurateUserRegistration = () => {
     if (!user.is_active){
         return (
         <div className="w-full max-w-6xl mx-auto p-6">
+            <button
+                type="button"
+                onClick={() => navigate(-1)}
+                className="px-4 py-2 rounded-md border border-stroke bg-white shadow-sm hover:bg-gray-100 dark:bg-boxdark dark:border-strokedark"
+            >
+                Volver
+            </button>
             
             <h2 className="text-xl font-semibold mb-6 text-gray-900 dark:text-white">
             Gestionar matrícula

@@ -62,12 +62,14 @@ const TeacherStudentList = lazy(() => import('../pages/Teachers/Students/ListStu
 const TeacherScaleList = lazy(() => import('../pages/Teachers/Scales/ListScales'));
 
 // Admin routes
-const UserRegistrationList = lazy(()=>import('../pages/Admin/userRegistrationList.tsx'));
-const UserRegistration = lazy(()=>import('../pages/Admin/userRegistration.tsx'));
+const UserRegistrationList = lazy(()=>import('../pages/Admin/registrations/userRegistrationList.tsx'));
+const UserRegistration = lazy(()=>import('../pages/Admin/registrations/userRegistration.tsx'));
 const AssignTeacher = lazy(() => import('../pages/Admin/assignTeacher'));
 const GroupList = lazy(() => import('../pages/Admin/groupList'));
 const CreateGroup = lazy(() => import('../pages/Admin/createGroup'));
 const UpdateGroup = lazy(() => import('../pages/Admin/updateGroup'));
+const UserEnrollmentList = lazy(() => import('../pages/Admin/enrollments/userEnrollmentList'));
+const UserEnrollment = lazy(()=>import('../pages/Admin/enrollments/userEnrollment.tsx'));
 
 const coreRoutes = [
   {
@@ -92,6 +94,18 @@ const coreRoutes = [
     path: '/admin/registration/users/:id',
     title: 'Gestionar matrícula',
     component: UserRegistration,
+    allowedRoles: ['ADMIN'],
+  },
+  {
+    path: '/admin/enrollment/users/list',
+    title: 'Inscripciones',
+    component: UserEnrollmentList,
+    allowedRoles: ['ADMIN'],
+  },
+    {
+    path: '/admin/enrollment/users/:id',
+    title: 'Inscripciones',
+    component: UserEnrollment,
     allowedRoles: ['ADMIN'],
   },
   {
