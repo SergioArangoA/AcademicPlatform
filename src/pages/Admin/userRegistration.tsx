@@ -46,7 +46,10 @@ const ConfigurateUserRegistration = () => {
         const users = [rawUser];
         const formattedUser: UserForList[] = transformUsersForList(users);
         const registrationData = await registrationService.getRegistrations();
-        setUser(formattedUser[0]);
+        console.log("Formatted user:", formattedUser[0]);
+        console.log("Registrations:", registrationData);
+        console.log("Careers:", careersData);
+                setUser(formattedUser[0]);
         setCareers(careersData);
         setSemesters(semestersData);
         setRegistrations(registrationData)
@@ -87,6 +90,9 @@ const ConfigurateUserRegistration = () => {
             });
             return;
         }
+        const career = careers?.find(
+            c => c.id === selectedCareer
+        );;
         const registration: Registration = {
             student_id: user.profile?.id ?? user.id,
             career_id: selectedCareer,
@@ -111,7 +117,7 @@ const ConfigurateUserRegistration = () => {
                 </p>
 
                 <p class="mb-2 text-green-900 dark:text-green-100">
-                    <span class="font-semibold">Carrera:</span> ${selectedCareer}
+                    <span class="font-semibold">Carrera:</span> ${career}
                 </p>
 
                 <p class="mb-2 text-green-900 dark:text-green-100">
@@ -185,6 +191,12 @@ const ConfigurateUserRegistration = () => {
             return;
         }
         const registration = selectedRegistration;
+        const oldCareerInstance = careers?.find(
+            c => c.id === selectedCareer
+        );
+        const newCareerInstance = careers?.find(
+            c => c.id === newCareer
+        );
         Swal.fire({
             title: "¿Estás seguro?",
             html: `
@@ -202,11 +214,11 @@ const ConfigurateUserRegistration = () => {
                 </p>
 
                 <p class="mb-2 text-green-900 dark:text-green-100">
-                    <span class="font-semibold">Antigua carrera:</span> ${selectedCareer}
+                    <span class="font-semibold">Antigua carrera:</span> ${oldCareerInstance.code}
                 </p>
 
                 <p class="mb-2 text-green-900 dark:text-green-100">
-                    <span class="font-semibold">Nueva carrera:</span> ${newCareer}
+                    <span class="font-semibold">Nueva carrera:</span> ${newCareerInstance.code}
                 </p>
 
                 <p class="mb-2 text-green-900 dark:text-green-100">
@@ -348,12 +360,16 @@ const ConfigurateUserRegistration = () => {
                 {registrationList?.length ? (
                 registrationList
                     .filter(r => r.student_id === user.profile?.id || r.student_id === user.id)
-                    .map((reg) => (
-                    <RegistrationCard
-                        key={reg.id}
-                        registration={reg}
-                    />
-                    ))
+                    .map((reg) => {
+                        const careerInstance = careers?.find((c) => c.id === reg.career_id);
+                        return (
+                            <RegistrationCard
+                                key={reg.id}
+                                registration={reg}
+                                career={careerInstance}
+                            />
+                        );
+                    })
                 ) : (
                 <div className="text-sm text-gray-500">
                     No hay matrículas registradas
@@ -390,7 +406,7 @@ const ConfigurateUserRegistration = () => {
                 value={selectedCareer}
                 onChange={setSelectedCareer}
                 labelKey="name"
-                valueKey="code"
+                valueKey="id"
                 />
 
                 <DropdownForm
@@ -438,7 +454,7 @@ const ConfigurateUserRegistration = () => {
                     value={newCareer}
                     onChange={setNewCareer}
                     labelKey="name"
-                    valueKey="code"
+                    valueKey="id"
                 />
 
                 <DropdownForm
@@ -478,12 +494,17 @@ const ConfigurateUserRegistration = () => {
             {registrationList?.length ? (
             registrationList
                 .filter(r => r.student_id === user.profile?.id || r.student_id === user.id)
-                .map((reg) => (
+                .map((reg) => {
+
+                const careerInstance = careers?.find((c) => c.id === reg.career_id);
+
+                return(
                 <RegistrationCard
                     key={reg.id}
                     registration={reg}
-                />
-                ))
+                    career={careerInstance}
+                />)
+                })
             ) : (
             <div className="text-sm text-gray-500">
                 No hay matrículas registradas
