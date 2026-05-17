@@ -47,6 +47,10 @@ function App() {
             path="/teachers/rubrics"
             element={<Navigate to="/teachers/rubrics/list" replace />}
           />
+          <Route
+            path="/teachers/evaluations"
+            element={<Navigate to="/evaluaciones" replace />}
+          />
           {routes.map((routes, index) => {
             const { path, component: Component, allowedRoles } = routes;
             return (

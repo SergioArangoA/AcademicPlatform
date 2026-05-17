@@ -11,6 +11,7 @@ export interface GradeDetail {
 export interface Grade {
     id?: string;
     enrollment_id: string;
+    evaluation_id?: string;
     rubric_id: string;
     final_score?: number;
     status?: "DRAFT" | "SENT" | string;
