@@ -299,6 +299,13 @@ const ConfigurateUserRegistration = () => {
     if (!user) {
         return (
             <div className="flex items-center justify-center min-h-screen">
+                <button
+                    type="button"
+                    onClick={() => navigate(-1)}
+                    className="px-4 py-2 rounded-md border border-stroke bg-white shadow-sm hover:bg-gray-100 dark:bg-boxdark dark:border-strokedark"
+                >
+                    Volver
+                </button>
                 <div className="text-center">
                     <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
                     <p className="mt-4 text-gray-600">Cargando usuario...</p>
@@ -309,6 +316,13 @@ const ConfigurateUserRegistration = () => {
     if (!user.is_active){
         return (
         <div className="w-full max-w-6xl mx-auto p-6">
+            <button
+                type="button"
+                onClick={() => navigate(-1)}
+                className="px-4 py-2 rounded-md border border-stroke bg-white shadow-sm hover:bg-gray-100 dark:bg-boxdark dark:border-strokedark"
+            >
+                Volver
+            </button>
             
             <h2 className="text-xl font-semibold mb-6 text-gray-900 dark:text-white">
             Gestionar matrícula
