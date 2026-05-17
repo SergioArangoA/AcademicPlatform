@@ -1,176 +1,116 @@
 /*
- * CU-10 – Asociar rúbrica publicada a evaluación
+ * CU-10 — Listado de evaluaciones (entrada al flujo de asociación y calificación)
  */
 import React, { useEffect, useMemo, useState } from 'react';
 import Breadcrumb from '../../../components/Breadcrumb';
 import { Link } from 'react-router-dom';
-import toast from 'react-hot-toast';
-import {
-  evaluationService,
-  getEvaluationErrorMessage,
-} from '../../../services/evaluationService';
-import { rubricService } from '../../../services/rubricService';
-import { gradeService } from '../../../services/gradeService';
+import { evaluationService } from '../../../services/evaluationService';
+import { enrollmentService } from '../../../services/enrollmentService';
 import { Evaluation } from '../../../models/Evaluation/Evaluation';
-import { Rubric } from '../../../models/Evaluation/Rubric';
 
 const ListEvaluations: React.FC = () => {
   const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
-  const [publicRubrics, setPublicRubrics] = useState<Rubric[]>([]);
-  const [grades, setGrades] = useState<{ rubric_id?: string; enrollment_id?: string }[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
-      try {
-        const [evalsData, rubricsData, gradesData] = await Promise.all([
-          evaluationService.getEvaluations(),
-          rubricService.getPublicRubrics(),
-          gradeService.getGrades(),
-        ]);
-        setEvaluations(evalsData);
-        setPublicRubrics(rubricsData);
-        setGrades(gradesData);
-      } finally {
-        setLoading(false);
-      }
+      const evalsData = await evaluationService.getEvaluations();
+      setEvaluations(evalsData);
+      setLoading(false);
     };
     void fetchData();
   }, []);
 
-  const rubricTitleById = useMemo(() => {
-    const map = new Map<string, string>();
-    publicRubrics.forEach((r) => {
-      if (r.id) map.set(String(r.id), r.title ?? 'Sin título');
-    });
-    return map;
-  }, [publicRubrics]);
-
-  const evaluationHasGrades = (evaluation: Evaluation): boolean => {
-    if (!evaluation.rubric_id) return false;
-    return grades.some((g) => String(g.rubric_id) === String(evaluation.rubric_id));
-  };
-
-  const handleAssociateRubric = async (evalId: string, rubricId: string) => {
-    if (!rubricId) return;
-
-    const evaluation = evaluations.find((e) => String(e.id) === String(evalId));
-    if (
-      evaluation?.rubric_id &&
-      evaluationHasGrades(evaluation) &&
-      String(evaluation.rubric_id) !== rubricId
-    ) {
-      toast.error(
-        'E2: Ya existen notas vinculadas a esta evaluación. No se puede cambiar la rúbrica.'
-      );
-      return;
-    }
-
-    try {
-      const updated = await evaluationService.associateRubric(evalId, rubricId);
-      setEvaluations((evals) =>
-        evals.map((e) => (String(e.id) === String(evalId) ? { ...e, ...updated } : e))
-      );
-      toast.success('Rúbrica asociada a la evaluación y asignatura actualizadas.');
-    } catch (error) {
-      toast.error(getEvaluationErrorMessage(error));
-    }
-  };
+  const sorted = useMemo(
+    () =>
+      [...evaluations].sort((a, b) =>
+        (b.updated_at ?? b.created_at ?? '').localeCompare(
+          a.updated_at ?? a.created_at ?? ''
+        )
+      ),
+    [evaluations]
+  );
 
   return (
     <>
-      <Breadcrumb pageName="Evaluaciones (CU-10)" />
+      <Breadcrumb pageName="Evaluaciones" />
 
       <div className="rounded-sm border border-stroke bg-white px-5 pt-6 pb-2.5 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5">
-        <h4 className="text-xl font-semibold text-black dark:text-white mb-4">
-          Asociar rúbrica a evaluación
-        </h4>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-          Solo se listan rúbricas publicadas (es_publica = true). Si no hay ninguna,{' '}
-          <Link to="/teachers/rubrics/create" className="text-primary hover:underline">
-            crea y publica una rúbrica (CU-08)
+        <div className="mb-6 flex flex-wrap justify-between items-center gap-3">
+          <div>
+            <h4 className="text-xl font-semibold text-black dark:text-white">
+              Evaluaciones del docente
+            </h4>
+            <p className="mt-1 text-sm text-gray-500">
+              CU-10, CU-11 y CU-12 — asociar rúbricas, calificar y registrar notas finales.
+            </p>
+          </div>
+          <Link
+            to="/teachers/rubrics/list"
+            className="text-sm font-medium text-[#6366f1] hover:underline"
+          >
+            Mis rúbricas →
           </Link>
-          .
-        </p>
+        </div>
 
         {loading ? (
-          <p className="py-6 text-center">Cargando...</p>
-        ) : evaluations.length === 0 ? (
-          <p className="py-6 text-center">No hay evaluaciones registradas.</p>
-        ) : publicRubrics.length === 0 ? (
-          <p className="py-6 text-center text-amber-600">
-            E1: No hay rúbricas publicadas. Publica una rúbrica antes de asociarla.
-          </p>
+          <p className="py-6 text-center text-gray-500">Cargando...</p>
+        ) : sorted.length === 0 ? (
+          <p className="py-6 text-center text-gray-500">No hay evaluaciones registradas.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full table-auto text-sm">
               <thead>
-                <tr className="bg-gray-2 dark:bg-meta-4 text-left">
+                <tr className="bg-gray-2 text-left dark:bg-meta-4">
                   <th className="py-3 px-4">Evaluación</th>
                   <th className="py-3 px-4">Grupo</th>
-                  <th className="py-3 px-4">Rúbrica</th>
+                  <th className="py-3 px-4 text-center">Peso</th>
+                  <th className="py-3 px-4 text-center">Rúbrica</th>
                   <th className="py-3 px-4 text-center">Acciones</th>
                 </tr>
               </thead>
               <tbody>
-                {evaluations.map((evaluation) => {
-                  const locked =
-                    !!evaluation.rubric_id && evaluationHasGrades(evaluation);
-                  return (
-                    <tr
-                      key={evaluation.id}
-                      className="border-b border-stroke dark:border-strokedark"
-                    >
-                      <td className="py-4 px-4 font-medium text-black dark:text-white">
-                        {evaluation.name}
-                        <span className="block text-xs text-gray-500">
-                          Peso: {evaluation.weight}%
-                        </span>
-                      </td>
-                      <td className="py-4 px-4 text-gray-600 dark:text-gray-300">
-                        {evaluation.group_id}
-                      </td>
-                      <td className="py-4 px-4">
-                        {locked ? (
-                          <span className="text-xs text-gray-500">
-                            {rubricTitleById.get(String(evaluation.rubric_id)) ?? evaluation.rubric_id}
-                            <span className="block text-amber-600">Con notas — no editable</span>
-                          </span>
-                        ) : (
-                          <select
-                            className="w-full max-w-xs rounded border border-stroke py-1.5 px-2 text-sm dark:bg-form-input dark:border-strokedark"
-                            value={evaluation.rubric_id ?? ''}
-                            onChange={(e) =>
-                              handleAssociateRubric(String(evaluation.id), e.target.value)
-                            }
-                          >
-                            <option value="" disabled>
-                              {evaluation.rubric_id ? 'Cambiar rúbrica...' : 'Asociar rúbrica...'}
-                            </option>
-                            {publicRubrics.map((r) => (
-                              <option key={r.id} value={String(r.id)}>
-                                {r.title}
-                              </option>
-                            ))}
-                          </select>
+                {sorted.map((evaluation) => (
+                  <tr
+                    key={evaluation.id}
+                    className="border-b border-stroke dark:border-strokedark"
+                  >
+                    <td className="py-4 px-4 font-medium text-black dark:text-white">
+                      {evaluation.name}
+                    </td>
+                    <td className="py-4 px-4 text-gray-600">{evaluation.group_id}</td>
+                    <td className="py-4 px-4 text-center">{evaluation.weight}%</td>
+                    <td className="py-4 px-4 text-center">
+                      {evaluation.rubric_id ? (
+                        <span className="text-[#16a34a] text-xs font-medium">Asociada</span>
+                      ) : (
+                        <span className="text-amber-600 text-xs">Sin rúbrica</span>
+                      )}
+                    </td>
+                    <td className="py-4 px-4">
+                      <div className="flex flex-wrap justify-center gap-2">
+                        <Link
+                          to={`/evaluaciones/${evaluation.id}/asociar-rubrica`}
+                          className="rounded border border-stroke px-2 py-1 text-xs hover:bg-gray-50 dark:border-strokedark"
+                        >
+                          Asociar rúbrica
+                        </Link>
+                        {evaluation.rubric_id && (
+                          <EvaluationGradeLink evaluation={evaluation} />
                         )}
-                      </td>
-                      <td className="py-4 px-4 text-center">
-                        {evaluation.rubric_id ? (
+                        {evaluation.group_id && (
                           <Link
-                            to={`/teachers/evaluations/${evaluation.id}/grade`}
-                            className="inline-flex rounded bg-primary py-1.5 px-3 text-xs text-white hover:bg-opacity-90"
+                            to={`/calificaciones/${evaluation.group_id}/nota-final`}
+                            className="rounded bg-[#6366f1]/10 px-2 py-1 text-xs text-[#6366f1] hover:underline"
                           >
-                            Calificar (CU-11)
+                            Nota final grupo
                           </Link>
-                        ) : (
-                          <span className="text-xs text-gray-400">Asocia una rúbrica</span>
                         )}
-                      </td>
-                    </tr>
-                  );
-                })}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
@@ -179,5 +119,31 @@ const ListEvaluations: React.FC = () => {
     </>
   );
 };
+
+function EvaluationGradeLink({ evaluation }: { evaluation: Evaluation }) {
+  const [firstEnrollment, setFirstEnrollment] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!evaluation.group_id) return;
+    enrollmentService.getEnrollments(String(evaluation.group_id)).then((list) => {
+      if (list[0]?.id) setFirstEnrollment(String(list[0].id));
+    });
+  }, [evaluation.group_id]);
+
+  if (!firstEnrollment) {
+    return (
+      <span className="text-xs text-gray-400">Sin inscripciones</span>
+    );
+  }
+
+  return (
+    <Link
+      to={`/evaluaciones/${evaluation.id}/calificar/${firstEnrollment}`}
+      className="rounded bg-[#6366f1] px-2 py-1 text-xs text-white hover:bg-opacity-90"
+    >
+      Calificar
+    </Link>
+  );
+}
 
 export default ListEvaluations;

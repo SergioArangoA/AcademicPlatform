@@ -29,6 +29,14 @@ const Header = (props: {
     pageTitle = 'Biblioteca';
   } else if (pathname.includes('/teachers/scales')) {
     pageTitle = 'Escalas';
+  } else if (pathname.includes('/evaluaciones')) {
+    pageTitle = pathname.includes('asociar-rubrica')
+      ? 'Asociar rúbrica'
+      : pathname.includes('calificar')
+        ? 'Calificar estudiante'
+        : 'Evaluaciones';
+  } else if (pathname.includes('/calificaciones') && pathname.includes('nota-final')) {
+    pageTitle = 'Nota final del grupo';
   } else if (pathname.includes('/teachers/dashboard') || pathname === '/') {
     pageTitle = 'Inicio';
   }

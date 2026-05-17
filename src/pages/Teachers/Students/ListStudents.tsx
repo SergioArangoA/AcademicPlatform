@@ -16,12 +16,21 @@ const TeacherStudentList = () => {
     const [students, setStudents] = useState<TeacherStudentRow[]>([]);
     const [filters, setFilters] = useState<FilterValues>(initialFilters);
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState<string | null>(null);
 
     const loadData = useCallback(async () => {
         setLoading(true);
-        const rows = await loadTeacherStudentsData(user);
-        setStudents(rows);
-        setLoading(false);
+        setLoadError(null);
+        try {
+            const { rows, error } = await loadTeacherStudentsData(user);
+            setStudents(rows);
+            setLoadError(error);
+        } catch {
+            setLoadError('No se pudieron cargar los estudiantes.');
+            setStudents([]);
+        } finally {
+            setLoading(false);
+        }
     }, [user]);
 
     useEffect(() => {
@@ -55,7 +64,6 @@ const TeacherStudentList = () => {
                 options: [
                     { value: 'all', label: 'Todas' },
                     { value: 'Activa', label: 'Activas' },
-                    { value: 'ACTIVE', label: 'ACTIVE' },
                 ],
             },
         ],
@@ -92,24 +100,36 @@ const TeacherStudentList = () => {
         <>
             <Breadcrumb pageName="Mis estudiantes" />
 
-            <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
-                Estudiantes inscritos en tus grupos asignados.
-            </p>
+            <div className="flex flex-col gap-4">
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Estudiantes inscritos en tus grupos asignados.
+                </p>
 
-            <FilterBar
-                filters={filterConfigs}
-                values={filters}
-                onChange={(key, value) => setFilters((c) => ({ ...c, [key]: value }))}
-                onClear={() => setFilters(initialFilters)}
-            />
+                {loadError && (
+                    <p className="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-200">
+                        {loadError}
+                    </p>
+                )}
 
-            {loading ? (
-                <p className="mt-4 text-gray-500">Cargando estudiantes...</p>
-            ) : tableData.length === 0 ? (
-                <p className="mt-4 text-gray-500">No hay estudiantes en tus grupos o no se pudo cargar la información.</p>
-            ) : (
-                <GenericTable data={tableData} columns={columns} actions={[]} onAction={() => {}} />
-            )}
+                {!loadError && !loading && students.length === 0 && (
+                    <p className="rounded-lg border border-stroke bg-white px-4 py-3 text-sm text-gray-600 dark:border-strokedark dark:bg-boxdark dark:text-gray-300">
+                        No hay estudiantes en tus grupos o aún no tienes grupos asignados.
+                    </p>
+                )}
+
+                <FilterBar
+                    filters={filterConfigs}
+                    values={filters}
+                    onChange={(key, value) => setFilters((c) => ({ ...c, [key]: value }))}
+                    onClear={() => setFilters(initialFilters)}
+                />
+
+                {loading ? (
+                    <p className="mt-4 text-gray-500">Cargando estudiantes...</p>
+                ) : (
+                    <GenericTable data={tableData} columns={columns} actions={[]} onAction={() => {}} />
+                )}
+            </div>
         </>
     );
 };

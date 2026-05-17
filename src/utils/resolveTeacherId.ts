@@ -27,7 +27,8 @@ export async function resolveTeacherRecord(user: AuthUser): Promise<Teacher | nu
   const authUserId = getAuthUserId(user);
   if (!authUserId && !user) return null;
 
-  const teachers = await teacherService.searchTeacher('');
+  const teachersRaw = await teacherService.searchTeacher('');
+  const teachers = Array.isArray(teachersRaw) ? teachersRaw : [];
   const lookup = buildTeacherLookup(teachers);
   const u = user as AppUser;
 
