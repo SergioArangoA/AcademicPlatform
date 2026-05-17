@@ -1,15 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import GenericTable from "../../components/GenericTable"; // Ajusta la ruta
-import FilterBar, { FilterValues } from "../../components/FilterBar";
-import { userPService } from "../../services/userPService";
-import { transformUsersForList } from "../../utils/userTransformers";
-import { UserResponse } from "../../models/Users/UserResponse";
-import { UserForList } from "../../models/Users/UserForList";
-import { Registration } from "../../models/Registration";
-import { registrationService } from "../../services/registrationService";
-import { Career } from "../../models/Careers/Career";
-import { careerService } from "../../services/careerService";
+import GenericTable from "../../../components/GenericTable"; // Ajusta la ruta
+import FilterBar, { FilterValues } from "../../../components/FilterBar";
+import { userPService } from "../../../services/userPService";
+import { transformUsersForList } from "../../../utils/userTransformers";
+import { UserResponse } from "../../../models/Users/UserResponse";
+import { UserForList } from "../../../models/Users/UserForList";
+import { Registration } from "../../../models/Registration";
+import { registrationService } from "../../../services/registrationService";
+import { Career } from "../../../models/Careers/Career";
+import { careerService } from "../../../services/careerService";
 import Swal from "sweetalert2";
 
 const initialFilterValues: FilterValues = {
