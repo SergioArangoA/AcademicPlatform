@@ -33,6 +33,7 @@ const ManageUserEnrollments = () => {
     const [registrationList, setRegistrations] = useState<Registration[] | null>(null);
     const [groups, setGroups] = useState<GroupForList[] | null>(null);
     const [subjects, setSubjects] = useState<Subject[] | null>(null);
+    const [selectedGroups, setSelectedGroups] = useState<GroupForList[]>([]);
 
     useEffect(() => {
         fetchData();
@@ -42,7 +43,6 @@ const ManageUserEnrollments = () => {
         const careersData = await careerService.getCareers();
         const semestersData = await semesterService.getSemesters();
         const currentSemester = semestersData.find((sem)=>sem.is_active);
-        console.log(currentSemester)
         const usersData = await userService.getUsers();
         const teachers = usersData.filter((us)=>us.role === "TEACHER");
         const rawUser: UserResponse | null = await userPService.getUserById(id);
@@ -56,7 +56,7 @@ const ManageUserEnrollments = () => {
         const subjectsData = await subjectService.getSubjects();
         const studyPlans = await studyplanService.getStudyPlan();
 
-        console.log(groupsData);
+        console.log(studyPlans);
 
         // Build a map of subject_id -> study plan for efficient lookup
         const subjectToStudyPlan = new Map<string, any>();
@@ -73,26 +73,28 @@ const ManageUserEnrollments = () => {
             }
         }
 
-        console.log(activeGroups);
-
         const formattedGroups: GroupForList[] = activeGroups.map((gr) => {
-            const teacher = teachers.find((tea) => tea.id === gr.teacher_id);
+            const teacher = teachers.find((tea) => tea.profile.id === gr.teacher_id);
             const subject = subjectsData.find((sub) => String(sub.id) === String(gr.subject_id));
             
             // Find study plan that contains this subject
             const studyPlan = subjectToStudyPlan.get(String(gr.subject_id));
             const careerId = studyPlan?.career_id ?? "";
+            console.log(careerId);
+            console.log(careersData);
             const career = careersData.find((car) => car.id === careerId);
+            console.log(career);
+            console.log(career?.name);
 
             return {
                 id: gr.id,
                 name: gr.name,
-                teacher: teacher ? `${teacher.first_name} ${teacher.last_name}` : "Sin asignar",
+                teacher: teacher ? `${teacher.profile.first_name} ${teacher.profile.last_name}` : "Sin asignar",
                 subject: subject?.name ?? "Sin asignar",
                 group_code: gr.group_code ?? "",
-                career: career?.code ?? "",
+                career: career?.name,
                 career_id: careerId ?? "",
-                capacity: gr.capacity ?? 0,
+                capacity: `${gr.capacity}(${gr.available_capacity})`,
                 enrolled_count: gr.enrolled_count ?? 0,
                 credits: subject?.credits,
             };
@@ -105,15 +107,11 @@ const ManageUserEnrollments = () => {
         setGroups(formattedGroups);
         setSubjects(subjectsData);
     };
-    const selectedGroups: GroupForList[] = [];
     const columns = [
-        { key: "name", label: "Nombre" },
-        { key: "group_code", label: "Código" },
-        { key: "career_name", label: "Carrera" },
+        { key: "career", label: "Carrera" },
         { key: "teacher", label: "Docente" },
         { key: "subject", label: "Asignatura" },
-        { key: "enrolled_count", label: "Inscritos" },
-        { key: "capacity", label: "Capacidad"},
+        { key: "capacity", label: "Capacidad(disponibles)"},
         { key: "credits", label: "Créditos"},
     ];
 
@@ -124,13 +122,24 @@ const ManageUserEnrollments = () => {
         {name: "deselect", label: "Deseleccionar"}
     ];
 
-    const handleAction = async (name: string, item: Record<string, any>) => {
+    const handleAction = (name: string, item: GroupForList) => {
         switch (name) {
             case "select":
-                selectedGroups.push(groups.drop(item));
+                setSelectedGroups(prev => [...prev, item]);
+
+                setGroups(prev =>
+                    prev.filter(g => g.id !== item.id)
+                );
                 break;
+
             case "deselect":
-                groups?.push(selectedGroups.drop(item));
+                setGroups(prev => [...prev, item]);
+
+                setSelectedGroups(prev =>
+                    prev.filter(g => g.id !== item.id)
+                );
+                break;
+
             default:
                 console.log(`Acción desconocida: ${name}`);
         }
