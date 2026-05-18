@@ -35,14 +35,14 @@ export function getSubjectFinalGradesStatus(
 
   let pendingCount = 0;
   for (const ev of subjectEvaluations) {
-    const missing = ev.students_total - ev.students_graded_sent;
+    const missing = ev.students_total - ev.students_graded;
     if (missing > 0) pendingCount += missing;
   }
 
   if (pendingCount > 0) {
     return {
       canRegister: false,
-      message: `Faltan ${pendingCount} calificación(es) por guardar en esta asignatura.`,
+      message: `Faltan ${pendingCount} calificación(es) en borrador (guardar) en esta asignatura.`,
       subjectEvaluations,
       pendingCount,
     };
@@ -50,7 +50,8 @@ export function getSubjectFinalGradesStatus(
 
   return {
     canRegister: true,
-    message: 'Todas las evaluaciones están calificadas. Puedes registrar las notas finales.',
+    message:
+      'Todas las calificaciones están en borrador. Puedes registrar las notas finales (pasarán a enviadas).',
     subjectEvaluations,
     pendingCount: 0,
   };

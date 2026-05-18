@@ -7,7 +7,7 @@ import { useSearchParams } from 'react-router-dom';
 import Breadcrumb from '../../../components/Breadcrumb';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../../context/AuthContext';
-import { gradeService, getGradeErrorMessage } from '../../../services/gradeService';
+import { gradeService, getGradeErrorMessage, isGradeRecorded } from '../../../services/gradeService';
 import { evaluationService } from '../../../services/evaluationService';
 import { enrollmentService } from '../../../services/enrollmentService';
 import { semesterService } from '../../../services/semesterService';
@@ -121,7 +121,7 @@ const FinalGrades: React.FC = () => {
           (g) =>
             String(g.enrollment_id) === enrollment.id &&
             String(g.rubric_id) === String(ev.rubric_id) &&
-            g.status === 'SENT'
+            isGradeRecorded(g.status)
         );
         if (grade && grade.final_score != null) {
           graded += 1;
@@ -260,8 +260,8 @@ const FinalGrades: React.FC = () => {
         ) : (
           <>
             <p className="text-sm text-gray-500 mb-4">
-              Nota consolidada = Σ (nota evaluación × peso evaluación / 100) solo con calificaciones
-              enviadas (SENT).
+              Nota consolidada = Σ (nota evaluación × peso / 100) con calificaciones en borrador.
+              Al registrar, pasan a estado enviado (SENT) y quedan bloqueadas.
             </p>
             <table className="w-full table-auto text-sm">
               <thead>

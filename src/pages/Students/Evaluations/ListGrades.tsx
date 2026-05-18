@@ -12,7 +12,8 @@
  */
 import React, { useEffect, useState } from "react";
 import { Grade } from "../../../models/Evaluation/Grade";
-import { GradeDetails } from "../../../models/Evaluation/GradeDetails";
+import { GradeDetail } from "../../../models/Evaluation/GradeDetails";
+import { isGradeSent } from "../../../services/gradeService";
 import { Rubric } from "../../../models/Evaluation/Rubric";
 import { Subject } from "../../../models/Subjects/Subject";
 import { Group } from "../../../models/Groups/Group";
@@ -49,14 +50,14 @@ const Grades: React.FC = () => {
         fetchData();
     }, []);
 
-    const normalizeDetails = (details: any): GradeDetails[] => {
+    const normalizeDetails = (details: any): GradeDetail[] => {
         if (!details) return [];
         if (Array.isArray(details)) return details;
         return [details];
     };
 
     const calculateGradeValue = (
-        details: GradeDetails[],
+        details: GradeDetail[],
         scaleMap: Map<string, Scale>,
         criterionMap: Map<string, Criterion>
     ) => {
@@ -107,7 +108,9 @@ const Grades: React.FC = () => {
             criteria.map((criterion) => [String(criterion.id), criterion])
         );
 
-        const rows: GradeRow[] = grades.map((grade) => {
+        const rows: GradeRow[] = grades
+            .filter((grade) => isGradeSent(grade.status))
+            .map((grade) => {
             // Cadena correcta según backend: nota → rúbrica → evaluación → asignatura/grupo.
             const rubric = rubricMap.get(String(grade.rubric_id));
             const evaluation = evaluations.find(

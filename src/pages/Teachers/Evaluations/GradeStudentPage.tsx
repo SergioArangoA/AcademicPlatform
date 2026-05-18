@@ -223,7 +223,7 @@ const GradeStudentPage = () => {
             const payload = {
                 enrollment_id: currentEnrollment.enrollmentId,
                 evaluation_id: evaluacionId,
-                status: 'SENT' as const,
+                status: 'DRAFT' as const,
                 details: Object.values(selections)
                     .filter((s) => s.scaleId)
                     .map((s) => ({
@@ -232,7 +232,7 @@ const GradeStudentPage = () => {
                     })),
             };
             await gradeService.saveGrade(payload);
-            toast.success('Calificación guardada.');
+            toast.success('Calificación guardada en borrador.');
             navigate('/evaluaciones');
         } catch (err) {
             toast.error(getGradeErrorMessage(err));

@@ -104,7 +104,7 @@ const ListEvaluations: React.FC = () => {
   const handleDeleteEvaluation = async (evaluation: TeacherEvaluationRow) => {
     if (!evaluation.id) return;
 
-    const hasGrades = evaluation.students_graded_sent > 0;
+    const hasGrades = evaluation.students_graded > 0;
     const result = await Swal.fire({
       title: '¿Eliminar evaluación?',
       html: hasGrades
@@ -319,7 +319,11 @@ const ListEvaluations: React.FC = () => {
                       </td>
                       <td className="py-4 px-4 text-center text-xs text-gray-600">
                         {evaluation.rubric_id
-                          ? `${evaluation.students_graded_sent}/${evaluation.students_total}`
+                          ? `${evaluation.students_graded}/${evaluation.students_total}${
+                              evaluation.students_graded_sent > 0
+                                ? ` (${evaluation.students_graded_sent} env.)`
+                                : ''
+                            }`
                           : '—'}
                       </td>
                       <td className="py-4 px-4">

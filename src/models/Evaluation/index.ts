@@ -3,5 +3,5 @@ export type { Rubric } from './Rubric';
 export type { Evaluation } from './Evaluation';
 export type { Criterion } from './Criterion';
 export type { Scale } from './Scale';
-export type { Grade, GradeDetail } from './Grade';
-export type { GradeDetails } from './GradeDetails';
+export type { Grade, GradeStatus } from './Grade';
+export type { GradeDetail, GradeDetails } from './GradeDetails';

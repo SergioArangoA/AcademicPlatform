@@ -14,7 +14,7 @@ import { Grade } from '../../../models/Evaluation/Grade';
 import { groupService } from '../../../services/groupService';
 import { evaluationService } from '../../../services/evaluationService';
 import { enrollmentService } from '../../../services/enrollmentService';
-import { gradeService, getGradeErrorMessage } from '../../../services/gradeService';
+import { gradeService, getGradeErrorMessage, isGradeRecorded } from '../../../services/gradeService';
 import { semesterService } from '../../../services/semesterService';
 import { subjectService } from '../../../services/subjectService';
 import { userPService } from '../../../services/userPService';
@@ -92,7 +92,7 @@ const RegisterFinalGradePage = () => {
                             String(g.enrollment_id) === String(enr.id) &&
                             ev.rubric_id &&
                             String(g.rubric_id) === String(ev.rubric_id) &&
-                            g.status === 'SENT'
+                            isGradeRecorded(g.status)
                     );
                     const raw =
                         grade?.final_score != null ? Number(grade.final_score) : null;

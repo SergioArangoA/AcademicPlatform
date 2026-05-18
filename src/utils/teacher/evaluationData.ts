@@ -6,7 +6,7 @@ import { Grade } from '../../models/Evaluation/Grade';
 import { Group } from '../../models/Groups/Group';
 import { Subject } from '../../models/Subjects/Subject';
 import { evaluationService } from '../../services/evaluationService';
-import { gradeService } from '../../services/gradeService';
+import { gradeService, isGradeRecorded, isGradeSent } from '../../services/gradeService';
 import { enrollmentService } from '../../services/enrollmentService';
 import { groupService } from '../../services/groupService';
 import { subjectService } from '../../services/subjectService';
@@ -20,6 +20,9 @@ export interface TeacherEvaluationRow extends Evaluation {
   group_label: string;
   subject_label: string;
   students_total: number;
+  /** Con nota guardada (DRAFT o SENT). */
+  students_graded: number;
+  /** Solo calificaciones oficiales (SENT). */
   students_graded_sent: number;
 }
 
@@ -85,16 +88,17 @@ export async function loadTeacherEvaluationsData(user: AuthUser): Promise<{
         const enrollments = await enrollmentService.getEnrollments(String(ev.group_id));
         const active = enrollments.filter((e) => e.status === 'ACTIVE' || e.status === 'Activa');
 
+        let graded = 0;
         let sent = 0;
         if (ev.rubric_id) {
           for (const enr of active) {
             const grade = (allGrades as Grade[]).find(
               (g) =>
                 String(g.enrollment_id) === String(enr.id) &&
-                String(g.rubric_id) === String(ev.rubric_id) &&
-                g.status === 'SENT'
+                String(g.rubric_id) === String(ev.rubric_id)
             );
-            if (grade) sent += 1;
+            if (grade && isGradeRecorded(grade.status)) graded += 1;
+            if (grade && isGradeSent(grade.status)) sent += 1;
           }
         }
 
@@ -103,6 +107,7 @@ export async function loadTeacherEvaluationsData(user: AuthUser): Promise<{
           group_label: group?.name ?? group?.group_code ?? String(ev.group_id),
           subject_label: subject ? `${subject.code} — ${subject.name}` : '—',
           students_total: active.length,
+          students_graded: graded,
           students_graded_sent: sent,
         };
       })
