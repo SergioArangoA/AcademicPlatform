@@ -9,6 +9,7 @@ import { RootState } from '../../store/store';
 import ECommerce from './ECommerce';
 import TeacherDashboard from './TeacherDashboard';
 import StudentDashboard from './StudentDashboard';
+import AdminDashboard from './AdminDashboard';
 
 const DashboardIndex: React.FC = () => {
   const user = useSelector((state: RootState) => state.user.user);
@@ -19,6 +20,10 @@ const DashboardIndex: React.FC = () => {
   
   if (user?.role === 'STUDENT') {
     return <StudentDashboard />;
+  }
+
+  if(user?.role === 'ADMIN'){
+    return <AdminDashboard />
   }
 
   return <ECommerce />;
