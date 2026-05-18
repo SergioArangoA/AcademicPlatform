@@ -73,14 +73,6 @@ const EvaluationStudentsPage = () => {
             >
               ← Evaluaciones
             </Link>
-            {evaluacionId && (
-              <Link
-                to={`/evaluaciones/${evaluacionId}/asociar-rubrica`}
-                className="rounded border border-stroke px-3 py-2 text-sm text-[#6366f1] hover:bg-gray-50 dark:border-strokedark"
-              >
-                Asociar rúbrica
-              </Link>
-            )}
           </div>
         </div>
 

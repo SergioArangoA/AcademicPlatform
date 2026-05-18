@@ -32,10 +32,21 @@ export {
   filterGroupsByTeacherMatchIds,
   filterRubricsByTeacherMatchIds,
   filterRubricsForTeacher,
+  filterRubricsVisibleToTeacher,
+  filterRubricsWithoutEvaluation,
+  collectAllLinkedRubricIds,
+  collectRubricIdsFromTeacherEvaluations,
+  collectRubricIdsFromEvaluations,
+  ensureRubricsLoaded,
+  mergeRubricsFromTeacherEvaluations,
+  buildRubricSubjectLabelMap,
+  buildRubricSubjectIdMap,
   getRubricSubjectId,
   filterGroupsAssignedToTeacher,
   filterRubricsAssignedToTeacher,
 } from './filters';
+
+export type { RubricVisibility, RubricWithVisibility, RubricFilterOptions } from './filters';
 
 export { getTeacherProfileId } from '../authUser';
 

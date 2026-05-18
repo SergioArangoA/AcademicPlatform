@@ -88,8 +88,8 @@ const RegisterFinalGradePage = () => {
                     const grade = gradesAll.find(
                         (g: Grade) =>
                             String(g.enrollment_id) === String(enr.id) &&
-                            (String(g.rubric_id) === String(ev.rubric_id) ||
-                                String(g.evaluation_id) === String(ev.id)) &&
+                            ev.rubric_id &&
+                            String(g.rubric_id) === String(ev.rubric_id) &&
                             g.status === 'SENT'
                     );
                     const raw =

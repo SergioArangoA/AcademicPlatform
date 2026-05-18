@@ -11,7 +11,6 @@ import {
     ChevronRight,
     ExternalLink,
     Loader2,
-    Rocket,
     Save,
 } from 'lucide-react';
 import EvaluationFlowLayout from '../../../components/evaluations/flow/EvaluationFlowLayout';
@@ -71,24 +70,17 @@ const GradeStudentPage = () => {
     const [currentEnrollment, setCurrentEnrollment] = useState<EnrollmentStudent | null>(null);
     const [selections, setSelections] = useState<Record<string, ScaleSelection>>({});
     const [existingGradeId, setExistingGradeId] = useState<string | null>(null);
-    const [gradeStatus, setGradeStatus] = useState<string>('');
     const [previewOpen, setPreviewOpen] = useState(false);
 
     const loadGradeForEnrollment = useCallback(
         async (enrollmentId: string, rubricId: string) => {
-            const existing = await gradeService.findGradeForEnrollment(
-                enrollmentId,
-                rubricId,
-                evaluacionId
-            );
+            const existing = await gradeService.findGradeForEnrollment(enrollmentId, rubricId);
             if (!existing) {
                 setSelections({});
                 setExistingGradeId(null);
-                setGradeStatus('');
                 return;
             }
             setExistingGradeId(existing.id ? String(existing.id) : null);
-            setGradeStatus(existing.status ?? '');
             const next: Record<string, ScaleSelection> = {};
             for (const detail of existing.details ?? []) {
                 const scale = scales.find((s) => String(s.id) === String(detail.scale_id));
@@ -101,7 +93,7 @@ const GradeStudentPage = () => {
             }
             setSelections(next);
         },
-        [evaluacionId, scales]
+        [scales]
     );
 
     const loadPage = useCallback(async () => {
@@ -217,10 +209,10 @@ const GradeStudentPage = () => {
         }));
     };
 
-    const save = async (send: boolean) => {
+    const save = async () => {
         if (!currentEnrollment || !evaluation?.rubric_id || !evaluacionId) return;
-        if (send && !allComplete) {
-            toast.error('Selecciona un nivel de desempeño para todos los criterios.');
+        if (!allComplete) {
+            toast.error('Selecciona un nivel de desempeño para todos los criterios antes de guardar.');
             return;
         }
 
@@ -229,9 +221,7 @@ const GradeStudentPage = () => {
             const payload = {
                 enrollment_id: currentEnrollment.enrollmentId,
                 evaluation_id: evaluacionId,
-                rubric_id: String(evaluation.rubric_id),
-                status: (send ? 'SENT' : 'DRAFT') as 'SENT' | 'DRAFT',
-                final_score: finalScore,
+                status: 'SENT' as const,
                 details: Object.values(selections)
                     .filter((s) => s.scaleId)
                     .map((s) => ({
@@ -239,14 +229,9 @@ const GradeStudentPage = () => {
                         comment: s.comment?.trim() || undefined,
                     })),
             };
-            const saved = await gradeService.saveGrade(payload, existingGradeId ?? undefined);
-            setExistingGradeId(saved.id ? String(saved.id) : existingGradeId);
-            setGradeStatus(saved.status ?? '');
-            toast.success(
-                send
-                    ? 'Calificación enviada. El estudiante puede consultarla.'
-                    : 'Borrador guardado sin notificar al estudiante.'
-            );
+            await gradeService.saveGrade(payload);
+            toast.success('Calificación guardada.');
+            navigate('/evaluaciones');
         } catch (err) {
             toast.error(getGradeErrorMessage(err));
         } finally {
@@ -277,9 +262,8 @@ const GradeStudentPage = () => {
             <EvaluationFlowLayout
                 pageTitle="Calificar estudiante"
                 steps={[
-                    { label: 'Seleccionar estudiante', done: true },
-                    { label: 'Evaluar criterios', active: true },
-                    { label: 'Revisar y enviar' },
+                    { label: 'Estudiante', done: true },
+                    { label: 'Calificar criterios', active: true },
                 ]}
                 main={
                     <div className="space-y-5">
@@ -578,15 +562,6 @@ const GradeStudentPage = () => {
                             <p className="mt-1 text-sm text-gray-500">
                                 Ponderación evaluación: {evaluation.weight}%
                             </p>
-                            <span
-                                className={`mt-2 inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
-                                    gradeStatus === 'SENT'
-                                        ? 'bg-[#dcfce7] text-[#16a34a]'
-                                        : 'bg-gray-100 text-gray-600'
-                                }`}
-                            >
-                                {gradeStatus === 'SENT' ? 'Enviada' : 'Borrador'}
-                            </span>
                         </SideCard>
 
                         <SideCard title="Detalle del cálculo">
@@ -614,73 +589,37 @@ const GradeStudentPage = () => {
                             </ul>
                         </SideCard>
 
-                        <SideCard title="💡 Incluye CU-12" className="border-amber-200 bg-amber-50/50">
-                            <p className="text-xs text-amber-900">
-                                Revisa las notas del grupo en calificaciones finales.
-                            </p>
-                            <Link
-                                to={`/calificaciones/${evaluation.group_id}/nota-final`}
-                                className="mt-2 inline-block text-xs font-medium text-[#6366f1] hover:underline"
-                            >
-                                Ir a calificaciones →
-                            </Link>
-                        </SideCard>
                     </>
                 }
                 footer={
                     <>
                         <button
                             type="button"
-                            onClick={() => navigate('/evaluaciones')}
+                            onClick={() => navigate(`/evaluaciones/${evaluacionId}/estudiantes`)}
                             className="text-sm text-gray-600"
                         >
-                            Cancelar
+                            Volver a estudiantes
                         </button>
-                        <div className="flex flex-wrap gap-3">
-                            <div className="text-right">
-                                <button
-                                    type="button"
-                                    disabled={saving}
-                                    onClick={() => void save(false)}
-                                    className="inline-flex items-center gap-2 rounded-lg border border-stroke px-4 py-2 text-sm dark:border-strokedark"
-                                >
-                                    {saving ? (
-                                        <Loader2 className="h-4 w-4 animate-spin" />
-                                    ) : (
-                                        <Save className="h-4 w-4" />
-                                    )}
-                                    Guardar borrador
-                                </button>
-                                <p className="text-[10px] text-gray-500">
-                                    Se guarda sin notificar al estudiante.
-                                </p>
-                            </div>
-                            <div className="text-right">
-                                <button
-                                    type="button"
-                                    disabled={saving || !allComplete}
-                                    onClick={() => void save(true)}
-                                    className="inline-flex items-center gap-2 rounded-lg bg-[#6366f1] px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-                                >
-                                    {saving ? (
-                                        <Loader2 className="h-4 w-4 animate-spin" />
-                                    ) : (
-                                        <Rocket className="h-4 w-4" />
-                                    )}
-                                    Enviar calificación
-                                </button>
-                                <p className="text-[10px] text-gray-500">
-                                    Calcula la nota y notifica al estudiante.
-                                </p>
-                            </div>
-                        </div>
+                        <button
+                            type="button"
+                            disabled={saving || !allComplete}
+                            onClick={() => void save()}
+                            className="inline-flex items-center gap-2 rounded-lg bg-[#6366f1] px-5 py-2 text-sm font-medium text-white disabled:opacity-50"
+                        >
+                            {saving ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                                <Save className="h-4 w-4" />
+                            )}
+                            Guardar
+                        </button>
                     </>
                 }
                 bottomBanners={
                     !allComplete ? (
                         <ErrorBanner
-                            title="No se puede enviar la calificación"
-                            message="Debes seleccionar un nivel de desempeño (escala) para todos los criterios."
+                            title="Completa la calificación"
+                            message="Selecciona un nivel de desempeño para cada criterio antes de guardar."
                         />
                     ) : undefined
                 }

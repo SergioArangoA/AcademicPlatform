@@ -1,13 +1,23 @@
 /**
- * Filtros para grupos y rúbricas del docente.
- * Rúbricas: por asignatura (subject_id), no por docente — cualquier profe de la misma asignatura las ve.
+ * Filtros para grupos y rúbricas del docente (datos del API, sin localStorage).
  */
 import { Group } from '../../models/Groups/Group';
 import { Rubric } from '../../models/Evaluation/Rubric';
-import {
-    collectRubricIdsForTeacherSubjects,
-    enrichRubricWithOwnership,
-} from '../rubricOwnershipStorage';
+
+export type { RubricFilterOptions } from './rubricFilters';
+export {
+    filterRubricsForTeacher,
+    filterRubricsVisibleToTeacher,
+    filterRubricsWithoutEvaluation,
+    collectRubricIdsFromTeacherEvaluations,
+    collectAllLinkedRubricIds,
+    collectRubricIdsFromEvaluations,
+    buildRubricSubjectLabelMap,
+    buildRubricSubjectIdMap,
+    ensureRubricsLoaded,
+    mergeRubricsFromTeacherEvaluations,
+} from './rubricFilters';
+export type { RubricVisibility, RubricWithVisibility } from './rubricFilters';
 
 type GroupWithTeacherRef = Group & {
   teacherId?: string | number | null;
@@ -32,23 +42,17 @@ export function filterGroupsByTeacherMatchIds<T extends Group>(
   });
 }
 
-type RubricWithTeacherRef = Rubric & {
-  teacherId?: string | number | null;
-  teacher?: { id?: string | number | null };
-};
-
-export function getRubricTeacherId(rubric: Rubric): string | null {
-  const r = rubric as RubricWithTeacherRef;
-  const raw = rubric.teacher_id ?? r.teacherId ?? r.teacher?.id;
-  if (raw == null || raw === '') return null;
-  return String(raw);
+/** @deprecated Rubric no tiene teacher_id en el API. */
+export function getRubricTeacherId(_rubric: Rubric): string | null {
+  return null;
 }
 
-export function getRubricSubjectId(rubric: Rubric): string | null {
-  if (rubric.subject_id == null || rubric.subject_id === '') return null;
-  return String(rubric.subject_id);
+/** @deprecated La asignatura no viene en Rubric; usar evaluación → grupo. */
+export function getRubricSubjectId(_rubric: Rubric): string | null {
+  return null;
 }
 
+/** @deprecated El API no expone teacher_id en rubrics; usar filterRubricsForTeacher */
 export function filterRubricsByTeacherMatchIds<T extends Rubric>(
   rubrics: T[],
   matchIds: Set<string>
@@ -60,36 +64,7 @@ export function filterRubricsByTeacherMatchIds<T extends Rubric>(
   });
 }
 
-export type RubricFilterOptions = {
-  publicOnly?: boolean;
-  evaluations?: Array<{ rubric_id?: string | null; subject_id?: string | number | null }>;
-};
-
-/**
- * Rúbricas de las asignaturas que imparte el docente (grupos asignados).
- * Incluye rúbricas creadas por otros docentes de la misma asignatura.
- */
-export function filterRubricsForTeacher<T extends Rubric>(
-  rubrics: T[],
-  _teacherMatchIds: Set<string>,
-  subjectIds: Set<string>,
-  options?: RubricFilterOptions
-): T[] {
-  if (subjectIds.size === 0) return [];
-
-  const linkedIds = collectRubricIdsForTeacherSubjects(subjectIds, options?.evaluations);
-
-  return rubrics
-    .map((rubric) => enrichRubricWithOwnership(rubric))
-    .filter((rubric) => {
-      const rubricId = rubric.id != null ? String(rubric.id) : '';
-      if (!rubricId || !linkedIds.has(rubricId)) return false;
-      if (options?.publicOnly && !rubric.is_public) return false;
-      return true;
-    });
-}
-
-/** @deprecated Usar filterGroupsByTeacherMatchIds con resolveTeacherMatchIds */
+/** @deprecated Usar filterGroupsByTeacherMatchIds */
 export function filterGroupsAssignedToTeacher<T extends Group>(
   groups: T[],
   matchIds: Set<string>
@@ -97,7 +72,7 @@ export function filterGroupsAssignedToTeacher<T extends Group>(
   return filterGroupsByTeacherMatchIds(groups, matchIds);
 }
 
-/** @deprecated Usar filterRubricsByTeacherMatchIds con resolveTeacherMatchIds */
+/** @deprecated Usar filterRubricsForTeacher */
 export function filterRubricsAssignedToTeacher<T extends Rubric>(
   rubrics: T[],
   matchIds: Set<string>

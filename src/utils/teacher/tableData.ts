@@ -21,8 +21,13 @@ import { scaleService } from '../../services/scaleService';
 import { transformUsersForList } from '../userTransformers';
 import {
   filterGroupsByTeacherMatchIds,
-  filterRubricsForTeacher,
+  filterRubricsVisibleToTeacher,
+  collectRubricIdsFromTeacherEvaluations,
+  ensureRubricsLoaded,
+  buildRubricSubjectLabelMap,
 } from './filters';
+import type { RubricVisibility } from './rubricFilters';
+import { buildGroupSubjectMap } from '../rubricContext';
 import {
   getResolvedTeacherProfileId,
   resolveTeacherMatchIds,
@@ -186,8 +191,14 @@ export async function loadTeacherStudentsData(user: AuthUser): Promise<{
   }
 }
 
-export type TeacherRubricRow = Rubric & { subject_label: string };
+export type TeacherRubricRow = Rubric & {
+  subject_label: string;
+  visibility: RubricVisibility;
+};
 
+/**
+ * Carga rúbricas del docente y aplica filtro mine | shared (rubricFilters.ts).
+ */
 export async function loadTeacherRubricsData(user: AuthUser): Promise<{
   teacherId: string | null;
   rubrics: TeacherRubricRow[];
@@ -207,12 +218,27 @@ export async function loadTeacherRubricsData(user: AuthUser): Promise<{
       };
     }
 
-    const [rubricsRaw, groupsSource, subjectsRaw, evaluationsRaw] = await Promise.all([
-      rubricService.getRubrics(),
-      groupService.getGroups(),
-      subjectService.getSubjects(),
-      evaluationService.getEvaluations(),
-    ]);
+    let rubricsRaw: Rubric[];
+    let groupsSource: Group[];
+    let subjectsRaw: Subject[];
+    let evaluationsRaw: Awaited<ReturnType<typeof evaluationService.getEvaluations>>;
+
+    try {
+      [rubricsRaw, groupsSource, subjectsRaw, evaluationsRaw] = await Promise.all([
+        rubricService.getRubrics(undefined, { throwOnError: true }),
+        groupService.getGroups(),
+        subjectService.getSubjects(),
+        evaluationService.getEvaluations(),
+      ]);
+    } catch {
+      return {
+        teacherId,
+        rubrics: [],
+        error:
+          'No se pudieron cargar las rúbricas desde el servidor. Comprueba que el backend esté activo en http://localhost:5000.',
+      };
+    }
+
     const evaluations = Array.isArray(evaluationsRaw) ? evaluationsRaw : [];
     const subjects = Array.isArray(subjectsRaw) ? subjectsRaw : [];
     const subjectMap = new Map<string, Subject>();
@@ -223,25 +249,43 @@ export async function loadTeacherRubricsData(user: AuthUser): Promise<{
       Array.isArray(groupsSource) ? groupsSource : [],
       matchIds
     );
-    const subjectIds = new Set(
-      assignedGroups
-        .map((g) => (g.subject_id != null ? String(g.subject_id) : ''))
-        .filter(Boolean)
+    const groupIds = new Set(
+      assignedGroups.map((g) => (g.id != null ? String(g.id) : '')).filter(Boolean)
+    );
+    const groupSubjectById = buildGroupSubjectMap(assignedGroups);
+    const subjectLabelById = new Map<string, string>();
+    subjects.forEach((s) => {
+      if (s.id != null) {
+        subjectLabelById.set(String(s.id), `${s.code} — ${s.name}`);
+      }
+    });
+
+    // Rúbricas enlazadas a evaluaciones del docente (pueden no venir en GET /rubrics).
+    const mineIds = collectRubricIdsFromTeacherEvaluations(evaluations, groupIds);
+    const allLoaded = await ensureRubricsLoaded(
+      rubricsRaw,
+      mineIds,
+      (id) => rubricService.getRubricById(id)
     );
 
-    const rubrics = filterRubricsForTeacher(
-      Array.isArray(rubricsRaw) ? rubricsRaw : [],
-      matchIds,
-      subjectIds,
-      { evaluations }
-    ).map((rubric) => {
-      const subject =
-        rubric.subject_id != null ? subjectMap.get(String(rubric.subject_id)) : undefined;
-      return {
-        ...rubric,
-        subject_label: subject ? `${subject.code} — ${subject.name}` : '—',
-      };
-    });
+    const rubricSubjectLabels = buildRubricSubjectLabelMap(
+      evaluations,
+      groupIds,
+      subjectLabelById,
+      groupSubjectById
+    );
+
+    // Aplica reglas mine | shared (ver rubricFilters.ts).
+    const rubrics = filterRubricsVisibleToTeacher(allLoaded, {
+      evaluations,
+      groupIds,
+    }).map((rubric) => ({
+      ...rubric,
+      subject_label:
+        rubric.visibility === 'mine' && rubric.id != null
+          ? rubricSubjectLabels.get(String(rubric.id)) ?? '—'
+          : 'Sin evaluación asociada',
+    }));
 
     return { teacherId, rubrics, error: null };
   } catch (error) {
@@ -280,18 +324,21 @@ export async function loadTeacherScalesData(user: AuthUser): Promise<{
       Array.isArray(groupsSource) ? groupsSource : [],
       matchIds
     );
-    const subjectIds = new Set(
-      assignedGroups
-        .map((g) => (g.subject_id != null ? String(g.subject_id) : ''))
-        .filter(Boolean)
+    const groupIds = new Set(
+      assignedGroups.map((g) => (g.id != null ? String(g.id) : '')).filter(Boolean)
     );
 
-    const rubrics = filterRubricsForTeacher(
+    const mineIds = collectRubricIdsFromTeacherEvaluations(evaluations, groupIds);
+    const allLoaded = await ensureRubricsLoaded(
       Array.isArray(rubricsRaw) ? rubricsRaw : [],
-      matchIds,
-      subjectIds,
-      { evaluations }
+      mineIds,
+      (id) => rubricService.getRubricById(id)
     );
+
+    const rubrics = filterRubricsVisibleToTeacher(allLoaded, {
+      evaluations,
+      groupIds,
+    });
     const rubricIds = new Set(rubrics.map((r) => String(r.id)));
     const rubricMap = new Map<string, Rubric>();
     rubrics.forEach((r) => {

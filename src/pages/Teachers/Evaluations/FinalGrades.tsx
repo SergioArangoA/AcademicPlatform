@@ -3,6 +3,7 @@
  * desde aquí puedo ir a registrar nota final por estudiante (RegisterFinalGradePage).
  */
 import React, { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import Breadcrumb from '../../../components/Breadcrumb';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../../context/AuthContext';
@@ -27,6 +28,8 @@ interface ConsolidatedRow {
 
 const FinalGrades: React.FC = () => {
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
+  const subjectFromUrl = searchParams.get('subject') ?? '';
   const [groupOptions, setGroupOptions] = useState<SubjectGroupOption[]>([]);
   const [selectedGroupId, setSelectedGroupId] = useState('');
   const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
@@ -42,11 +45,23 @@ const FinalGrades: React.FC = () => {
     const init = async () => {
       const options = await loadTeacherGroupOptions(user);
       setGroupOptions(options);
-      if (options[0]) setSelectedGroupId(options[0].group_id);
+      const filtered = subjectFromUrl
+        ? options.filter((o) => String(o.subject_id) === subjectFromUrl)
+        : options;
+      if (filtered[0]) setSelectedGroupId(filtered[0].group_id);
+      else if (options[0]) setSelectedGroupId(options[0].group_id);
       setLoading(false);
     };
     void init();
-  }, [user]);
+  }, [user, subjectFromUrl]);
+
+  const visibleGroupOptions = useMemo(
+    () =>
+      subjectFromUrl
+        ? groupOptions.filter((o) => String(o.subject_id) === subjectFromUrl)
+        : groupOptions,
+    [groupOptions, subjectFromUrl]
+  );
 
   useEffect(() => {
     if (!selectedGroupId) return;
@@ -121,16 +136,16 @@ const FinalGrades: React.FC = () => {
 
     const incomplete = consolidated.filter((r) => r.incomplete);
     if (incomplete.length > 0) {
-      const ok = window.confirm(
-        `E1: ${incomplete.length} estudiante(s) tienen evaluaciones sin calificar enviadas. ¿Registrar notas finales parciales de todos modos?`
+      toast.error(
+        'No se pueden registrar las notas: hay estudiantes o evaluaciones sin calificar.'
       );
-      if (!ok) return;
-    } else {
-      const ok = window.confirm(
-        '¿Confirmar el registro oficial? Las notas quedarán bloqueadas (is_locked).'
-      );
-      if (!ok) return;
+      return;
     }
+
+    const ok = window.confirm(
+      '¿Confirmar el registro oficial de las notas finales de este grupo?'
+    );
+    if (!ok) return;
 
     setRegistering(true);
     try {
@@ -183,7 +198,7 @@ const FinalGrades: React.FC = () => {
               onChange={(e) => setSelectedGroupId(e.target.value)}
               className="mt-1 block rounded border border-stroke py-2 px-3 dark:bg-form-input dark:border-strokedark"
             >
-              {groupOptions.map((o) => (
+              {visibleGroupOptions.map((o) => (
                 <option key={o.group_id} value={o.group_id}>
                   {o.label}
                 </option>
@@ -193,11 +208,21 @@ const FinalGrades: React.FC = () => {
           {!registered && semesterActive && (
             <button
               type="button"
-              disabled={registering || loading}
+              disabled={
+                registering ||
+                loading ||
+                consolidated.some((r) => r.incomplete) ||
+                evaluations.length === 0
+              }
               onClick={handleRegisterOfficial}
+              title={
+                consolidated.some((r) => r.incomplete)
+                  ? 'Califica todas las evaluaciones antes de registrar'
+                  : undefined
+              }
               className="rounded-md bg-success px-5 py-2 text-sm font-medium text-white disabled:opacity-50"
             >
-              {registering ? 'Registrando...' : 'Confirmar registro oficial'}
+              {registering ? 'Registrando...' : 'Registrar notas finales'}
             </button>
           )}
           {registered && (

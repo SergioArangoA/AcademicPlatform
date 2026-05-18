@@ -1,11 +1,13 @@
-export interface Rubric {
+import type { ApiTimestamps } from './common';
+
+/**
+ * Rúbrica — tabla `rubrics` / POST|PUT /api/evaluation/rubrics
+ * Body API: title, description, is_public, is_archived (sin subject_id ni teacher_id).
+ */
+export interface Rubric extends ApiTimestamps {
     id?: string;
-    subject_id?: number | string;
-    teacher_id?: string;
-    title?: string;
-    description?: string;
-    is_public?: boolean;
-    is_archived?: boolean;
-    created_at?: string;
-    updated_at?: string;
+    title: string;
+    description?: string | null;
+    is_public: boolean;
+    is_archived: boolean;
 }

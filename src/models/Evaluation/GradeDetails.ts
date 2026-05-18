@@ -1,6 +1,5 @@
-export interface GradeDetails {
-    scale_id?: number;
-    student_id?: number;
-    score?: number;
-    comment?: string;
-}
+/**
+ * @deprecated Usar `GradeDetail` desde `./Grade`.
+ * Se mantiene el alias para imports legacy (p. ej. ListGrades).
+ */
+export type { GradeDetail as GradeDetails } from './Grade';

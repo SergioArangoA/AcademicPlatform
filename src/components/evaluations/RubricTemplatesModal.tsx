@@ -13,7 +13,7 @@ import { getCriterionWeight } from '../../utils/criterionWeight';
 import { groupService } from '../../services/groupService';
 import {
   filterGroupsByTeacherMatchIds,
-  filterRubricsForTeacher,
+  filterRubricsVisibleToTeacher,
   resolveTeacherMatchIds,
   resolveTeacherRecord,
 } from '../../utils/teacher';
@@ -56,14 +56,17 @@ const RubricTemplatesModal: React.FC<RubricTemplatesModalProps> = ({
         groupService.getGroups(),
         evaluationService.getEvaluations(),
       ]);
-      const subjectIds = new Set(
-        filterGroupsByTeacherMatchIds(groups, matchIds)
-          .map((g) => (g.subject_id != null ? String(g.subject_id) : ''))
-          .filter(Boolean)
+      const assignedGroups = filterGroupsByTeacherMatchIds(groups, matchIds);
+      const groupIds = new Set(
+        assignedGroups.map((g) => (g.id != null ? String(g.id) : '')).filter(Boolean)
       );
       const evaluations = Array.isArray(evaluationsRaw) ? evaluationsRaw : [];
       const data = await rubricService.getRubrics();
-      const mine = filterRubricsForTeacher(data, matchIds, subjectIds, { evaluations });
+      const visible = filterRubricsVisibleToTeacher(data, {
+        evaluations,
+        groupIds,
+      });
+      const mine = visible.filter((r) => !r.is_public);
       setTemplates(mine);
       setLoading(false);
     };

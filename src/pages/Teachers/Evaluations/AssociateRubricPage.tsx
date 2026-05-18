@@ -29,16 +29,21 @@ import {
     resolveTeacherIdForApi,
     getSubjectByIdSafe,
     filterGroupsByTeacherMatchIds,
-    filterRubricsForTeacher,
+    filterRubricsVisibleToTeacher,
+    ensureRubricsLoaded,
+    collectRubricIdsFromTeacherEvaluations,
+    buildRubricSubjectIdMap,
     resolveTeacherMatchIds,
     resolveTeacherRecord,
     type TeacherSubjectOption,
 } from '../../../utils/teacher';
-import { registerRubricForSubject } from '../../../utils/rubricOwnershipStorage';
+import { buildGroupSubjectMap } from '../../../utils/rubricContext';
+import { linkRubricToEvaluation } from '../../../utils/rubricEvaluationLink';
 
 type RubricRow = Rubric & {
     criteriaCount: number;
     subjectLabel: string;
+    subjectId: string;
 };
 
 const AssociateRubricPage = () => {
@@ -79,18 +84,28 @@ const AssociateRubricPage = () => {
 
             const matchIds = resolveTeacherMatchIds(user, teacher);
             const groups = await groupService.getGroups();
-            const subjectIds = new Set(
-                filterGroupsByTeacherMatchIds(groups, matchIds)
-                    .map((g) => (g.subject_id != null ? String(g.subject_id) : ''))
-                    .filter(Boolean)
+            const assignedGroups = filterGroupsByTeacherMatchIds(groups, matchIds);
+            const groupIds = new Set(
+                assignedGroups.map((g) => (g.id != null ? String(g.id) : '')).filter(Boolean)
             );
             const evaluations = Array.isArray(allEvaluations) ? allEvaluations : [];
-            const publicRubrics = filterRubricsForTeacher(
-                Array.isArray(allRubricsRaw) ? allRubricsRaw : [],
-                matchIds,
-                subjectIds,
-                { publicOnly: true, evaluations }
+            const groupSubjectById = buildGroupSubjectMap(assignedGroups);
+            const rubricSubjectIdMap = buildRubricSubjectIdMap(
+                evaluations,
+                groupIds,
+                groupSubjectById
             );
+            const mineIds = collectRubricIdsFromTeacherEvaluations(evaluations, groupIds);
+            const loaded = await ensureRubricsLoaded(
+                Array.isArray(allRubricsRaw) ? allRubricsRaw : [],
+                mineIds,
+                (id) => rubricService.getRubricById(id)
+            );
+            const publicRubrics = filterRubricsVisibleToTeacher(loaded, {
+                publicOnly: true,
+                evaluations,
+                groupIds,
+            });
 
             setTeacherId(docenteId);
             setEvaluation(evalData);
@@ -128,20 +143,22 @@ const AssociateRubricPage = () => {
             });
 
             const subjectMap = new Map(teacherSubjects.map((s) => [s.id, s]));
-            const rows: RubricRow[] = publicRubrics.map((r) => ({
-                ...r,
-                criteriaCount: countByRubric.get(String(r.id)) ?? 0,
-                subjectLabel: r.subject_id
-                    ? subjectMap.get(String(r.subject_id))?.label ?? '—'
-                    : '—',
-            }));
+            const rows: RubricRow[] = publicRubrics.map((r) => {
+                const sid =
+                    r.id != null ? rubricSubjectIdMap.get(String(r.id)) ?? '' : '';
+                return {
+                    ...r,
+                    criteriaCount: countByRubric.get(String(r.id)) ?? 0,
+                    subjectId: sid,
+                    subjectLabel: sid ? subjectMap.get(sid)?.label ?? '—' : '—',
+                };
+            });
             setRubrics(rows);
 
-            const grades = await gradeService.getGradesByEvaluation(evaluacionId);
-            const blocked =
-                !!evalData?.rubric_id &&
-                grades.some((g) => String(g.rubric_id) === String(evalData.rubric_id));
-            setHasGrades(blocked);
+            const grades = evalData?.rubric_id
+                ? await gradeService.getGradesByRubricId(String(evalData.rubric_id))
+                : [];
+            setHasGrades(grades.length > 0);
         } catch {
             toast.error('No se pudo cargar la evaluación.');
         } finally {
@@ -156,7 +173,7 @@ const AssociateRubricPage = () => {
     const filteredRubrics = useMemo(() => {
         const q = search.trim().toLowerCase();
         return rubrics.filter((r) => {
-            if (subjectFilter !== 'all' && String(r.subject_id) !== subjectFilter) return false;
+            if (subjectFilter !== 'all' && r.subjectId !== subjectFilter) return false;
             if (q) {
                 const hay = `${r.title} ${r.description} ${r.subjectLabel}`.toLowerCase();
                 if (!hay.includes(q)) return false;
@@ -173,13 +190,7 @@ const AssociateRubricPage = () => {
         if (!evaluacionId || !canConfirm) return;
         setSubmitting(true);
         try {
-            await evaluationService.updateEvaluationAssociation(evaluacionId, {
-                rubric_id: selectedRubricId,
-                subject_id: selectedSubjectId,
-            });
-            if (selectedSubjectId) {
-                registerRubricForSubject(selectedRubricId, selectedSubjectId);
-            }
+            await linkRubricToEvaluation(evaluation, selectedRubricId);
             toast.success('Asociación confirmada correctamente.');
             navigate('/evaluaciones');
         } catch (err) {
@@ -502,8 +513,8 @@ const AssociateRubricPage = () => {
                         {rubrics.length === 0 && (
                             <ErrorBanner
                                 title="No hay rúbricas publicadas"
-                                message="No existen rúbricas publicadas disponibles. Crea y publica una rúbrica desde Mis rúbricas (CU-07)."
-                                actionLabel="Ir a Mis rúbricas"
+                                message="No hay rúbricas publicadas disponibles. Crea y publica una plantilla desde Rúbricas."
+                                actionLabel="Ir a Rúbricas"
                                 onAction={() => navigate('/teachers/rubrics/list')}
                             />
                         )}
