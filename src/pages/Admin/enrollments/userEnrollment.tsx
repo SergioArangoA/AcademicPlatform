@@ -15,26 +15,29 @@ import { transformUsersForList } from "../../../utils/userTransformers";
 import { UserForList } from "../../../models/Users/UserForList";
 import { Registration } from "../../../models/Registration";
 import { registrationService } from "../../../services/registrationService";
-import { Group } from "../../../models/Groups/Group";
 import { groupService } from "../../../services/groupService";
 import { Subject } from "../../../models/Subjects/Subject";
 import { subjectService } from "../../../services/subjectService";
 import { userService } from "../../../services/userService";
 import { GroupForList } from "../../../models/Groups/GroupForList";
-import { StudyPlan } from "../../../models/StudyPlan/StudyPlan";
 import { studyplanService } from "../../../services/studyplanService";
+import { enrollmentService } from "../../../services/enrollmentService";
+import { Enrollment } from "../../../models/Enrollment";
 
 
 const ManageUserEnrollments = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const [user, setUser] = useState<UserForList | null>(null);
-    const [careers, setCareers] = useState<Career[] | null>(null);
+    const [careers, setCareers] = useState<Career[]>([]);
     const [semester, setSemester] = useState<Semester | null>(null);
-    const [registrationList, setRegistrations] = useState<Registration[] | null>(null);
+    const [registrationList, setRegistrations] = useState<Registration[]>([]);
     const [groups, setGroups] = useState<GroupForList[] | null>(null);
     const [subjects, setSubjects] = useState<Subject[] | null>(null);
     const [selectedGroups, setSelectedGroups] = useState<GroupForList[]>([]);
+    const [studentEnrollments, setEnrollments] = useState<GroupForList[]>([])
+    const [currentUserId,setId]=useState<string>("");
+    const MAX_CREDITS = 20;
 
     useEffect(() => {
         fetchData();
@@ -79,23 +82,22 @@ const ManageUserEnrollments = () => {
             // Find study plan that contains this subject
             const studyPlan = subjectToStudyPlan.get(String(gr.subject_id));
             const careerId = studyPlan?.career_id ?? "";
-            console.log(careerId);
-            console.log(careersData);
             const career = careersData.find((car) => car.id === careerId);
-            console.log(career);
-            console.log(career?.name);
+
 
             return {
                 id: gr.id,
                 name: gr.name,
                 teacher: teacher ? `${teacher.profile.first_name} ${teacher.profile.last_name}` : "Sin asignar",
                 subject: subject?.name ?? "Sin asignar",
+                subject_id: subject?.id,
                 group_code: gr.group_code ?? "",
                 career: career?.name,
                 career_id: careerId ?? "",
                 capacity: `${gr.capacity}(${gr.available_capacity})`,
                 enrolled_count: gr.enrolled_count ?? 0,
                 credits: subject?.credits,
+                available_capacity: gr.available_capacity,
             };
         });
 
@@ -106,14 +108,37 @@ const ManageUserEnrollments = () => {
                 )
         );
 
-        setGroups(filteredGroups);
+        const enrollments = await enrollmentService.getStudentEnrollments(formattedUser[0].profile?.id);
+        const activeEnrollments = enrollments.filter(
+            (enr) => enr.status === "ACTIVE"
+        );
+        console.log(activeEnrollments);
+        const enrolledGroups: GroupForList[] = activeEnrollments
+            .map((enr) => {
+                return formattedGroups.find(
+                    (g) => g.id === enr.group_id && enr.status === "ACTIVE"
+                );
+            })
+            .filter((g): g is GroupForList => g !== undefined);
+        
+        const availableGroups = filteredGroups.filter(group =>
+            !enrollments.some(enr => enr.group_id === group.id)
+        );
 
+        setId(formattedUser[0].profile?.id);
         setUser(formattedUser[0]);
         setCareers(careersData);
         setSemester(currentSemester ?? null);
         setRegistrations(activeRegistrations);
-        setGroups(filteredGroups);
+        setGroups(availableGroups);
         setSubjects(subjectsData);
+        setEnrollments(enrolledGroups);
+
+        setSelectedGroups(prev =>
+            prev.filter(
+                sg => !enrolledGroups.some(eg => eg.id === sg.id)
+            )
+        );
     };
     const columns = [
         { key: "career", label: "Carrera" },
@@ -129,8 +154,11 @@ const ManageUserEnrollments = () => {
     const actionsSelected = [
         {name: "deselect", label: "Deseleccionar"}
     ];
+    const actionsEnrolled = [
+        {name: "deenroll", label: "Desinscribir"}
+    ];
 
-    const handleAction = (name: string, item: GroupForList) => {
+    const handleAction = async (name: string, item: GroupForList) => {
         switch (name) {
             case "select":
                 setSelectedGroups(prev => [...prev, item]);
@@ -147,11 +175,144 @@ const ManageUserEnrollments = () => {
                     prev.filter(g => g.id !== item.id)
                 );
                 break;
+            
+            case "deenroll":
+                const groupEnrollments = await enrollmentService.getEnrollments(item.id);
+                const enrollment = groupEnrollments.find(
+                    (e) => e.student_id === currentUserId && e.status === "ACTIVE"
+                );
+
+                const result = await Swal.fire({
+                    title: "¿Está seguro?",
+                    text: `¿Está seguro que quiere desinscribir al usuario de ${item.name} de la asignatura ${item.subject} con el profesor ${item.teacher}?`,
+                    icon: "warning",
+                    showCancelButton: true,
+                    confirmButtonText: "Sí, desinscribir",
+                    cancelButtonText: "Cancelar",
+                    confirmButtonColor: "#d33",
+                    cancelButtonColor: "#3085d6",
+                });
+
+                if (!result.isConfirmed) return;
+                const newEnrollment: Enrollment = {
+                    student_id: enrollment?.student_id,
+                    group_id: enrollment?.group_id,
+                    status: "CANCELLED",
+                }
+                console.log(enrollment);
+                await enrollmentService.updateEnrollment(enrollment?.id,newEnrollment);
+                fetchData();
+
+                break;
 
             default:
                 console.log(`Acción desconocida: ${name}`);
         }
     };
+
+    async function enrollStudent(){
+        fetchData();
+        let credits = 0;
+        selectedGroups.forEach((g) => {
+            credits += g.credits ?? 0;
+        });
+        studentEnrollments.forEach((g) => {
+            credits += g.credits ?? 0;
+        });
+
+        if (credits > MAX_CREDITS){
+            Swal.fire({
+                icon: "error",
+                title: "Límite de créditos excedido",
+                text: "La inscripción no se realizó porque se excedió el número de créditos permitidos para este semestre.",
+                confirmButtonText: "Entendido",
+                confirmButtonColor: "#d33",
+            });
+            return;
+        }
+
+        for (const g1 of selectedGroups){
+            const duplicate = studentEnrollments.find((g2)=>g2.id===g1.id)
+            console.log(duplicate);
+            if (!!duplicate){
+                Swal.fire({
+                    icon: "error",
+                    title: "Inscripción duplicada",
+                    text: `La inscripción para ${g1.name} de la asignatura ${g1.subject} con el profesor ${g1.teacher} no se realizó porque el estudiante ya se encuentra inscrito al grupo`,
+                    confirmButtonText: "Entendido",
+                    confirmButtonColor: "#d33",
+                });
+                handleAction("deselect",g1);
+            }
+            if (g1.available_capacity === 0){
+                Swal.fire({
+                    icon: "error",
+                    title: "Inscripción fallida",
+                    text: `La inscripción para ${g1.name} de la asignatura ${g1.subject} con el profesor ${g1.teacher} no se realizó porque el grupo ya no cuenta con capacidad`,
+                    confirmButtonText: "Entendido",
+                    confirmButtonColor: "#d33",
+                });
+                handleAction("deselect",g1);
+            }
+            
+            const foundSubject = subjects?.find((s)=> s.id === g1.subject_id);
+
+            if (!foundSubject){
+                const result = await Swal.fire({
+                    title: "¿Estás seguro?",
+                    text: `La asignatura ${g1.subject} no se encuentra en el plan de estudios de ninguna de las carreras en las que el usuario está matriculado`,
+                    icon: "warning",
+                    showCancelButton: true,
+                    confirmButtonText: "Sí, inscribir",
+                    cancelButtonText: "Cancelar",
+                    confirmButtonColor: "#facc15", // amarillo
+                    cancelButtonColor: "#6b7280",
+                });
+
+                if (!result.isConfirmed) {
+                    handleAction("deselect",g1);
+                }
+            }
+            const enrollment: Enrollment = {
+                student_id: currentUserId,
+                group_id: g1.id,
+                status: "ACTIVE",
+            }
+            const activeEnrollment = await enrollmentService.createEnrollment(enrollment);
+            if (!activeEnrollment){
+                Swal.fire({
+                    icon: "error",
+                    title: "Inscripción fallida",
+                    text: `La inscripción para ${g1.name} de la asignatura ${g1.subject} con el profesor ${g1.teacher} no se pudo realizar`,
+                    confirmButtonText: "Entendido",
+                    confirmButtonColor: "#d33",
+                });
+                handleAction("deselect",g1);
+            }
+        }
+        if (selectedGroups.length > 0){
+            await Swal.fire({
+                icon: "success",
+                title: "¡Éxito!",
+                text: `Se ha inscrito correctamente al usuario en ${selectedGroups.length} grupos`,
+                confirmButtonColor: "#16a34a",
+            });
+        }
+        fetchData();
+    }
+
+    const enrolledCredits = studentEnrollments.reduce(
+        (sum, g) => sum + (g.credits ?? 0),
+        0
+    );
+
+    const selectedCredits = selectedGroups.reduce(
+        (sum, g) => sum + (g.credits ?? 0),
+        0
+    );
+
+    const totalCredits = enrolledCredits + selectedCredits;
+    const isOverLimit = totalCredits >= MAX_CREDITS;
 
 
     if (!user) {
@@ -180,7 +341,6 @@ const ManageUserEnrollments = () => {
                 <div className="rounded-2xl shadow-md p-6 bg-white dark:bg-black text-gray-900 dark:text-gray-100">
 
                 <UserCard {...user} />
-
             </div>
                 <div className="flex w-full border-l-6 border-[#F87171] bg-[#F87171] bg-opacity-[15%] px-7 py-8 shadow-md dark:bg-[#1B1B24] dark:bg-opacity-30 md:p-9">
                     <div className="mr-5 flex h-9 w-full max-w-[36px] items-center justify-center rounded-lg bg-[#F87171]">
@@ -264,8 +424,45 @@ const ManageUserEnrollments = () => {
             <div className="w-full lg:w-1/2">
                 <div className="rounded-2xl shadow-md p-6 bg-white dark:bg-black text-gray-900 dark:text-gray-100">
                 <UserCard {...user} />
+                <div className="mt-4 p-4 rounded-xl border shadow-sm bg-blue-50 border-blue-400 text-blue-700">
+                <div className="flex justify-between items-center">
+                        <span className="font-semibold">
+                            Semestre actual
+                        </span>
+
+                        <span className="font-bold text-lg">
+                            {semester?.name ?? "No definido"}
+                        </span>
+                    </div>
+
                 </div>
-            </div>
+
+                <div
+                    className={`mt-4 p-4 rounded-xl border shadow-sm
+                    ${isOverLimit
+                        ? "bg-red-100 border-red-500 text-red-700"
+                        : "bg-green-50 border-green-400 text-green-700"
+                    }`}
+                    >
+                    <div className="flex justify-between items-center">
+                        <span className="font-semibold">
+                        Créditos inscritos
+                        </span>
+
+                        <span className="font-bold text-lg">
+                        {totalCredits} / {MAX_CREDITS}
+                        </span>
+                    </div>
+
+                    {isOverLimit && (
+                        <p className="text-sm mt-2 font-medium">
+                        ⚠ Has alcanzado o superado el límite de créditos permitidos
+                        </p>
+                    )}
+                    </div>
+                    
+                    </div>
+                </div>
 
             {/* 🟢 DERECHA */}
             <div className="w-full lg:w-1/2 space-y-4">
@@ -328,16 +525,25 @@ const ManageUserEnrollments = () => {
                 actions={actionsSelected}
                 onAction={handleAction}
             />
-
-            </div>
-
             <button
                 type="button"
-                onClick={() => navigate(-1)}
+                onClick={enrollStudent}
                 className="px-4 py-2 mt-2 rounded-md border border-stroke bg-white shadow-sm hover:bg-gray-100 dark:bg-boxdark dark:border-strokedark"
             >
                 Inscribir
             </button>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            Grupos inscritos
+            </h3>
+
+            <GenericTable
+                data={studentEnrollments}
+                columns={columns}
+                actions={actionsEnrolled}
+                onAction={handleAction}
+            />
+
+            </div>
 
         </div>
     );
