@@ -4,6 +4,7 @@ import Breadcrumb from "../../components/Breadcrumb";
 import UserFormValidator from "../../components/UserForm";
 import { UpdateUserPayload } from "../../models/Users/UpdateUserPayload";
 import { userPService } from "../../services/userPService";
+import FirebaseAuthService from "../../services/firebaseAuthService"
 
 const normalizeDuplicateMessage = (message: string) => {
     const normalized = message.toLowerCase();
@@ -47,12 +48,13 @@ const CreateUser = () => {
                 });
                 return;
             }
+            FirebaseAuthService.registerWithEmailPassword(values.email,values.password);
 
             const result =
                 role === "TEACHER"
                     ? await userPService.registerTeacher(values as UpdateUserPayload & { password: string })
                     : await userPService.registerStudent(values as UpdateUserPayload & { password: string });
-
+            
             if (result.success) {
                 Swal.fire({
                     title: "Completado",
