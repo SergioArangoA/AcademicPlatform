@@ -1,3 +1,6 @@
+/**
+ * Tabla de criterios y escalas al calificar: el docente elige un nivel por fila (CU-11).
+ */
 import React, { useMemo } from "react";
 import { Criterion } from "../../models/Evaluation/Criterion";
 import { Scale } from "../../models/Evaluation/Scale";

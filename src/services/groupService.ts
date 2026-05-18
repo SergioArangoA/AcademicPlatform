@@ -1,26 +1,37 @@
+/**
+ * Aquí llamo al API de grupos (/academic/groups).
+ *
+ * Sergio dejó una base(listar). Yo armé lo de crear y editar grupos:
+ * - Quité métodos que no tenían que ver (eran copia de usuarios) y puse crear/actualizar de verdad.
+ * - Ajusté las respuestas porque el backend manda todo dentro de "data".
+ * - En el listado muestro cuántos cupos quedan según las matrículas activas.
+ * - Antes de guardar, reviso que el código del grupo no se repita en el mismo semestre.
+ * - Si algo falla, devuelvo un mensaje claro para el SweetAlert.
+ * - assignTeacherToGroup lo uso en otra pantalla (asignar docente), no al crear un grupo nuevo.
+ */
 import axios from "axios";
 import { api } from "../interceptors/authInterceptor";
 import { Group } from "../models/Groups/Group";
 import { GroupsApiResponse } from "../models/Groups/GroupsApiResponse";
 import { GroupApiResponse } from "../models/Groups/GroupApiResponse";
 import { GroupPayload } from "../models/Groups/GroupPayload";
-import { archiveGroupLocally, getArchivedGroupIds } from "../utils/groupArchiveStorage";
-
 const API_URL = "/academic/groups";
 
+/** Matrículas para saber cuántos estudiantes ya están en cada grupo */
 interface Enrollment {
     id: string;
     group_id: string;
     status: string;
 }
 
+/** Grupo con info extra para la tabla del admin (cupos según matrículas activas) */
 export interface GroupWithMeta extends Group {
     enrolled_count: number;
     available_capacity: number;
-    is_archived_local: boolean;
 }
 
 class GroupService {
+    /** Traigo las inscripciones para calcular cupos ocupados */
     private async fetchEnrollments(): Promise<Enrollment[]> {
         try {
             const response = await api.get<{ data: Enrollment[] }>("/academic/enrollments");
@@ -30,8 +41,8 @@ class GroupService {
         }
     }
 
+    /** Les sumo cupo disponible según inscripciones activas */
     private enrichGroups(groups: Group[], enrollments: Enrollment[]): GroupWithMeta[] {
-        const archived = getArchivedGroupIds();
         const countByGroup = new Map<string, number>();
 
         enrollments
@@ -48,11 +59,11 @@ class GroupService {
                 ...group,
                 enrolled_count: enrolled,
                 available_capacity: Math.max(0, capacity - enrolled),
-                is_archived_local: archived.has(String(group.id)),
             };
         });
     }
 
+    /** Lista básica; la uso al crear para validar que el código no exista */
     async getGroups(): Promise<Group[]> {
         try {
             const response = await api.get<GroupsApiResponse>(API_URL);
@@ -63,6 +74,7 @@ class GroupService {
         }
     }
 
+    /** Lista con cupos para la pantalla de gestión de grupos */
     async getGroupsWithMeta(): Promise<GroupWithMeta[]> {
         try {
             const [groupsResponse, enrollments] = await Promise.all([
@@ -89,20 +101,19 @@ class GroupService {
         }
     }
 
+    /** Guardar un grupo nuevo (pantalla "Nuevo grupo") */
     async createGroup(payload: GroupPayload): Promise<Group> {
         const response = await api.post<GroupApiResponse>(API_URL, payload);
         return response.data.data;
     }
 
+    /** Actualizar un grupo ya existente */
     async updateGroup(groupId: string, payload: Partial<GroupPayload>): Promise<Group> {
         const response = await api.put<GroupApiResponse>(`${API_URL}/${groupId}`, payload);
         return response.data.data;
     }
 
-    async archiveGroupLocally(groupId: string): Promise<void> {
-        archiveGroupLocally(groupId);
-    }
-
+    /** Cambiar docente en otra pantalla; no lo uso al crear el grupo */
     async assignTeacherToGroup(groupId: string, teacherId: string): Promise<boolean> {
         try {
             await api.patch(`${API_URL}/${groupId}/assign-teacher/${teacherId}`);
@@ -115,6 +126,7 @@ class GroupService {
         }
     }
 
+    /** Mensaje amigable cuando falla guardar o editar */
     getErrorMessage(error: unknown): string {
         if (axios.isAxiosError(error)) {
             const data = error.response?.data as { message?: string } | undefined;
@@ -126,6 +138,7 @@ class GroupService {
         return "Ocurrió un error inesperado";
     }
 
+    /** No permitir dos grupos con el mismo código en el mismo semestre */
     validateGroupCodeUniqueInSemester(
         groups: Group[],
         groupCode: string,

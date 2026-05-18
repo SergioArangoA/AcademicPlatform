@@ -1,3 +1,7 @@
+/**
+ * Definir escalas por criterio de una rúbrica: niveles (nombre, descripción, valor)
+ * para poder calificar estudiantes con la rúbrica en el flujo de evaluaciones.
+ */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';

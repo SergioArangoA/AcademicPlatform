@@ -1,6 +1,6 @@
-/*
- * CU-11 — Calificar estudiante con rúbrica
- * Ruta: /evaluaciones/:evaluacionId/calificar/:inscripcionId
+/**
+ * Calificar un estudiante con rúbrica (CU-11).
+ * Ruta: /evaluaciones/:evaluacionId/calificar/:inscripcionId — marco nivel por criterio y guardo nota.
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';

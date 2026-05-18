@@ -1,8 +1,6 @@
-/*
- * Componente Sidebar
- * Maneja la navegacion lateral. Se modifico para ocultar las opciones genericas
- * de la plantilla a todos los usuarios excepto al ADMIN. Tambien se implemento
- * el menu exclusivo para docentes y el menu exclusivo para estudiantes.
+/**
+ * Menú lateral: según el rol muestro admin, docente o estudiante.
+ * El bloque TEACHER agrupa Inicio, Mi clase, Rúbricas y Recursos; las rutas están en routes/index.
  */
 import React, { useEffect, useRef, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
@@ -413,6 +411,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
             </div>
           )}
 
+          {/* Menú docente: solo rol TEACHER. Enlaces a rutas en routes/index (grupos, evaluaciones, rúbricas, escalas). */}
           {user?.role === 'TEACHER' && (
             <>
               <ul className="mb-6 flex flex-col gap-1.5">
@@ -497,6 +496,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                       <span>Escalas</span>
                     </NavLink>
                   </li>
+                  {/* Biblioteca: enlace preparado; la ruta aún no está en routes/index */}
                   <li>
                     <NavLink to="/teachers/library" className={`group relative flex items-center gap-2.5 py-2 px-4 text-[13px] duration-300 ease-in-out hover:bg-[#EDE9FE] hover:text-[#6D28D9] dark:hover:bg-meta-4 ${pathname.includes('/teachers/library') ? 'bg-[#EDE9FE] text-[#6D28D9] border-l-[3px] border-[#6D28D9] font-semibold' : 'text-[#374151] font-medium dark:text-bodydark1'}`}>
                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">

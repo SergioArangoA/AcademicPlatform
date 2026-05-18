@@ -1,52 +1,71 @@
-import React from "react";
+import React, { useState } from "react";
 
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import Breadcrumb from "../../components/Breadcrumb";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { getLoginErrorMessage } from "../../utils/getLoginErrorMessage";
 
 const SignIn: React.FC = () => {
   const navigate = useNavigate();
-  // agregamos el login con google, github, microsoft
   const { loginWithCredentials, loginWithGoogle, loginWithGitHub, loginWithMicrosoft } = useAuth();
+  const [loginError, setLoginError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleLogin = async (credentials: { email: string; password: string }) => {
+    setLoginError(null);
+    setIsSubmitting(true);
     try {
       await loginWithCredentials(credentials);
       navigate("/");
     } catch (error) {
-      console.error('Error al iniciar sesión', error);
+      console.error("Error al iniciar sesión", error);
+      setLoginError(getLoginErrorMessage(error));
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  // Agregamos la función para iniciar con google
   const handleGoogleLogin = async () => {
+    setLoginError(null);
+    setIsSubmitting(true);
     try {
       await loginWithGoogle();
       navigate("/");
     } catch (error) {
       console.error("Error en login con Google:", error);
+      setLoginError(getLoginErrorMessage(error));
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  // Agregamos la función para iniciar con github
   const handleGitHubLogin = async () => {
+    setLoginError(null);
+    setIsSubmitting(true);
     try {
       await loginWithGitHub();
       navigate("/");
     } catch (error) {
       console.error("Error en login con GitHub:", error);
+      setLoginError(getLoginErrorMessage(error));
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  // Agregamos la función para iniciar con Microsoft
   const handleMicrosoftLogin = async () => {
+    setLoginError(null);
+    setIsSubmitting(true);
     try {
       await loginWithMicrosoft();
       navigate("/");
     } catch (error) {
       console.error("Error en login con Microsoft:", error);
+      setLoginError(getLoginErrorMessage(error));
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -190,6 +209,15 @@ const SignIn: React.FC = () => {
                 Inicia sesión en EduGest
               </h2>
 
+              {loginError && (
+                <div
+                  role="alert"
+                  className="mb-6 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-800 dark:bg-red-950 dark:text-red-200"
+                >
+                  {loginError}
+                </div>
+              )}
+
               <Formik
                 initialValues={{
                   email: "",
@@ -200,8 +228,7 @@ const SignIn: React.FC = () => {
                   password: Yup.string().required("La contraseña es obligatoria"),
                 })}
                 onSubmit={(values) => {
-                  const formattedValues = { ...values };  // Formateo adicional si es necesario
-                  handleLogin(formattedValues);
+                  void handleLogin(values);
                 }}
 
               >
@@ -224,14 +251,16 @@ const SignIn: React.FC = () => {
                     {/* Botón de enviar */}
                     <button
                       type="submit"
-                      className="w-full cursor-pointer rounded-lg border border-primary bg-primary p-4 text-white transition hover:bg-opacity-90"
+                      disabled={isSubmitting}
+                      className="w-full cursor-pointer rounded-lg border border-primary bg-primary p-4 text-white transition hover:bg-opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                      Login
+                      {isSubmitting ? "Iniciando sesión..." : "Iniciar sesión"}
                     </button>
 
                     <button 
                       type="button"
-                      onClick={handleGoogleLogin}
+                      disabled={isSubmitting}
+                      onClick={() => void handleGoogleLogin()}
                       className="flex w-full items-center justify-center gap-3.5 rounded-lg border border-stroke bg-gray p-4 hover:bg-opacity-50 dark:border-strokedark dark:bg-meta-4 dark:hover:bg-opacity-50">
                       <span>
                         <svg
@@ -271,7 +300,8 @@ const SignIn: React.FC = () => {
               
                     <button 
                       type="button"
-                      onClick={handleGitHubLogin}
+                      disabled={isSubmitting}
+                      onClick={() => void handleGitHubLogin()}
                       className="flex w-full items-center justify-center gap-3.5 rounded-lg border border-stroke bg-gray p-4 hover:bg-opacity-50 dark:border-strokedark dark:bg-meta-4 dark:hover:bg-opacity-50">
                       <span>
                         <svg
@@ -299,7 +329,8 @@ const SignIn: React.FC = () => {
                     
                     <button 
                       type="button"
-                      onClick={handleMicrosoftLogin}
+                      disabled={isSubmitting}
+                      onClick={() => void handleMicrosoftLogin()}
                       className="flex w-full items-center justify-center gap-3.5 rounded-lg border border-stroke bg-gray p-4 hover:bg-opacity-50 dark:border-strokedark dark:bg-meta-4 dark:hover:bg-opacity-50">
                       <span>
                         <svg

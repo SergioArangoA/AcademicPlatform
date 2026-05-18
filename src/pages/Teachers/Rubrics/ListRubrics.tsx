@@ -1,39 +1,63 @@
-import React, { useEffect, useMemo, useState } from 'react';
+/**
+ * Mis rúbricas: listado con cantidad de criterios y enlace a crear o editar flujo.
+ */
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Breadcrumb from '../../../components/Breadcrumb';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../../../context/AuthContext';
 import { Rubric } from '../../../models/Evaluation/Rubric';
 import { Criterion } from '../../../models/Evaluation/Criterion';
-import { rubricService } from '../../../services/rubricService';
 import { criterionService } from '../../../services/criterionService';
+import { loadTeacherRubricsData } from '../../../utils/teacher';
 
 type RubricRow = Rubric & { criteriaCount: number };
 
 const ListRubrics: React.FC = () => {
+  const { user } = useAuth();
   const [rows, setRows] = useState<RubricRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const load = async () => {
-      setLoading(true);
-      const [rubrics, criteria] = await Promise.all([
-        rubricService.getRubrics(),
-        criterionService.getCriteria(),
-      ]);
+  const load = useCallback(async () => {
+    setLoading(true);
+    setLoadError(null);
+    try {
+      const { rubrics, error } = await loadTeacherRubricsData(user);
+      if (error) {
+        setLoadError(error);
+        setRows([]);
+        return;
+      }
+
+      const rubricIds = new Set(rubrics.map((r) => String(r.id)));
+      const allCriteria = await criterionService.getCriteria();
+      const criteria = allCriteria.filter((c: Criterion) =>
+        rubricIds.has(String(c.rubric_id))
+      );
+
       const countByRubric = new Map<string, number>();
       criteria.forEach((c: Criterion) => {
         const key = String(c.rubric_id);
         countByRubric.set(key, (countByRubric.get(key) ?? 0) + 1);
       });
+
       setRows(
         rubrics.map((r) => ({
           ...r,
           criteriaCount: countByRubric.get(String(r.id)) ?? 0,
         }))
       );
+    } catch {
+      setLoadError('No se pudieron cargar las rúbricas.');
+      setRows([]);
+    } finally {
       setLoading(false);
-    };
+    }
+  }, [user]);
+
+  useEffect(() => {
     void load();
-  }, []);
+  }, [load]);
 
   const sorted = useMemo(
     () =>
@@ -59,6 +83,12 @@ const ListRubrics: React.FC = () => {
             Crear rúbrica
           </Link>
         </div>
+
+        {loadError && (
+          <p className="mb-4 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {loadError}
+          </p>
+        )}
 
         {loading ? (
           <p className="py-6 text-center text-gray-500">Cargando...</p>

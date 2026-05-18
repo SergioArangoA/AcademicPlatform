@@ -1,5 +1,6 @@
-/*
- * CU-12 – Registrar nota final del grupo
+/**
+ * Calificaciones finales (docente): elijo grupo y veo/consolido notas;
+ * desde aquí puedo ir a registrar nota final por estudiante (RegisterFinalGradePage).
  */
 import React, { useEffect, useMemo, useState } from 'react';
 import Breadcrumb from '../../../components/Breadcrumb';
@@ -10,7 +11,7 @@ import { evaluationService } from '../../../services/evaluationService';
 import { enrollmentService } from '../../../services/enrollmentService';
 import { semesterService } from '../../../services/semesterService';
 import { groupService } from '../../../services/groupService';
-import { loadTeacherGroupOptions } from '../../../utils/loadTeacherGroupOptions';
+import { loadTeacherGroupOptions } from '../../../utils/teacher';
 import { SubjectGroupOption } from '../../../models/Subjects/SubjectGroupOption';
 import { Evaluation } from '../../../models/Evaluation/Evaluation';
 import { Grade } from '../../../models/Evaluation/Grade';

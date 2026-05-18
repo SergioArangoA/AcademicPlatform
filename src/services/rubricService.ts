@@ -1,3 +1,7 @@
+/**
+ * API de rúbricas para el flujo del docente (crear, listar, publicar).
+ * POST solo envía title, description, is_public, is_archived; los criterios van aparte en criterionService.
+ */
 import axios from "axios";
 import { api } from "../interceptors/authInterceptor";
 import { Rubric } from "../models/Evaluation/Rubric";

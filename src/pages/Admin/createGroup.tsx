@@ -1,3 +1,8 @@
+/**
+ * Pantalla para crear un grupo (solo admin).
+ * reviso semestre activo, código sin repetir y cupo válido,
+ * guardo con groupService y vuelvo al listado. El formulario está en GroupForm.
+ */
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
@@ -11,6 +16,7 @@ const CreateGroup = () => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
 
+    /** Antes de guardar valido todo; el semestre lo tomo del que está activo */
     const handleCreate = async (values: GroupPayload) => {
         setLoading(true);
         try {

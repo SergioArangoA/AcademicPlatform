@@ -1,3 +1,7 @@
+/**
+ * Modal de plantillas al crear rúbrica: copio criterios de rúbricas existentes
+ * y normalizo pesos para que no se desconfigure la suma del 100 %.
+ */
 import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { Rubric } from '../../models/Evaluation/Rubric';
@@ -5,6 +9,8 @@ import { Criterion } from '../../models/Evaluation/Criterion';
 import { rubricService } from '../../services/rubricService';
 import { criterionService } from '../../services/criterionService';
 import { getCriterionWeight } from '../../utils/criterionWeight';
+import { filterRubricsAssignedToTeacher, resolveTeacherRecord } from '../../utils/teacher';
+import { useAuth } from '../../context/AuthContext';
 
 export interface LocalCriterionDraft {
   id_temp: string;
@@ -27,6 +33,7 @@ const RubricTemplatesModal: React.FC<RubricTemplatesModalProps> = ({
   onClose,
   onApply,
 }) => {
+  const { user } = useAuth();
   const [templates, setTemplates] = useState<Rubric[]>([]);
   const [loading, setLoading] = useState(false);
   const [applyingId, setApplyingId] = useState<string | null>(null);
@@ -36,13 +43,15 @@ const RubricTemplatesModal: React.FC<RubricTemplatesModalProps> = ({
 
     const load = async () => {
       setLoading(true);
+      const teacher = await resolveTeacherRecord(user);
       const data = await rubricService.getPublicRubrics();
-      setTemplates(data);
+      const mine = teacher ? filterRubricsAssignedToTeacher(data, teacher) : [];
+      setTemplates(mine);
       setLoading(false);
     };
 
     load();
-  }, [open, teacherId]);
+  }, [open, teacherId, user]);
 
   const handleClone = async (rubric: Rubric) => {
     if (!rubric.id) return;

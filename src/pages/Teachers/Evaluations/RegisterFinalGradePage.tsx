@@ -1,6 +1,6 @@
-/*
- * CU-12 — Registrar nota final del grupo
- * Ruta: /calificaciones/:grupoId/nota-final
+/**
+ * Registrar nota final de un grupo (CU-12). Ruta: /calificaciones/:grupoId/nota-final.
+ * Consolido evaluaciones del grupo y registro la nota definitiva por estudiante.
  */
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
