@@ -1,8 +1,6 @@
-/*
- * Archivo de Rutas (routes/index.ts)
- * Configura el enrutamiento de la aplicacion. Se agregaron las rutas para el
- * flujo del docente, incluyendo listar rubricas, crear rubricas,
- * evaluar estudiantes y revisar el consolidado final de notas.
+/**
+ * Rutas de la app: admin, estudiante y docente. Abajo del archivo está el bloque TEACHER
+ * (rúbricas, evaluaciones, grupos, calificaciones). El Sidebar enlaza a estas paths.
  */
 import { lazy } from 'react';
 import Rubrics from '../pages/Students/Rubrics/ListRubrics';
@@ -114,6 +112,7 @@ const coreRoutes = [
     component: AssignTeacher,
     allowedRoles: ['ADMIN'],
   },
+  // Rutas de grupos (listar, crear y editar) — las armé yo
   {
     path: '/admin/groups/list',
     title: 'Grupos',
@@ -349,7 +348,13 @@ const coreRoutes = [
     allowedRoles: ['STUDENT', 'TEACHER', 'ADMIN'],
   },
 
-  // Rutas del Docente --------------------------------------------------------------------------------
+  /**
+   * Perfil docente (rol TEACHER): rutas que armé para el menú lateral del Sidebar.
+   * - Rúbricas: listar, crear (CU-08), revisar y definir escalas por criterio.
+   * - Evaluaciones: listado, asociar rúbrica (CU-10), calificar con rúbrica (CU-11), nota final (CU-12).
+   * - Consulta: mis grupos, mis estudiantes, escalas y calificaciones consolidadas.
+   * Los datos del docente logueado los resuelvo con utils/teacher (resolveTeacherId, tableData, filters).
+   */
   {
     path: '/teachers/rubrics/list',
     title: 'Mis Rúbricas',

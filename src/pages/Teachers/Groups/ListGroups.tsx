@@ -1,10 +1,14 @@
+/**
+ * Mis grupos (docente): tabla con filtros de asignatura y semestre.
+ * Solo muestro grupos donde soy el teacher_id; los datos vienen de utils/teacher.
+ */
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
 import Breadcrumb from '../../../components/Breadcrumb';
 import FilterBar, { FilterValues } from '../../../components/FilterBar';
 import GenericTable from '../../../components/GenericTable';
-import { loadTeacherGroupsData, TeacherGroupRow } from '../../../utils/teacherTableData';
+import { loadTeacherGroupsData, TeacherGroupRow } from '../../../utils/teacher';
 
 const initialFilters: FilterValues = {
     search: '',

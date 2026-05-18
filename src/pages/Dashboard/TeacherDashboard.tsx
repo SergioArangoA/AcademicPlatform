@@ -1,7 +1,7 @@
-/*
- * Componente TeacherDashboard
- * Este componente es la vista principal que se muestra al usuario con rol TEACHER.
- * Sirve como punto de entrada para que el docente gestione sus grupos y rubricas.
+/**
+ * Panel de inicio del docente: al entrar con rol TEACHER, la ruta "/" muestra esta pantalla
+ * (Index.tsx elige TeacherDashboard). Desde aquí el menú lateral lleva a grupos, estudiantes,
+ * evaluaciones, rúbricas y calificaciones.
  */
 import React from 'react';
 import Breadcrumb from '../../components/Breadcrumb';

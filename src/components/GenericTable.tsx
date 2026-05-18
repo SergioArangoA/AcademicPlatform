@@ -28,7 +28,6 @@ const GenericTable: React.FC<GenericTableProps> = ({
     rowClassName
 }) => {
 
-    // TODO el manejo interno queda aquí
     const [currentPage, setCurrentPage] = useState(1);
 
     const ITEMS_PER_PAGE = 5;
@@ -64,9 +63,11 @@ const GenericTable: React.FC<GenericTableProps> = ({
                                 </th>
                             ))}
 
-                            <th className="py-4 px-4 font-medium text-black dark:text-white">
-                                Acciones
-                            </th>
+                            {actions.length > 0 && (
+                                <th className="py-4 px-4 font-medium text-black dark:text-white">
+                                    Acciones
+                                </th>
+                            )}
 
                         </tr>
                     </thead>
@@ -111,17 +112,18 @@ const GenericTable: React.FC<GenericTableProps> = ({
 
                                 ))}
 
-                                <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">
+                                {actions.length > 0 && (
+                                    <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">
 
-                                    <div className="flex items-center gap-2">
+                                        <div className="flex items-center gap-2">
 
-                                        {actions.map((action) => (
+                                            {actions.map((action) => (
 
-                                            <button
-                                                key={action.name}
-                                                onClick={() => onAction(action.name, item)}
-                                                type="button"
-                                                className={`rounded-md border border-stroke px-2 py-1 text-xs font-medium transition
+                                                <button
+                                                    key={action.name}
+                                                    onClick={() => onAction(action.name, item)}
+                                                    type="button"
+                                                    className={`rounded-md border border-stroke px-2 py-1 text-xs font-medium transition
                                                     hover:bg-gray-2 dark:border-strokedark
                                                     ${
                                                         action.name === "delete"
@@ -139,15 +141,16 @@ const GenericTable: React.FC<GenericTableProps> = ({
                                                             : ""
                                                     }
                                                 `}
-                                            >
-                                                {action.label}
-                                            </button>
+                                                >
+                                                    {action.label}
+                                                </button>
 
-                                        ))}
+                                            ))}
 
-                                    </div>
+                                        </div>
 
-                                </td>
+                                    </td>
+                                )}
 
                             </tr>
 
@@ -158,7 +161,6 @@ const GenericTable: React.FC<GenericTableProps> = ({
                 </table>
             </div>
 
-            {/* PAGINACIÓN INTERNA */}
             {
                 totalPages > 1 && (
                     <div className="flex items-center justify-between p-4">

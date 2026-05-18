@@ -1,3 +1,8 @@
+/**
+ * Formulario que uso para crear y editar grupos.
+ * mode 1 = pantalla "Nuevo grupo", mode 2 = editar uno existente.
+ * Cargo asignaturas, docentes y el semestre activo al abrir la página.
+ */
 import { ErrorMessage, Field, Form, Formik } from "formik";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -97,7 +102,7 @@ const GroupForm: React.FC<GroupFormProps> = ({ mode, group, loading = false, onS
                     </p>
                     {!isEditMode && (
                         <p className="mt-1 text-xs text-amber-600">
-                            Nota: el backend actual requiere docente al crear (PRG FELIPE).
+                            Por ahora el backend pide elegir docente al crear el grupo.
                         </p>
                     )}
                 </div>

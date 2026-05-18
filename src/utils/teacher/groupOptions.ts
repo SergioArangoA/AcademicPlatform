@@ -1,23 +1,17 @@
-import { User as AppUser } from '../models/User';
-import { User as FirebaseUser } from 'firebase/auth';
-import { groupService } from '../services/groupService';
-import { subjectService } from '../services/subjectService';
-import { teacherService } from '../services/teacherService';
-import { Subject } from '../models/Subjects/Subject';
-import { SubjectGroupOption } from '../models/Subjects/SubjectGroupOption';
-import { resolveTeacherRecord } from './resolveTeacherId';
-
-type AuthUser = FirebaseUser | AppUser | null;
-
 /**
- * Carga grupos del docente con la misma fuente de datos que /admin/assign-teacher:
- * getGroups() + getSubjects() + searchTeacher(""), luego filtra por teachers.id === group.teacher_id.
+ * Opciones de asignatura/grupo para selects del docente (crear rúbrica, notas finales, etc.).
  */
+import { Subject } from '../../models/Subjects/Subject';
+import { SubjectGroupOption } from '../../models/Subjects/SubjectGroupOption';
+import { groupService } from '../../services/groupService';
+import { subjectService } from '../../services/subjectService';
+import { filterGroupsAssignedToTeacher } from './filters';
+import { resolveTeacherRecord } from './resolveTeacherId';
+import type { AuthUser } from './types';
+
 export async function loadTeacherGroupOptions(user: AuthUser): Promise<SubjectGroupOption[]> {
   const teacher = await resolveTeacherRecord(user);
   if (!teacher) return [];
-
-  const teacherRecordId = String(teacher.id);
 
   const [groups, subjects] = await Promise.all([
     groupService.getGroups(),
@@ -34,9 +28,7 @@ export async function loadTeacherGroupOptions(user: AuthUser): Promise<SubjectGr
     }
   });
 
-  const assignedGroups = groups.filter(
-    (group) => group.teacher_id && String(group.teacher_id) === teacherRecordId
-  );
+  const assignedGroups = filterGroupsAssignedToTeacher(groups, teacher);
 
   return assignedGroups.map((group) => {
     const subjectKey = group.subject_id ? String(group.subject_id) : '';

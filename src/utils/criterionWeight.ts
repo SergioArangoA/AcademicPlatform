@@ -1,3 +1,7 @@
+/**
+ * Leo el peso de un criterio aunque el API venga con weight, peso_porcentual u otro nombre.
+ * Lo uso al validar el 100 % y al copiar plantillas de rúbrica.
+ */
 import { Criterion } from '../models/Evaluation/Criterion';
 
 type CriterionLike = Criterion & {

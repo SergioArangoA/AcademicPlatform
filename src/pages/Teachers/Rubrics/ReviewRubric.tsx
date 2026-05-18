@@ -1,3 +1,7 @@
+/**
+ * Revisión de rúbrica antes de publicar: veo criterios, pesos y datos generales;
+ * desde aquí paso a definir escalas por criterio.
+ */
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { rubricService } from '../../../services/rubricService';

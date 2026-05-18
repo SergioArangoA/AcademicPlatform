@@ -1,3 +1,7 @@
+/**
+ * Listado de grupos para el admin.
+ * Desde aquí se entra a crear uno nuevo o editar; muestro cupos libres según matrículas.
+ */
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Breadcrumb from "../../components/Breadcrumb";
@@ -16,7 +20,6 @@ const initialFilters: FilterValues = {
     subject_id: "all",
     semester_id: "all",
     has_capacity: "all",
-    show_archived: "active",
 };
 
 type GroupRow = GroupWithMeta & {
@@ -24,7 +27,6 @@ type GroupRow = GroupWithMeta & {
     semester_label: string;
     teacher_label: string;
     capacity_label: string;
-    status_label: string;
 };
 
 const GroupList = () => {
@@ -94,9 +96,6 @@ const GroupList = () => {
 
         return groups
             .filter((group) => {
-                if (filters.show_archived === "active" && group.is_archived_local) return false;
-                if (filters.show_archived === "archived" && !group.is_archived_local) return false;
-
                 if (filters.subject_id !== "all" && String(group.subject_id) !== String(filters.subject_id)) {
                     return false;
                 }
@@ -125,7 +124,6 @@ const GroupList = () => {
                         ? [teacher.first_name, teacher.last_name].filter(Boolean).join(" ")
                         : "Sin asignar",
                     capacity_label: `${group.enrolled_count ?? 0} / ${group.capacity ?? 0} (disp. ${group.available_capacity ?? 0})`,
-                    status_label: group.is_archived_local ? "Archivado (local)" : "Activo",
                 };
             });
     }, [filters, groups, semesterMap, subjectMap, teacherMap]);
@@ -165,16 +163,6 @@ const GroupList = () => {
                 { value: "no", label: "Sin cupo" },
             ],
         },
-        {
-            key: "show_archived",
-            label: "Estado",
-            type: "select" as const,
-            options: [
-                { value: "active", label: "Activos" },
-                { value: "archived", label: "Archivados" },
-                { value: "all", label: "Todos" },
-            ],
-        },
     ];
 
     const columns = [
@@ -184,7 +172,6 @@ const GroupList = () => {
         { key: "semester_label", label: "Semestre" },
         { key: "capacity_label", label: "Inscritos / Cupo" },
         { key: "teacher_label", label: "Docente" },
-        { key: "status_label", label: "Estado" },
     ];
 
     const handleFilterChange = (key: string, value: string) => {
@@ -193,33 +180,12 @@ const GroupList = () => {
 
     const handleClearFilters = () => setFilters(initialFilters);
 
-    const handleAction = async (name: string, item: Record<string, unknown>) => {
+    const handleAction = (name: string, item: Record<string, unknown>) => {
         const groupId = String(item.id ?? "");
         if (!groupId) return;
 
-        if (item.is_archived_local) {
-            return;
-        }
-
         if (name === "edit") {
             navigate(`/admin/groups/edit/${groupId}`);
-            return;
-        }
-
-        if (name === "archive") {
-            const enrolled = Number(item.enrolled_count ?? 0);
-            if (enrolled > 0) {
-                window.alert("No se puede archivar: el grupo tiene inscripciones activas.");
-                return;
-            }
-            const confirmed = window.confirm(
-                `¿Archivar el grupo ${item.name ?? item.group_code}? (marcado solo en esta aplicación hasta que el backend soporte archivado)`
-            );
-            if (!confirmed) return;
-
-            await groupService.archiveGroupLocally(groupId);
-            await loadData();
-            window.alert("Grupo archivado en la aplicación.");
         }
     };
 
@@ -230,7 +196,7 @@ const GroupList = () => {
             <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                 <div>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                        CU-09 — Usa la API actual del backend. El archivado se guarda localmente en el navegador.
+                        Grupos del backend: crear, editar y revisar cupos disponibles.
                     </p>
                 </div>
                 <button
@@ -263,10 +229,7 @@ const GroupList = () => {
                 <GenericTable
                     data={tableData}
                     columns={columns}
-                    actions={[
-                        { name: "edit", label: "Editar" },
-                        { name: "archive", label: "Archivar" },
-                    ]}
+                    actions={[{ name: "edit", label: "Editar" }]}
                     onAction={handleAction}
                 />
             )}
