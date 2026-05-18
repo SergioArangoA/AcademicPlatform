@@ -81,16 +81,9 @@ const Grades: React.FC = () => {
         const user = users.find((u) => u.profile?.id === id || u.id === id);
         const profileId = user?.profile?.id ?? id;
         const enrollments = await enrollmentService.getStudentEnrollments(profileId);
-        const [grades, rubrics, subjects, groups, evaluations, scales, criteria] =
-            await Promise.all([
-                gradeService.getGrades(),
-                rubricService.getRubrics(),
-                subjectService.getSubjects(),
-                groupService.getGroups(),
-                evaluationService.getEvaluations(),
-                scaleService.getScales(),
-                criteriaService.getCriteria(),
-            ]);
+        const grades = await gradeService.getGrades();
+        console.log(user.id);
+        console.log(user?.profile.id);
 
         const rubricMap = new Map<string, Rubric>(
             rubrics.map((rubric) => [String((rubric as any).id || rubric.title || ""), rubric])
@@ -109,35 +102,55 @@ const Grades: React.FC = () => {
         );
 
         const rows: GradeRow[] = grades
-            .filter((grade) => isGradeSent(grade.status))
+            .filter((grade) => {
+                // Debe ser pública
+                if (!isGradeSent(grade.status)) return false;
+
+                // Normalizar details
+                const details = normalizeDetails((grade as any).details);
+
+                // Verificar si pertenece al usuario
+                return details.some(
+                    (detail) =>
+                        String(detail.student_id) ===
+                        String(user?.id || user?.profile?.id)
+                );
+            })
             .map((grade) => {
-            // Cadena correcta según backend: nota → rúbrica → evaluación → asignatura/grupo.
-            const rubric = rubricMap.get(String(grade.rubric_id));
-            const evaluation = evaluations.find(
-                (ev) =>
-                    ev.rubric_id &&
-                    String(ev.rubric_id) === String(grade.rubric_id)
-            );
-            const subject = evaluation?.subject_id
-                ? subjectMap.get(String(evaluation.subject_id))?.name || "-"
-                : "-";
-            const group = evaluation
-                ? groupMap.get(String(evaluation.group_id))?.name || String(evaluation.group_id)
-                : "-";
+                const details = normalizeDetails((grade as any).details);
 
-            const details = normalizeDetails((grade as any).details);
-            const rawValue = calculateGradeValue(details, scaleMap, criterionMap);
-            const gradeValue = rawValue.toFixed(2);
+                // Buscar evaluación relacionada con la rúbrica
+                const evaluation = evaluations.find(
+                    (ev) =>
+                        String(ev.rubric_id) === String(grade.rubric_id)
+                );
 
-            return {
-                id: grade.id,
-                gradeValue,
-                subject,
-                group,
-                evaluationName: evaluation?.name || "-",
-                rubricTitle: rubric?.title || String(grade.rubric_id),
-            };
-        });
+                const rubric = rubricMap.get(String(grade.rubric_id));
+
+                const subject = evaluation?.subject_id
+                    ? subjectMap.get(String(evaluation.subject_id))?.name || "-"
+                    : "-";
+
+                const group = evaluation
+                    ? groupMap.get(String(evaluation.group_id))?.name || "-"
+                    : "-";
+
+                const rawValue = calculateGradeValue(
+                    details,
+                    scaleMap,
+                    criterionMap
+                );
+
+                return {
+                    id: grade.id,
+                    gradeValue: rawValue.toFixed(2),
+                    subject,
+                    group,
+                    evaluationName: evaluation?.name || "-",
+                    rubricTitle:
+                        rubric?.title || String(grade.rubric_id),
+                };
+            });
 
         // Solo notas de evaluaciones en grupos donde el estudiante está ACTIVE.
         const activeGroupIds = new Set(

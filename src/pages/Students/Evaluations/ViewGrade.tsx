@@ -92,14 +92,14 @@ const GradeDetails: React.FC = () => {
     useEffect(() => {
         fetchData();
     }, []);
-    const nota = 3;
     // 🔹 Obtiene los datos necesarios
     const fetchData = async () => {
         const evaluationData = await evaluationService.getEvaluationById(id);
+        
         const subjectData = await subjectService.getSubjectById(evaluationData?.subject_id);
         const groupData = await groupService.getGroupById(evaluationData?.group_id);
-        const teacherData = await userService.getTeacherById(groupData?.teacher_id);
-        const rubricData = await rubricService.getRubricById("5d84071e-96cd-4ae8-8141-31a0511f6103");//(evaluationData?.rubric_id);
+        const teacherData = await userService.getUserById(groupData?.teacher_id);
+        const rubricData = await rubricService.getRubricById(gradeData?.rubric_id);//(evaluationData?.rubric_id);
         const criteriaData = await criteriaService.getCriteria();
         const scalesData = await scaleService.getScales();
 
@@ -110,8 +110,6 @@ const GradeDetails: React.FC = () => {
         setRubric(rubricData);
         setCriteria(criteriaData);
         setScales(scalesData);
-
-        const gradeData = await gradeService.getGradeById(id || "");
         setGrade(gradeData);
 
         if (gradeData && criteriaData && scalesData) {
@@ -180,7 +178,7 @@ const GradeDetails: React.FC = () => {
             {/* Número grande */}
             <span
                 className={`text-6xl font-extrabold leading-none
-                ${nota >= 4 ? "text-success" : nota >= 3 ? "text-warning" : "text-danger"}
+                ${grade?.final_score >= 80 ? "text-success" : grade?.final_score >= 60 ? "text-warning" : "text-danger"}
                 `}
             >
                 {nota.toFixed(1)}

@@ -11,6 +11,14 @@ interface EvaluationCardProps{
     user: User,
     rubric: Rubric,
 }
+const formatDate = (date?: string | Date) => {
+  if (!date) return "—";
+
+  return new Intl.DateTimeFormat("es-CO", {
+    dateStyle: "long",
+    timeStyle: "short",
+  }).format(new Date(date));
+};
 
 
 const EvaluationCard: React.FC<EvaluationCardProps> = ({ evaluation, subject, group, user, rubric }) => {
@@ -61,7 +69,7 @@ const EvaluationCard: React.FC<EvaluationCardProps> = ({ evaluation, subject, gr
             </h5>
 
             <p className="text-black dark:text-white font-medium">
-              {user?.first_name} {user?.last_name}
+              {user?.profile.first_name} {user?.profile?.last_name}
             </p>
           </div>
 

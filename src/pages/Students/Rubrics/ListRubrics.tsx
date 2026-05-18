@@ -1,60 +1,165 @@
 import React, { useEffect, useState } from "react";
-import { Rubric } from "../../../models/Evaluation/Rubric";
-import GenericTable from "../../../components/GenericTable";
-import { rubricService } from "../../../services/rubricService";
 import { useNavigate } from "react-router-dom";
+
+import GenericTable from "../../../components/GenericTable";
+
+import { Rubric } from "../../../models/Evaluation/Rubric";
+import { Evaluation } from "../../../models/Evaluation/Evaluation";
+
+import { rubricService } from "../../../services/rubricService";
+import { evaluationService } from "../../../services/evaluationService";
+import { enrollmentService } from "../../../services/enrollmentService";
+import { userPService } from "../../../services/userPService";
+
+import { LocalStorageProvider } from "../../../storage/LocalStorageProvider";
+
+interface RubricRow extends Rubric {
+    evaluationName?: string;
+    groupId?: string | number;
+}
 
 const Rubrics: React.FC = () => {
     const navigate = useNavigate();
-    const [data, setData] = useState<Rubric[]>([]);
 
-    // 🔹 Llamar `fetchData` cuando el componente se monta
+    const [data, setData] = useState<RubricRow[]>([]);
+
     useEffect(() => {
         fetchData();
     }, []);
 
-    // 🔹 Obtiene los datos de las rúbricas
     const fetchData = async () => {
-        const rubrics = await rubricService.getPublicRubrics();
-        setData(rubrics);
+        try {
+            const storageProvider = new LocalStorageProvider();
+
+            const userInStorage = storageProvider.getParsedItem("user") as {
+                id?: string;
+            } | null;
+
+            const id = userInStorage?.id;
+
+            if (!id) return;
+
+            // Buscar usuario real
+            const users = await userPService.getUsers();
+
+            const user = users.find(
+                (u) => u.profile?.id === id || u.id === id
+            );
+
+            const profileId = user?.profile?.id ?? id;
+
+            // Obtener enrollments del estudiante
+            const enrollments =
+                await enrollmentService.getStudentEnrollments(
+                    profileId
+                );
+
+            // Solo grupos activos
+            const activeGroupIds = new Set(
+                enrollments
+                    .filter(
+                        (enrollment) =>
+                            enrollment.status === "ACTIVE"
+                    )
+                    .map((enrollment) =>
+                        String(enrollment.group_id)
+                    )
+            );
+
+            // Obtener evaluaciones y rúbricas
+            const [evaluations, rubrics] =
+                await Promise.all([
+                    evaluationService.getEvaluations(),
+                    rubricService.getPublicRubrics(),
+                ]);
+
+            // Filtrar evaluaciones donde el estudiante está inscrito
+            const studentEvaluations = evaluations.filter(
+                (evaluation) =>
+                    activeGroupIds.has(
+                        String(evaluation.group_id)
+                    )
+            );
+
+            // Crear lista de rúbricas relacionadas
+            const rubricRows: RubricRow[] =
+                studentEvaluations
+                    .map((evaluation: Evaluation) => {
+                        const rubric = rubrics.find(
+                            (r) =>
+                                String(r.id) ===
+                                String(evaluation.rubric_id)
+                        );
+
+                        if (!rubric) return null;
+
+                        return {
+                            ...rubric,
+                            evaluationName:
+                                evaluation.name,
+                            groupId:
+                                evaluation.group_id,
+                        };
+                    })
+                    .filter(
+                        (
+                            item
+                        ): item is RubricRow =>
+                            item !== null
+                    );
+
+            setData(rubricRows);
+        } catch (error) {
+            console.error(
+                "Error cargando rúbricas:",
+                error
+            );
+        }
     };
 
-    const handleAction = (action: string, item: Rubric) => {
+    const handleAction = (
+        action: string,
+        item: RubricRow
+    ) => {
         if (action === "view") {
-            console.log("View rubric:", item);
-            navigate(`/students/evaluations/list`);
+            navigate(
+                `/students/evaluations/list`
+            );
         }
     };
 
     return (
         <div>
-            <h2>Lista de rúbricas</h2>
+            <h2 className="mb-4 text-2xl font-semibold">
+                Lista de evaluaciones
+            </h2>
 
             <GenericTable
                 data={data}
                 columns={[
-                    {key: "title",label: "Nombre rúbrica"},
-                    {key: "description", label: "Descripción"},
-                    
+                    {
+                        key: "evaluationName",
+                        label: "Evaluación",
+                    },
+                    {
+                        key: "title",
+                        label: "Rúbrica",
+                    },
+                    {
+                        key: "description",
+                        label: "Descripción",
+                    },
                 ]}
                 actions={[
-                    { name: "view", label: "Detalles" },
+                    {
+                        name: "view",
+                        label: "Detalles",
+                    },
                 ]}
                 onAction={handleAction}
             />
         </div>
     );
 };
-//    "data": [
-  //      {
-    //        "created_at": "2026-04-24T02:56:38.383606",
-      //      "description": "Main rubric",
-        //    "id": "5d84071e-96cd-4ae8-8141-31a0511f6103",
-          //"is_public": false,
-            //"subject_id": "589d7dc1-aa2b-402a-adfc-432e0b31fb6c",
-            //"title": "Rubric 1",
-            //"updated_at": "2026-04-24T02:56:38.383606"
-        //}
-    //],
 
 export default Rubrics;
