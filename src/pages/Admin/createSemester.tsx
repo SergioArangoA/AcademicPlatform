@@ -10,6 +10,21 @@ const CreateSemester = () => {
 
 	const handleCreateSemester = async (values: SemesterPayload) => {
 		try {
+			const semesterLabel = values.name || values.code || "este semestre";
+			const confirmation = await Swal.fire({
+				title: "Confirmar creación",
+				text: `¿Seguro que desea guardar el semestre "${semesterLabel}"?`,
+				icon: "warning",
+				showCancelButton: true,
+				confirmButtonText: "Sí, guardar semestre",
+				cancelButtonText: "Cancelar",
+				reverseButtons: true,
+			});
+
+			if (!confirmation.isConfirmed) {
+				return;
+			}
+
 			const createdSemester = await semesterService.createSemester(values);
 
 			if (createdSemester) {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { userPService } from "../../services/userPService";
 import Swal from "sweetalert2";
@@ -27,6 +27,24 @@ const UpdateUser = () => {
         try {
             if (!user?.id) {
                 throw new Error("ID de usuario no disponible");
+            }
+
+            const userLabel =
+                "profile" in user
+                    ? `${user.profile?.first_name || ""} ${user.profile?.last_name || ""}`.trim() || user.email || user.code
+                    : user.email || user.code || "este usuario";
+            const confirmation = await Swal.fire({
+                title: "Confirmar actualización",
+                text: `¿Seguro que desea guardar los cambios de "${userLabel}"?`,
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonText: "Sí, guardar cambios",
+                cancelButtonText: "Cancelar",
+                reverseButtons: true,
+            });
+
+            if (!confirmation.isConfirmed) {
+                return;
             }
 
             const updatedUser = await userPService.updateUser(user.id, payload);

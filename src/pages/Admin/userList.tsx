@@ -120,16 +120,28 @@ const UserList = () => {
                 break;
             case "delete":
                 try {
+                    const Swal = (await import('sweetalert2')).default;
+                    const userLabel = item.name || item.email || item.code || 'este usuario';
+
+                    const confirmation = await Swal.fire({
+                        title: 'Confirmar desactivación',
+                        text: `¿Seguro que desea desactivar al usuario "${userLabel}"?`,
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'Sí, desactivar',
+                        cancelButtonText: 'Cancelar',
+                        reverseButtons: true,
+                    });
+
+                    if (!confirmation.isConfirmed) {
+                        return;
+                    }
+
                     const ok = await userPService.deactivateUser(item.id);
                     if (ok) {
-                        // Refrescar lista
                         await fetchUsers();
-                        // Mostrar notificación simple
-                        // import Swal dynamically to avoid adding top-level dep if not present
-                        const Swal = (await import('sweetalert2')).default;
                         Swal.fire({ title: 'Completado', text: 'Usuario desactivado', icon: 'success', timer: 2000 });
                     } else {
-                        const Swal = (await import('sweetalert2')).default;
                         Swal.fire({ title: 'Error', text: 'No se pudo desactivar el usuario', icon: 'error', timer: 3000 });
                     }
                 } catch (err) {

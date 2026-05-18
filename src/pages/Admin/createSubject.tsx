@@ -10,6 +10,21 @@ const CreateSubject = () => {
 
     const handleCreateSubject = async (values: SubjectPayload) => {
         try {
+            const subjectLabel = values.name || values.code || "esta asignatura";
+            const confirmation = await Swal.fire({
+                title: "Confirmar creación",
+                text: `¿Seguro que desea guardar la asignatura "${subjectLabel}"?`,
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonText: "Sí, guardar asignatura",
+                cancelButtonText: "Cancelar",
+                reverseButtons: true,
+            });
+
+            if (!confirmation.isConfirmed) {
+                return;
+            }
+
             const createdSubject = await subjectService.createSubject(values);
 
             if (createdSubject) {
