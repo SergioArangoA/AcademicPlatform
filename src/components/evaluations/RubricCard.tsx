@@ -1,3 +1,6 @@
+/**
+ * Tarjeta resumen de rúbrica (título, criterios, pesos): la reutilizo en crear, revisar y flujos de evaluación.
+ */
 import React from "react";
 import { Rubric } from "../../models/Evaluation/Rubric";
 import { Criterion } from "../../models/Evaluation/Criterion";

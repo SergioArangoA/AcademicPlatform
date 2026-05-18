@@ -1,7 +1,6 @@
-/*
- * Componente DashboardIndex
- * Funciona como un enrutador de inicio. Evalua el rol del usuario actual
- * y decide que dashboard renderizar TeacherDashboard, StudentDashboard o el default.
+/**
+ * Enrutador del inicio "/": según el rol muestro TeacherDashboard, StudentDashboard
+ * o el dashboard genérico de admin. Si soy docente, caigo en TeacherDashboard.
  */
 import React from 'react';
 import { useSelector } from 'react-redux';

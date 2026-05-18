@@ -1,6 +1,6 @@
-/*
- * CU-10 — Asociar rúbrica a evaluación y asignatura
- * Ruta: /evaluaciones/:evaluacionId/asociar-rubrica
+/**
+ * Asociar rúbrica a una evaluación (CU-10). Ruta: /evaluaciones/:evaluacionId/asociar-rubrica.
+ * Elijo una de mis rúbricas, previsualizo criterios y confirmo el vínculo con la evaluación.
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
@@ -21,13 +21,15 @@ import {
 import { rubricService } from '../../../services/rubricService';
 import { gradeService } from '../../../services/gradeService';
 import { criterionService } from '../../../services/criterionService';
+import { formatDateTime } from '../../../utils/evaluationFormat';
 import {
     loadTeacherSubjects,
     resolveTeacherIdForApi,
     getSubjectByIdSafe,
-    TeacherSubjectOption,
-} from '../../../utils/teacherEvaluationHelpers';
-import { formatDateTime } from '../../../utils/evaluationFormat';
+    resolveTeacherRecord,
+    filterRubricsAssignedToTeacher,
+    type TeacherSubjectOption,
+} from '../../../utils/teacher';
 
 type RubricRow = Rubric & {
     criteriaCount: number;
@@ -60,14 +62,17 @@ const AssociateRubricPage = () => {
         if (!evaluacionId) return;
         setLoading(true);
         try {
-            const [evalData, publicRubrics, criteria, teacherSubjects, docenteId] =
+            const [evalData, publicRubricsRaw, criteria, teacherSubjects, docenteId, teacher] =
                 await Promise.all([
                     evaluationService.getEvaluationById(evaluacionId),
                     rubricService.getPublicRubrics(),
                     criterionService.getCriteria(),
                     loadTeacherSubjects(user),
                     resolveTeacherIdForApi(user),
+                    resolveTeacherRecord(user),
                 ]);
+
+            const publicRubrics = filterRubricsAssignedToTeacher(publicRubricsRaw, teacher);
 
             setTeacherId(docenteId);
             setEvaluation(evalData);
@@ -92,8 +97,11 @@ const AssociateRubricPage = () => {
                 setSelectedSubjectId(String(evalData.subject_id));
             }
 
+            const rubricIds = new Set(publicRubrics.map((r) => String(r.id)));
             const countByRubric = new Map<string, number>();
-            criteria.forEach((c: Criterion) => {
+            criteria
+                .filter((c: Criterion) => rubricIds.has(String(c.rubric_id)))
+                .forEach((c: Criterion) => {
                 const k = String(c.rubric_id);
                 countByRubric.set(k, (countByRubric.get(k) ?? 0) + 1);
             });
@@ -127,8 +135,10 @@ const AssociateRubricPage = () => {
     const filteredRubrics = useMemo(() => {
         const q = search.trim().toLowerCase();
         return rubrics.filter((r) => {
-            if (rubricScope === 'mine' && teacherId && r.teacher_id) {
-                if (String(r.teacher_id) !== teacherId) return false;
+            if (rubricScope === 'mine' && teacherId) {
+                const rubricTeacherId = r.teacher_id ? String(r.teacher_id) : '';
+                if (rubricTeacherId && rubricTeacherId !== teacherId) return false;
+                if (!rubricTeacherId) return false;
             }
             if (subjectFilter !== 'all' && String(r.subject_id) !== subjectFilter) return false;
             if (q) {

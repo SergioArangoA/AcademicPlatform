@@ -1,5 +1,6 @@
-/*
- * CU-11 – Calificar estudiante con rúbrica
+/**
+ * Calificar estudiante (ruta alternativa /teachers/evaluations/:id/grade).
+ * Misma idea que GradeStudentPage pero con layout de breadcrumb; el flujo principal es CU-11 en /evaluaciones/...
  */
 import React, { useEffect, useMemo, useState } from 'react';
 import Breadcrumb from '../../../components/Breadcrumb';

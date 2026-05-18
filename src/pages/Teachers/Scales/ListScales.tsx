@@ -1,10 +1,14 @@
+/**
+ * Escalas del docente: listado de escalas por criterio/rúbrica, con filtros.
+ * Sirve para revisar lo definido en Definir escalas sin entrar rúbrica por rúbrica.
+ */
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Breadcrumb from '../../../components/Breadcrumb';
 import FilterBar, { FilterValues } from '../../../components/FilterBar';
 import GenericTable from '../../../components/GenericTable';
 import { useAuth } from '../../../context/AuthContext';
-import { loadTeacherScalesData, TeacherScaleRow } from '../../../utils/teacherTableData';
+import { loadTeacherScalesData, TeacherScaleRow } from '../../../utils/teacher';
 
 const initialFilters: FilterValues = {
     search: '',

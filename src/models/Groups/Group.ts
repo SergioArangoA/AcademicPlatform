@@ -1,3 +1,4 @@
+/** Cómo viene un grupo del API; también uso cupos e inscripciones en el listado */
 export interface Group {
     id: string;
     subject_id?: string;

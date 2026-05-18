@@ -1,3 +1,7 @@
+/**
+ * Pantalla para editar un grupo que ya existe.
+ * Uso el mismo formulario que al crear; no es la de "asignar docente".
+ */
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Swal from "sweetalert2";
@@ -5,8 +9,6 @@ import Breadcrumb from "../../components/Breadcrumb";
 import GroupForm from "../../components/GroupForm";
 import { GroupPayload } from "../../models/Groups/GroupPayload";
 import { groupService } from "../../services/groupService";
-import { isGroupArchivedLocally } from "../../utils/groupArchiveStorage";
-
 const UpdateGroup = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
@@ -89,15 +91,6 @@ const UpdateGroup = () => {
             <>
                 <Breadcrumb pageName="Editar grupo" />
                 <p className="p-4 text-gray-500">Cargando grupo...</p>
-            </>
-        );
-    }
-
-    if (isGroupArchivedLocally(id!)) {
-        return (
-            <>
-                <Breadcrumb pageName="Editar grupo" />
-                <p className="p-4 text-amber-600">Este grupo está archivado y no puede editarse.</p>
             </>
         );
     }
