@@ -1,5 +1,6 @@
-/*
- * CU-10 — Listado de evaluaciones (entrada al flujo de asociación y calificación)
+/**
+ * Evaluaciones (docente, CU-10): listado para elegir una evaluación y asociarle rúbrica
+ * o ir a calificar estudiantes. Entrada al flujo /evaluaciones/...
  */
 import React, { useEffect, useMemo, useState } from 'react';
 import Breadcrumb from '../../../components/Breadcrumb';

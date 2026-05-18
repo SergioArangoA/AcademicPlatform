@@ -1,3 +1,8 @@
+/**
+ * Crear rúbrica (CU-08): título, criterios con pesos que suman 100 %, plantillas, borrador o publicar.
+ * Guardo rúbrica y criterios en el API; luego puedo ir a revisión y a definir escalas.
+ * Las asignaturas/grupos del select salen de loadTeacherGroupOptions.
+ */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -5,8 +10,7 @@ import Swal from 'sweetalert2';
 import { useAuth } from '../../../context/AuthContext';
 import { rubricService, getRubricErrorMessage } from '../../../services/rubricService';
 import { SubjectGroupOption } from '../../../models/Subjects/SubjectGroupOption';
-import { resolveTeacherId } from '../../../utils/resolveTeacherId';
-import { loadTeacherGroupOptions } from '../../../utils/loadTeacherGroupOptions';
+import { resolveTeacherId, loadTeacherGroupOptions } from '../../../utils/teacher';
 import RubricInfoCard from '../../../components/evaluations/RubricCard';
 import RubricTemplatesModal, { LocalCriterionDraft } from '../../../components/evaluations/RubricTemplatesModal';
 import { Criterion } from '../../../models/Evaluation/Criterion';

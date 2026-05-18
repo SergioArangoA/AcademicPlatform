@@ -1,3 +1,7 @@
+/**
+ * API de criterios de rúbrica: los creo después de guardar la rúbrica (rubric_id, name, weight, etc.).
+ * Uso unwrapApiData porque el backend devuelve { data: ... }.
+ */
 import { api } from "../interceptors/authInterceptor";
 import { Criterion } from "../models/Evaluation/Criterion";
 import { ApiEnvelope } from "../types/ApiResponse";

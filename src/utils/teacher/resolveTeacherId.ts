@@ -1,12 +1,13 @@
-import { User as AppUser } from '../models/User';
-import { User as FirebaseUser } from 'firebase/auth';
-import { Teacher } from '../models/Teachers/Teacher';
-import { teacherService } from '../services/teacherService';
-import { getAuthUserId } from './authUser';
+/**
+ * Paso del usuario de login al registro Teacher del backend.
+ * Sin esto las pantallas del docente no saben qué grupos, estudiantes o rúbricas son míos.
+ */
+import { User as AppUser } from '../../models/User';
+import { Teacher } from '../../models/Teachers/Teacher';
+import { teacherService } from '../../services/teacherService';
+import { getAuthUserId } from '../authUser';
+import type { AuthUser } from './types';
 
-type AuthUser = FirebaseUser | AppUser | null;
-
-/** Misma estrategia que /admin/assign-teacher: mapa teachers.id + user_id + identification */
 function buildTeacherLookup(teachers: Teacher[]): Map<string, Teacher> {
   const map = new Map<string, Teacher>();
 
@@ -19,10 +20,7 @@ function buildTeacherLookup(teachers: Teacher[]): Map<string, Teacher> {
   return map;
 }
 
-/**
- * Obtiene el registro en tabla `teachers` del usuario autenticado.
- * group.teacher_id siempre referencia teachers.id (como en assign-teacher).
- */
+/** Registro en tabla `teachers` del usuario autenticado (teachers.id en group.teacher_id) */
 export async function resolveTeacherRecord(user: AuthUser): Promise<Teacher | null> {
   const authUserId = getAuthUserId(user);
   if (!authUserId && !user) return null;
@@ -46,14 +44,12 @@ export async function resolveTeacherRecord(user: AuthUser): Promise<Teacher | nu
   }
 
   return (
-    teachers.find(
-      (t) =>
-        candidates.some((c) => String(t.user_id) === c || String(t.id) === c)
+    teachers.find((t) =>
+      candidates.some((c) => String(t.user_id) === c || String(t.id) === c)
     ) ?? null
   );
 }
 
-/** Id de teachers.id para comparar con group.teacher_id */
 export async function resolveTeacherId(user: AuthUser): Promise<string> {
   const teacher = await resolveTeacherRecord(user);
   return teacher ? String(teacher.id) : getAuthUserId(user);

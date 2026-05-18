@@ -1,3 +1,6 @@
+/**
+ * Saco el id del usuario logueado (Firebase o modelo User) para resolver docente/estudiante en el backend.
+ */
 import { User as AppUser } from '../models/User';
 import { User as FirebaseUser } from 'firebase/auth';
 

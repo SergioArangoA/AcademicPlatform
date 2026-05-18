@@ -1,9 +1,12 @@
+/**
+ * Mis estudiantes (docente): alumnos inscritos en mis grupos, con búsqueda y filtro por grupo.
+ */
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import Breadcrumb from '../../../components/Breadcrumb';
 import FilterBar, { FilterValues } from '../../../components/FilterBar';
 import GenericTable from '../../../components/GenericTable';
-import { loadTeacherStudentsData, TeacherStudentRow } from '../../../utils/teacherTableData';
+import { loadTeacherStudentsData, TeacherStudentRow } from '../../../utils/teacher';
 
 const initialFilters: FilterValues = {
     search: '',
