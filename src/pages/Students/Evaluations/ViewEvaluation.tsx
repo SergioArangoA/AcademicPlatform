@@ -12,6 +12,7 @@ import RubricEvaluationTable from "../../../components/evaluations/RubricTable";
 import EvaluationCard from "../../../components/evaluations/EvaluationCard";
 import { evaluationService } from "../../../services/evaluationService";
 import { subjectService } from "../../../services/subjectService";
+import { userPService } from "../../../services/userPService";
 import { groupService } from "../../../services/groupService";
 import { userService } from "../../../services/userService";
 import { rubricService } from "../../../services/rubricService";
@@ -51,7 +52,17 @@ const ViewEvaluation: React.FC = () => {
             setGroup(groupData ?? undefined);
 
             if (groupData?.teacher_id) {
-                const teacherData = await userService.getTeacherById(String(groupData.teacher_id));
+
+                // Obtener todos los usuarios
+                const users = await userPService.getUsers();
+
+                // Buscar el usuario cuyo profile.id sea igual al teacher_id
+                const teacherData = users.find(
+                    (user) =>
+                        String(user.profile?.id) ===
+                        String(groupData.teacher_id)
+                );
+
                 setTeacher(teacherData ?? undefined);
             }
 
@@ -104,6 +115,7 @@ const ViewEvaluation: React.FC = () => {
                         subject={subject}
                         group={group}
                         user={teacher}
+                        rubric={rubric}
                     />
 
                     {!evaluation.rubric_id ? (
