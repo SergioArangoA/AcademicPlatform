@@ -39,6 +39,21 @@ const CreateUser = () => {
                 return;
             }
 
+            const userLabel = values.first_name || values.email || values.code || "este usuario";
+            const confirmation = await Swal.fire({
+                title: "Confirmar creación",
+                text: `¿Seguro que desea guardar el usuario "${userLabel}"?`,
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonText: "Sí, guardar usuario",
+                cancelButtonText: "Cancelar",
+                reverseButtons: true,
+            });
+
+            if (!confirmation.isConfirmed) {
+                return;
+            }
+
             if (!values.password) {
                 Swal.fire({
                     title: "Error",

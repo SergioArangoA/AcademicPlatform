@@ -34,6 +34,21 @@ const UpdateCareer = () => {
 				throw new Error("ID de carrera no disponible");
 			}
 
+			const careerLabel = career.name || career.code || "esta carrera";
+			const confirmation = await Swal.fire({
+				title: "Confirmar actualización",
+				text: `¿Seguro que desea guardar los cambios de la carrera "${careerLabel}"?`,
+				icon: "warning",
+				showCancelButton: true,
+				confirmButtonText: "Sí, guardar cambios",
+				cancelButtonText: "Cancelar",
+				reverseButtons: true,
+			});
+
+			if (!confirmation.isConfirmed) {
+				return;
+			}
+
 			const updatedCareer = await careerService.updateCareer(career.id, values);
 
 			if (updatedCareer) {

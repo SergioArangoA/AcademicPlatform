@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Subject } from "../../models/Subjects/Subject";
 import { StudyPlan } from "../../models/StudyPlan/StudyPlan";
 import { studyplanService } from "../../services/studyplanService";
@@ -16,6 +17,7 @@ type StudyPlanRow = {
 const normalizeText = (value: string) => value.trim().toLowerCase();
 
 const PlanStudios = () => {
+    const navigate = useNavigate();
     const [subjects, setSubjects] = useState<Subject[]>([]);
     const [subjectSearch, setSubjectSearch] = useState("");
     const [subjectPage, setSubjectPage] = useState(1);
@@ -93,10 +95,25 @@ const PlanStudios = () => {
             return;
         }
 
+        const Swal = (await import("sweetalert2")).default;
+        const subjectLabel = subject.name || subject.code || "esta asignatura";
+        const confirmation = await Swal.fire({
+            icon: "warning",
+            title: "Confirmar agregado",
+            text: `¿Seguro que desea agregar la asignatura "${subjectLabel}" al plan de estudios?`,
+            showCancelButton: true,
+            confirmButtonText: "Sí, agregar",
+            cancelButtonText: "Cancelar",
+            reverseButtons: true,
+        });
+
+        if (!confirmation.isConfirmed) {
+            return;
+        }
+
         setIsPerformingAction(true);
         try {
             const ok = await studyplanService.addSubjectToStudyPlan(selectedPlanId, subject.id);
-            const Swal = (await import("sweetalert2")).default;
 
             if (ok) {
                 await Swal.fire({
@@ -121,6 +138,21 @@ const PlanStudios = () => {
     };
 
     const handleStudyPlanAction = async (actionName: string, plan: Record<string, any>) => {
+        if (actionName === "edit") {
+            if (!plan.id) {
+                const Swal = (await import("sweetalert2")).default;
+                Swal.fire({
+                    icon: "warning",
+                    title: "Error",
+                    text: "No se pudo identificar la asignatura para editarla.",
+                });
+                return;
+            }
+
+            navigate(`/admin/subjects/edit/${plan.id}`);
+            return;
+        }
+
         if (actionName !== "delete") return;
 
         if (!selectedPlanId) {

@@ -34,6 +34,21 @@ const UpdateSubject = () => {
                 throw new Error("ID de la asignatura no disponible");
             }
 
+            const subjectLabel = subject.name || subject.code || "esta asignatura";
+            const confirmation = await Swal.fire({
+                title: "Confirmar actualización",
+                text: `¿Seguro que desea guardar los cambios de la asignatura "${subjectLabel}"?`,
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonText: "Sí, guardar cambios",
+                cancelButtonText: "Cancelar",
+                reverseButtons: true,
+            });
+
+            if (!confirmation.isConfirmed) {
+                return;
+            }
+
             const updatedSubject = await subjectService.updateSubject(subject.id, values);
 
             if (updatedSubject) {

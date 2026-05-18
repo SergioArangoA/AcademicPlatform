@@ -181,14 +181,38 @@ const AssignTeacher = () => {
             return;
         }
 
+        const Swal = (await import("sweetalert2")).default;
+        const selectedTeacher = teacherRows.find((teacher) => String(teacher.id) === selectedTeacherId);
+        const teacherName = selectedTeacher
+            ? `${selectedTeacher.first_name} ${selectedTeacher.last_name}`.trim()
+            : "el docente seleccionado";
+        const teacherCode = selectedTeacher?.user_id || selectedTeacher?.id || "-";
+        const teacherIdentification = selectedTeacher?.identification || "-";
+
+        const confirmation = await Swal.fire({
+            icon: "warning",
+            title: "Confirmar asignación",
+            html: `
+                <div style="text-align:left; line-height:1.6">
+                    <p>¿Seguro que desea asignar al docente seleccionado?</p>
+                    <p><strong>Código:</strong> ${teacherCode}</p>
+                    <p><strong>Nombre:</strong> ${teacherName}</p>
+                    <p><strong>Identificación:</strong> ${teacherIdentification}</p>
+                </div>
+            `,
+            showCancelButton: true,
+            confirmButtonText: "Sí, asignar",
+            cancelButtonText: "Cancelar",
+            reverseButtons: true,
+        });
+
+        if (!confirmation.isConfirmed) {
+            return;
+        }
+
         setIsAssigningTeacher(true);
         try {
             const ok = await groupService.assignTeacherToGroup(selectedGroupId, selectedTeacherId);
-            const Swal = (await import("sweetalert2")).default;
-            const selectedTeacher = teacherRows.find((teacher) => String(teacher.id) === selectedTeacherId);
-            const teacherName = selectedTeacher
-                ? `${selectedTeacher.first_name} ${selectedTeacher.last_name}`.trim()
-                : "el docente seleccionado";
             const subjectLabel = selectedGroup
                 ? {
                     subjectName: selectedGroup.subject_name,
