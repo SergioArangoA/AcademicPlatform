@@ -30,7 +30,7 @@ import { scaleService } from '../../../services/scaleService';
 import { enrollmentService } from '../../../services/enrollmentService';
 import { gradeService, getGradeErrorMessage } from '../../../services/gradeService';
 import { userPService } from '../../../services/userPService';
-import { transformUsersForList } from '../../../utils/userTransformers';
+import { buildStudentLookupMap, resolveStudentFromEnrollment, transformUsersForList } from '../../../utils/userTransformers';
 import {
     calculateFinalScoreFromSelections,
     scalesByCriterion,
@@ -122,11 +122,13 @@ const GradeStudentPage = () => {
             const rubricScales = scalesData.filter((s) =>
                 criterionIds.includes(String(s.criterion_id))
             );
-            const students = transformUsersForList(Array.isArray(usersRaw) ? usersRaw : []);
-            const studentMap = new Map(students.map((s) => [String(s.id), s]));
+            const students = transformUsersForList(Array.isArray(usersRaw) ? usersRaw : []).filter(
+                (u) => u.role === 'STUDENT'
+            );
+            const studentMap = buildStudentLookupMap(students);
 
             const enrollmentRows: EnrollmentStudent[] = enrollmentsRaw.map((e) => {
-                const st = studentMap.get(String(e.student_id));
+                const st = resolveStudentFromEnrollment(studentMap, String(e.student_id));
                 return {
                     enrollmentId: String(e.id),
                     studentId: String(e.student_id),

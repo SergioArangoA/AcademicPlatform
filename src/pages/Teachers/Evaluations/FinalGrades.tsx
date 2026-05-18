@@ -13,6 +13,9 @@ import { enrollmentService } from '../../../services/enrollmentService';
 import { semesterService } from '../../../services/semesterService';
 import { groupService } from '../../../services/groupService';
 import { loadTeacherGroupOptions } from '../../../utils/teacher';
+import { userPService } from '../../../services/userPService';
+import { UserForList } from '../../../models/Users/UserForList';
+import { buildStudentLookupMap, resolveStudentFromEnrollment, transformUsersForList } from '../../../utils/userTransformers';
 import { SubjectGroupOption } from '../../../models/Subjects/SubjectGroupOption';
 import { Evaluation } from '../../../models/Evaluation/Evaluation';
 import { Grade } from '../../../models/Evaluation/Grade';
@@ -20,6 +23,8 @@ import { Grade } from '../../../models/Evaluation/Grade';
 interface ConsolidatedRow {
   enrollment_id: string;
   student_id: string;
+  student_name: string;
+  student_code: string;
   official_score: number;
   evaluations_graded: number;
   evaluations_total: number;
@@ -35,6 +40,7 @@ const FinalGrades: React.FC = () => {
   const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
   const [grades, setGrades] = useState<Grade[]>([]);
   const [enrollments, setEnrollments] = useState<{ id: string; student_id: string }[]>([]);
+  const [studentLookup, setStudentLookup] = useState<Map<string, UserForList>>(new Map());
   const [semesterActive, setSemesterActive] = useState(true);
   const [loading, setLoading] = useState(true);
   const [registering, setRegistering] = useState(false);
@@ -67,13 +73,19 @@ const FinalGrades: React.FC = () => {
     if (!selectedGroupId) return;
     const load = async () => {
       setLoading(true);
-      const [evals, allGrades, enrolls, semesters, groupData] = await Promise.all([
+      const [evals, allGrades, enrolls, semesters, groupData, usersRaw] = await Promise.all([
         evaluationService.getEvaluations(),
         gradeService.getGrades(),
         enrollmentService.getEnrollments(selectedGroupId),
         semesterService.getSemesters(),
         groupService.getGroupById(selectedGroupId),
+        userPService.getUsers(),
       ]);
+
+      const students = transformUsersForList(Array.isArray(usersRaw) ? usersRaw : []).filter(
+        (u) => u.role === 'STUDENT'
+      );
+      setStudentLookup(buildStudentLookupMap(students));
 
       const groupEvals = evals.filter(
         (e) => String(e.group_id) === selectedGroupId && e.rubric_id
@@ -102,6 +114,7 @@ const FinalGrades: React.FC = () => {
       let official = 0;
       let graded = 0;
       const total = evaluations.length;
+      const st = resolveStudentFromEnrollment(studentLookup, enrollment.student_id);
 
       for (const ev of evaluations) {
         const grade = grades.find(
@@ -119,13 +132,15 @@ const FinalGrades: React.FC = () => {
       return {
         enrollment_id: enrollment.id,
         student_id: enrollment.student_id,
+        student_name: st?.name ?? `Estudiante ${enrollment.student_id.slice(0, 8)}`,
+        student_code: st?.code ?? '—',
         official_score: Number(official.toFixed(2)),
         evaluations_graded: graded,
         evaluations_total: total,
         incomplete: graded < total,
       };
     });
-  }, [enrollments, evaluations, grades]);
+  }, [enrollments, evaluations, grades, studentLookup]);
 
   const handleRegisterOfficial = async () => {
     if (!selectedGroupId) return;
@@ -151,14 +166,19 @@ const FinalGrades: React.FC = () => {
     try {
       const result = await gradeService.registerFinalScores(selectedGroupId);
       setReportRows(
-        result.map((r) => ({
-          enrollment_id: r.enrollment_id,
-          student_id: r.student_id,
-          official_score: r.official_final_score,
-          evaluations_graded: r.evaluations_count,
-          evaluations_total: evaluations.length,
-          incomplete: false,
-        }))
+        result.map((r) => {
+          const st = resolveStudentFromEnrollment(studentLookup, r.student_id);
+          return {
+            enrollment_id: r.enrollment_id,
+            student_id: r.student_id,
+            student_name: st?.name ?? `Estudiante ${String(r.student_id).slice(0, 8)}`,
+            student_code: st?.code ?? '—',
+            official_score: r.official_final_score,
+            evaluations_graded: r.evaluations_count,
+            evaluations_total: evaluations.length,
+            incomplete: false,
+          };
+        })
       );
       setRegistered(true);
       toast.success('Notas finales registradas oficialmente.');
@@ -246,7 +266,7 @@ const FinalGrades: React.FC = () => {
             <table className="w-full table-auto text-sm">
               <thead>
                 <tr className="bg-gray-2 dark:bg-meta-4 text-left">
-                  <th className="py-3 px-4">Inscripción</th>
+                  <th className="py-3 px-4">Código</th>
                   <th className="py-3 px-4">Estudiante</th>
                   <th className="py-3 px-4 text-center">Evaluaciones</th>
                   <th className="py-3 px-4 text-right">Nota consolidada</th>
@@ -255,8 +275,8 @@ const FinalGrades: React.FC = () => {
               <tbody>
                 {consolidated.map((row) => (
                   <tr key={row.enrollment_id} className="border-b border-stroke dark:border-strokedark">
-                    <td className="py-3 px-4 font-mono text-xs">{row.enrollment_id}</td>
-                    <td className="py-3 px-4 font-mono text-xs">{row.student_id}</td>
+                    <td className="py-3 px-4">{row.student_code}</td>
+                    <td className="py-3 px-4 font-medium text-black dark:text-white">{row.student_name}</td>
                     <td className="py-3 px-4 text-center">
                       {row.evaluations_graded}/{row.evaluations_total}
                       {row.incomplete && (

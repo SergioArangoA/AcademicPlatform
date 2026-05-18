@@ -11,7 +11,7 @@ import { enrollmentService } from '../../services/enrollmentService';
 import { groupService } from '../../services/groupService';
 import { subjectService } from '../../services/subjectService';
 import { userPService } from '../../services/userPService';
-import { transformUsersForList } from '../userTransformers';
+import { buildStudentLookupMap, resolveStudentFromEnrollment, transformUsersForList } from '../userTransformers';
 import { filterGroupsByTeacherMatchIds } from './filters';
 import { resolveTeacherMatchIds, resolveTeacherRecord } from './resolveTeacherId';
 import type { AuthUser } from './types';
@@ -156,12 +156,12 @@ export async function loadEvaluationStudentsRows(
     const studentsList = transformUsersForList(
       Array.isArray(usersRaw) ? usersRaw : []
     ).filter((u) => u.role === 'STUDENT');
-    const studentMap = new Map(studentsList.map((s) => [String(s.id), s]));
+    const studentMap = buildStudentLookupMap(studentsList);
 
     const active = enrollments.filter((e) => e.status === 'ACTIVE' || e.status === 'Activa');
 
     const students: EvaluationStudentRow[] = active.map((enr) => {
-      const st = studentMap.get(String(enr.student_id));
+      const st = resolveStudentFromEnrollment(studentMap, String(enr.student_id));
       const grade =
         evaluation.rubric_id &&
         grades.find(

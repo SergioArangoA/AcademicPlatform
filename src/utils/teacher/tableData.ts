@@ -18,7 +18,7 @@ import { getCriterionRubricId } from '../criterionWeight';
 import { rubricService } from '../../services/rubricService';
 import { evaluationService } from '../../services/evaluationService';
 import { scaleService } from '../../services/scaleService';
-import { transformUsersForList } from '../userTransformers';
+import { buildStudentLookupMap, resolveStudentFromEnrollment, transformUsersForList } from '../userTransformers';
 import {
   filterGroupsByTeacherMatchIds,
   filterRubricsVisibleToTeacher,
@@ -157,14 +157,14 @@ export async function loadTeacherStudentsData(user: AuthUser): Promise<{
     const enrollments = Array.isArray(allEnrollments) ? allEnrollments : [];
     const usersList = Array.isArray(usersRaw) ? usersRaw : [];
     const students = transformUsersForList(usersList).filter((u) => u.role === 'STUDENT');
-    const studentMap = new Map(students.map((s) => [String(s.id), s]));
+    const studentMap = buildStudentLookupMap(students);
 
     const rows = enrollments
       .filter((e: Enrollment) => groupIds.has(String(e.group_id)))
       .map((e: Enrollment) => {
         const group = groupMap.get(String(e.group_id));
         const subject = group?.subject_id ? subjectMap.get(String(group.subject_id)) : undefined;
-        const student = studentMap.get(String(e.student_id));
+        const student = resolveStudentFromEnrollment(studentMap, String(e.student_id));
         const statusRaw = e.status ?? '';
         const status =
           statusRaw === 'ACTIVE' || statusRaw === 'Activa' ? 'Activa' : statusRaw || '—';
@@ -173,7 +173,11 @@ export async function loadTeacherStudentsData(user: AuthUser): Promise<{
           enrollment_id: String(e.id),
           student_id: String(e.student_id),
           student_code: student?.code ?? '—',
-          student_name: student?.name ?? `Estudiante ${String(e.student_id).slice(0, 8)}…`,
+          student_name:
+            student?.name ??
+            (student?.profile
+              ? `${student.profile.first_name} ${student.profile.last_name}`.trim()
+              : `Estudiante ${String(e.student_id).slice(0, 8)}…`),
           student_email: student?.email ?? '—',
           group_label: group?.name ?? group?.group_code ?? String(e.group_id),
           subject_label: subject ? `${subject.code} — ${subject.name}` : '—',
