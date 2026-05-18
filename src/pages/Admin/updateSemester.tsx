@@ -35,6 +35,21 @@ const UpdateSemester = () => {
 				throw new Error("ID de semestre no disponible");
 			}
 
+			const semesterLabel = semester.name || semester.code || "este semestre";
+			const confirmation = await Swal.fire({
+				title: "Confirmar actualización",
+				text: `¿Seguro que desea guardar los cambios del semestre "${semesterLabel}"?`,
+				icon: "warning",
+				showCancelButton: true,
+				confirmButtonText: "Sí, guardar cambios",
+				cancelButtonText: "Cancelar",
+				reverseButtons: true,
+			});
+
+			if (!confirmation.isConfirmed) {
+				return;
+			}
+
 			const updatedSemester = await semesterService.updateSemester(semester.id, values);
 
 			if (updatedSemester) {

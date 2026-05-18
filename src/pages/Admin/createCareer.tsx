@@ -10,6 +10,21 @@ const CreateCareer = () => {
 
 	const handleCreateCareer = async (values: CareerPayload) => {
 		try {
+			const careerLabel = values.name || values.code || "esta carrera";
+			const confirmation = await Swal.fire({
+				title: "Confirmar creación",
+				text: `¿Seguro que desea guardar la carrera "${careerLabel}"?`,
+				icon: "warning",
+				showCancelButton: true,
+				confirmButtonText: "Sí, guardar carrera",
+				cancelButtonText: "Cancelar",
+				reverseButtons: true,
+			});
+
+			if (!confirmation.isConfirmed) {
+				return;
+			}
+
 			const createdCareer = await careerService.createCareer(values);
 
 			if (createdCareer) {
