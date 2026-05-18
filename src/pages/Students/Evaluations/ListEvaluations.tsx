@@ -2,6 +2,9 @@ import React, { useEffect, useState } from "react";
 import { Evaluation } from "../../../models/Evaluation/Evaluation";
 import GenericTable from "../../../components/GenericTable";
 import { evaluationService } from "../../../services/evaluationService";
+import { enrollmentService } from "../../../services/enrollmentService";
+import { userPService } from "../../../services/userPService";
+import { LocalStorageProvider } from "../../../storage/LocalStorageProvider";
 import { useNavigate } from "react-router-dom";
 
 const Evaluations: React.FC = () => {
@@ -16,7 +19,29 @@ const Evaluations: React.FC = () => {
     // 🔹 Obtiene los datos de las evaluaciones
     const fetchData = async () => {
         const evaluations = await evaluationService.getEvaluations();
-        setData(evaluations);
+        const storageProvider = new LocalStorageProvider();
+        const userInStorage = storageProvider.getParsedItem("user");
+        
+        const id = userInStorage.id;
+        const users = await userPService.getUsers();
+        const user = users.find((u) => u.profile?.id === id || u.id === id);
+        const enrollments = await enrollmentService.getStudentEnrollments(user?.profile?.id);
+
+
+        const userEvaluations = [];
+        enrollments.forEach((en)=>{
+            if (en.status === "ACTIVE"){
+                const matches = evaluations.filter((ev) => ev.group_id === en.group_id);
+                if (matches){
+                    userEvaluations.forEach((match) =>{
+                        userEvaluations.push(match);
+                    });
+                }
+
+            }
+
+        })
+        setData(userEvaluations);
     };
 
     const handleAction = (action: string, item: Evaluation) => {
