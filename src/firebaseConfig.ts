@@ -2,10 +2,11 @@
 // Importar funciones necesarias
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, GithubAuthProvider, OAuthProvider } from "firebase/auth";
+const FIREBASE_KEY = import.meta.env.VITE_FIREBASE_KEY
 
 // Configuración de tu proyecto Firebase
 const firebaseConfig = {
-  apiKey: "AIzaSyBiFL4itZPllT1LHJ5waFQVyqKtZ1CPP2A",
+  apiKey: FIREBASE_KEY,
   authDomain: "security-2025-02.firebaseapp.com",
   projectId: "security-2025-02",
   storageBucket: "security-2025-02.firebasestorage.app",
