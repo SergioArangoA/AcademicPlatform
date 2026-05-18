@@ -12,6 +12,7 @@ import { criterionService } from '../../../services/criterionService';
 import { rubricService, getRubricErrorMessage } from '../../../services/rubricService';
 import { scaleService, getScaleErrorMessage } from '../../../services/scaleService';
 import { scalesByCriterion, validateScalesForPublish } from '../../../utils/rubricScoring';
+import { getCriterionWeight } from '../../../utils/criterionWeight';
 
 const emptyScaleForm = () => ({
   name: '',
@@ -98,7 +99,7 @@ const DefineScales: React.FC = () => {
   );
 
   const totalWeight = useMemo(
-    () => criteria.reduce((acc, c) => acc + Number(c.weight ?? 0), 0),
+    () => criteria.reduce((acc, c) => acc + getCriterionWeight(c), 0),
     [criteria]
   );
 
@@ -353,7 +354,7 @@ const DefineScales: React.FC = () => {
                       {idx + 1}. {c.name}
                     </span>
                     <span className="text-[13px] font-semibold text-[#6366F1] shrink-0">
-                      {c.weight} %
+                      {getCriterionWeight(c)} %
                     </span>
                   </div>
                   {c.description && (
@@ -448,7 +449,7 @@ const DefineScales: React.FC = () => {
                   </p>
                 </div>
                 <span className="inline-flex items-center rounded-full bg-[#EDE9FE] px-3 py-1 text-[13px] font-semibold text-[#5B21B6]">
-                  Peso del criterio: {activeCriterion.weight} %
+                  Peso del criterio: {getCriterionWeight(activeCriterion)} %
                 </span>
               </div>
 

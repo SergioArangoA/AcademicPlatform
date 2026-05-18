@@ -10,7 +10,8 @@ import Swal from 'sweetalert2';
 import { useAuth } from '../../../context/AuthContext';
 import { rubricService, getRubricErrorMessage } from '../../../services/rubricService';
 import { SubjectGroupOption } from '../../../models/Subjects/SubjectGroupOption';
-import { resolveTeacherId, loadTeacherGroupOptions } from '../../../utils/teacher';
+import { resolveVerifiedTeacherId, loadTeacherGroupOptions } from '../../../utils/teacher';
+import { registerRubricForSubject } from '../../../utils/rubricOwnershipStorage';
 import RubricInfoCard from '../../../components/evaluations/RubricCard';
 import RubricTemplatesModal, { LocalCriterionDraft } from '../../../components/evaluations/RubricTemplatesModal';
 import { Criterion } from '../../../models/Evaluation/Criterion';
@@ -75,7 +76,7 @@ const CreateRubric: React.FC = () => {
 
     const load = async () => {
       setLoadingSubjects(true);
-      const resolvedTeacherId = await resolveTeacherId(user);
+      const resolvedTeacherId = (await resolveVerifiedTeacherId(user)) ?? '';
       if (cancelled) return;
 
       setTeacherId(resolvedTeacherId);
@@ -158,12 +159,14 @@ const CreateRubric: React.FC = () => {
     setErrorBanner('');
 
     if (!validateBaseFields()) return;
-    if (!teacherId) {
-      toast.error('No se pudo identificar al docente autenticado.');
+    if (!rubric.subject_id) {
+      toast.error('Selecciona un grupo con asignatura antes de guardar.');
       return;
     }
 
-    if (asPublic && (criterios.length === 0 || sumaTotal !== 100)) {
+    const namedCriteria = buildCriteriaPayload().filter((c) => c.name.trim());
+
+    if (asPublic && (namedCriteria.length === 0 || sumaTotal !== 100)) {
       setErrorBanner(PUBLISH_ERROR);
       return;
     }
@@ -174,22 +177,34 @@ const CreateRubric: React.FC = () => {
     try {
       const saved = await rubricService.saveRubricWithCriteria(
         {
+          subject_id: rubric.subject_id,
+          teacher_id: teacherId || undefined,
           title: rubric.title.trim(),
           description: rubric.description.trim(),
           is_public: false,
           is_archived: false,
         },
-        buildCriteriaPayload()
+        namedCriteria,
+        { requireCriteria: asPublic }
       );
 
       setSavedRubricId(String(saved.id));
       setIsDirty(false);
 
       if (saved.id) {
-        localStorage.setItem(`rubric_meta_${saved.id}_subject`, selectedSubjectLabel);
+        const rubricId = String(saved.id);
+        localStorage.setItem(`rubric_meta_${rubricId}_subject`, selectedSubjectLabel);
         const groupLabel =
           subjectOptions.find((o) => o.group_id === rubric.group_id)?.groupName ?? rubric.group_id;
-        localStorage.setItem(`rubric_meta_${saved.id}_group`, groupLabel);
+        localStorage.setItem(`rubric_meta_${rubricId}_group`, groupLabel);
+
+        if (rubric.subject_id) {
+          registerRubricForSubject(
+            rubricId,
+            String(rubric.subject_id),
+            teacherId || undefined
+          );
+        }
       }
 
       if (asPublic) {

@@ -17,16 +17,27 @@ export type {
   TeacherSubjectOption,
 } from './types';
 
-export { resolveTeacherRecord, resolveTeacherId } from './resolveTeacherId';
+export {
+  resolveTeacherRecord,
+  resolveTeacherId,
+  resolveVerifiedTeacherId,
+  resolveTeacherMatchIds,
+  getTeacherEntityId,
+  getResolvedTeacherProfileId,
+} from './resolveTeacherId';
 
 export {
   getGroupTeacherId,
-  isGroupAssignedToTeacher,
-  filterGroupsAssignedToTeacher,
   getRubricTeacherId,
-  isRubricAssignedToTeacher,
+  filterGroupsByTeacherMatchIds,
+  filterRubricsByTeacherMatchIds,
+  filterRubricsForTeacher,
+  getRubricSubjectId,
+  filterGroupsAssignedToTeacher,
   filterRubricsAssignedToTeacher,
 } from './filters';
+
+export { getTeacherProfileId } from '../authUser';
 
 export { loadTeacherGroupOptions } from './groupOptions';
 
@@ -36,6 +47,7 @@ export {
   loadTeacherRubricsData,
   loadTeacherScalesData,
 } from './tableData';
+export type { TeacherRubricRow } from './tableData';
 
 export {
   loadTeacherSubjects,

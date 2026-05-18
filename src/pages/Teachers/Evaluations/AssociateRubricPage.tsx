@@ -22,12 +22,16 @@ import { rubricService } from '../../../services/rubricService';
 import { gradeService } from '../../../services/gradeService';
 import { criterionService } from '../../../services/criterionService';
 import { formatDateTime } from '../../../utils/evaluationFormat';
+import { getCriterionRubricId } from '../../../utils/criterionWeight';
+import { groupService } from '../../../services/groupService';
 import {
     loadTeacherSubjects,
     resolveTeacherIdForApi,
     getSubjectByIdSafe,
+    filterGroupsByTeacherMatchIds,
+    filterRubricsForTeacher,
+    resolveTeacherMatchIds,
     resolveTeacherRecord,
-    filterRubricsAssignedToTeacher,
     type TeacherSubjectOption,
 } from '../../../utils/teacher';
 
@@ -52,7 +56,6 @@ const AssociateRubricPage = () => {
 
     const [search, setSearch] = useState('');
     const [subjectFilter, setSubjectFilter] = useState('all');
-    const [rubricScope, setRubricScope] = useState<'mine' | 'all'>('mine');
     const [selectedRubricId, setSelectedRubricId] = useState('');
     const [selectedSubjectId, setSelectedSubjectId] = useState('');
     const [previewRubric, setPreviewRubric] = useState<Rubric | null>(null);
@@ -62,17 +65,31 @@ const AssociateRubricPage = () => {
         if (!evaluacionId) return;
         setLoading(true);
         try {
-            const [evalData, publicRubricsRaw, criteria, teacherSubjects, docenteId, teacher] =
+            const [evalData, allRubricsRaw, criteria, teacherSubjects, docenteId, teacher, allEvaluations] =
                 await Promise.all([
                     evaluationService.getEvaluationById(evaluacionId),
-                    rubricService.getPublicRubrics(),
+                    rubricService.getRubrics(),
                     criterionService.getCriteria(),
                     loadTeacherSubjects(user),
                     resolveTeacherIdForApi(user),
                     resolveTeacherRecord(user),
+                    evaluationService.getEvaluations(),
                 ]);
 
-            const publicRubrics = filterRubricsAssignedToTeacher(publicRubricsRaw, teacher);
+            const matchIds = resolveTeacherMatchIds(user, teacher);
+            const groups = await groupService.getGroups();
+            const subjectIds = new Set(
+                filterGroupsByTeacherMatchIds(groups, matchIds)
+                    .map((g) => (g.subject_id != null ? String(g.subject_id) : ''))
+                    .filter(Boolean)
+            );
+            const evaluations = Array.isArray(allEvaluations) ? allEvaluations : [];
+            const publicRubrics = filterRubricsForTeacher(
+                Array.isArray(allRubricsRaw) ? allRubricsRaw : [],
+                matchIds,
+                subjectIds,
+                { publicOnly: true, evaluations }
+            );
 
             setTeacherId(docenteId);
             setEvaluation(evalData);
@@ -100,9 +117,12 @@ const AssociateRubricPage = () => {
             const rubricIds = new Set(publicRubrics.map((r) => String(r.id)));
             const countByRubric = new Map<string, number>();
             criteria
-                .filter((c: Criterion) => rubricIds.has(String(c.rubric_id)))
+                .filter((c: Criterion) => {
+                    const rid = getCriterionRubricId(c);
+                    return rid != null && rubricIds.has(rid);
+                })
                 .forEach((c: Criterion) => {
-                const k = String(c.rubric_id);
+                const k = getCriterionRubricId(c) ?? '';
                 countByRubric.set(k, (countByRubric.get(k) ?? 0) + 1);
             });
 
@@ -135,11 +155,6 @@ const AssociateRubricPage = () => {
     const filteredRubrics = useMemo(() => {
         const q = search.trim().toLowerCase();
         return rubrics.filter((r) => {
-            if (rubricScope === 'mine' && teacherId) {
-                const rubricTeacherId = r.teacher_id ? String(r.teacher_id) : '';
-                if (rubricTeacherId && rubricTeacherId !== teacherId) return false;
-                if (!rubricTeacherId) return false;
-            }
             if (subjectFilter !== 'all' && String(r.subject_id) !== subjectFilter) return false;
             if (q) {
                 const hay = `${r.title} ${r.description} ${r.subjectLabel}`.toLowerCase();
@@ -147,7 +162,7 @@ const AssociateRubricPage = () => {
             }
             return true;
         });
-    }, [rubrics, search, subjectFilter, rubricScope, teacherId]);
+    }, [rubrics, search, subjectFilter]);
 
     const selectedRubric = rubrics.find((r) => String(r.id) === selectedRubricId);
     const selectedSubject = subjects.find((s) => String(s.id) === selectedSubjectId);
@@ -254,16 +269,6 @@ const AssociateRubricPage = () => {
                                             {s.label}
                                         </option>
                                     ))}
-                                </select>
-                                <select
-                                    value={rubricScope}
-                                    onChange={(e) =>
-                                        setRubricScope(e.target.value as 'mine' | 'all')
-                                    }
-                                    className="rounded-lg border border-stroke px-3 py-2 text-sm dark:border-strokedark dark:bg-form-input"
-                                >
-                                    <option value="mine">Mis rúbricas</option>
-                                    <option value="all">Todas las rúbricas</option>
                                 </select>
                             </div>
 

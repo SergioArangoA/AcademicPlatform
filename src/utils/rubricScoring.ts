@@ -1,5 +1,6 @@
 import { Criterion } from "../models/Evaluation/Criterion";
 import { Scale } from "../models/Evaluation/Scale";
+import { getCriterionWeight } from "./criterionWeight";
 
 /** Puntaje ponderado: valor × (peso / 100), igual que el backend. */
 export function weightedScore(scaleValue: number, criterionWeight: number): number {
@@ -15,7 +16,7 @@ export function calculateFinalScoreFromSelections(
         const key = String(criterion.id ?? "");
         const sel = selections[key];
         if (!sel?.scaleId) continue;
-        total += weightedScore(sel.scaleValue, Number(criterion.weight ?? 0));
+        total += weightedScore(sel.scaleValue, getCriterionWeight(criterion));
     }
     return Number(total.toFixed(2));
 }
@@ -30,7 +31,7 @@ export function validateCriterionWeights(criteria: Criterion[]): {
     diff: number;
 } {
     const total = Number(
-        criteria.reduce((acc, c) => acc + Number(c.weight ?? 0), 0).toFixed(2)
+        criteria.reduce((acc, c) => acc + getCriterionWeight(c), 0).toFixed(2)
     );
     const diff = Number((100 - total).toFixed(2));
     return { valid: total === 100, total, diff };

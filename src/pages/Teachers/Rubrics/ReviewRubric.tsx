@@ -97,7 +97,7 @@ const ReviewRubric: React.FC = () => {
                       <div className="text-[#6B7280] dark:text-gray-400">{c.description}</div>
                     )}
                   </td>
-                  <td className="py-2 px-3">{c.weight}%</td>
+                  <td className="py-2 px-3">{getCriterionWeight(c)}%</td>
                 </tr>
               ))}
             </tbody>

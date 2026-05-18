@@ -1,50 +1,78 @@
 /**
  * API de criterios de rúbrica: los creo después de guardar la rúbrica (rubric_id, name, weight, etc.).
- * Uso unwrapApiData porque el backend devuelve { data: ... }.
+ * El backend puede devolver rubrica_id / peso_porcentual / nombre — se normalizan al leer.
  */
-import { api } from "../interceptors/authInterceptor";
-import { Criterion } from "../models/Evaluation/Criterion";
-import { ApiEnvelope } from "../types/ApiResponse";
-import { unwrapApiData } from "../utils/unwrapApiResponse";
+import { api } from '../interceptors/authInterceptor';
+import { Criterion } from '../models/Evaluation/Criterion';
+import { ApiEnvelope } from '../types/ApiResponse';
+import { coerceApiId, nonEmptyText } from '../utils/apiPayload';
+import { unwrapApiData } from '../utils/unwrapApiResponse';
+import {
+  ensureCriteriaList,
+  filterCriteriaByRubricId,
+  normalizeCriterion,
+} from '../utils/criterionWeight';
 
-const API_URL = "/evaluation/criteria";
+const API_URL = '/evaluation/criteria';
+
+/** Body exacto de POST /evaluation/criteria */
+export interface CreateCriterionApiPayload {
+  rubric_id: string;
+  name: string;
+  description: string;
+  weight: number;
+}
 
 class CriterionService {
-    async getCriteria(rubricId?: string): Promise<Criterion[]> {
-        try {
-            const response = await api.get<ApiEnvelope<Criterion[]>>(`${API_URL}`, {
-                params: rubricId ? { rubric_id: rubricId } : undefined,
-            });
-            let list = unwrapApiData(response);
+  async getCriteria(rubricId?: string): Promise<Criterion[]> {
+    try {
+      const response = await api.get<ApiEnvelope<unknown>>(API_URL);
+      const raw = unwrapApiData(response);
+      const list = ensureCriteriaList(raw).map(normalizeCriterion);
 
-            if (!Array.isArray(list)) {
-                list = [];
-            }
+      if (rubricId) {
+        return filterCriteriaByRubricId(list, rubricId);
+      }
 
-            if (rubricId) {
-                list = list.filter((c) => String(c.rubric_id) === String(rubricId));
-            }
-
-            return list;
-        } catch (error) {
-            console.error("Error al obtener criterios:", error);
-            return [];
-        }
+      return list;
+    } catch (error) {
+      console.error('Error al obtener criterios:', error);
+      return [];
     }
+  }
 
-    async getCriteriaByRubricId(rubricId: string): Promise<Criterion[]> {
-        return this.getCriteria(rubricId);
-    }
+  async getCriteriaByRubricId(rubricId: string): Promise<Criterion[]> {
+    if (!rubricId) return [];
+    return this.getCriteria(rubricId);
+  }
 
-    async getCriterionById(id: string): Promise<Criterion | null> {
-        try {
-            const response = await api.get<ApiEnvelope<Criterion>>(`${API_URL}/${id}`);
-            return unwrapApiData(response);
-        } catch (error) {
-            console.error("Criterio no encontrado:", error);
-            return null;
-        }
+  async getCriterionById(id: string): Promise<Criterion | null> {
+    try {
+      const response = await api.get<ApiEnvelope<unknown>>(`${API_URL}/${id}`);
+      const raw = unwrapApiData(response);
+      if (!raw || typeof raw !== 'object') return null;
+      return normalizeCriterion(raw as Parameters<typeof normalizeCriterion>[0]);
+    } catch (error) {
+      console.error('Criterio no encontrado:', error);
+      return null;
     }
+  }
+
+  async createCriterion(payload: CreateCriterionApiPayload): Promise<Criterion> {
+    const body: CreateCriterionApiPayload = {
+      rubric_id: String(coerceApiId(payload.rubric_id)),
+      name: payload.name.trim(),
+      description: nonEmptyText(payload.description, 'Sin descripción'),
+      weight: Number(payload.weight),
+    };
+
+    const response = await api.post<ApiEnvelope<unknown>>(API_URL, body);
+    const raw = unwrapApiData(response);
+    if (!raw || typeof raw !== 'object') {
+      throw new Error('El servidor no devolvió el criterio creado.');
+    }
+    return normalizeCriterion(raw as Parameters<typeof normalizeCriterion>[0]);
+  }
 }
 
 export const criterionService = new CriterionService();

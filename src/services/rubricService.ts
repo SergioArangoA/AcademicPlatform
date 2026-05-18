@@ -1,30 +1,47 @@
 /**
- * API de rúbricas para el flujo del docente (crear, listar, publicar).
- * POST solo envía title, description, is_public, is_archived; los criterios van aparte en criterionService.
+ * API de rúbricas (CU-08). El backend solo acepta title, description, is_public, is_archived.
+ * subject_id del formulario se indexa en localStorage por asignatura (cualquier docente de esa asignatura la ve).
  */
-import axios from "axios";
 import { api } from "../interceptors/authInterceptor";
 import { Rubric } from "../models/Evaluation/Rubric";
-import { Criterion } from "../models/Evaluation/Criterion";
 import { ApiEnvelope } from "../types/ApiResponse";
+import { getApiErrorMessage, nonEmptyText } from "../utils/apiPayload";
 import { unwrapApiData } from "../utils/unwrapApiResponse";
+import { criterionService } from "./criterionService";
 
 const API_URL = "/evaluation/rubrics";
-const CRITERIA_URL = "/evaluation/criteria";
 
-/** Payload de POST /evaluation/rubrics (sin subject_id: el backend no lo persiste). */
+/** Datos del formulario de creación/edición */
 export interface CreateRubricPayload {
+    subject_id?: string | number;
+    teacher_id?: string;
     title: string;
     description: string;
     is_public: boolean;
     is_archived: boolean;
 }
 
-export interface CreateCriterionPayload {
+/** Body enviado al API (columnas reales de rubrics en el backend) */
+export interface CreateRubricApiBody {
+    title: string;
+    description: string;
+    is_public: boolean;
+    is_archived: boolean;
+}
+
+export interface CreateCriterionInput {
     name: string;
     description: string;
     weight: number;
-    rubric_id: string;
+}
+
+function toCreateRubricBody(payload: CreateRubricPayload): CreateRubricApiBody {
+    return {
+        title: payload.title.trim(),
+        description: nonEmptyText(payload.description, "Sin descripción"),
+        is_public: Boolean(payload.is_public),
+        is_archived: Boolean(payload.is_archived),
+    };
 }
 
 class RubricService {
@@ -57,17 +74,12 @@ class RubricService {
     }
 
     async createRubric(payload: CreateRubricPayload): Promise<Rubric> {
-        const response = await api.post<ApiEnvelope<Rubric>>(API_URL, payload);
+        const response = await api.post<ApiEnvelope<Rubric>>(API_URL, toCreateRubricBody(payload));
         return unwrapApiData(response);
     }
 
-    async updateRubric(rubricId: string, payload: Partial<CreateRubricPayload>): Promise<Rubric> {
+    async updateRubric(rubricId: string, payload: Partial<CreateRubricApiBody>): Promise<Rubric> {
         const response = await api.put<ApiEnvelope<Rubric>>(`${API_URL}/${rubricId}`, payload);
-        return unwrapApiData(response);
-    }
-
-    async createCriterion(payload: CreateCriterionPayload): Promise<Criterion> {
-        const response = await api.post<ApiEnvelope<Criterion>>(CRITERIA_URL, payload);
         return unwrapApiData(response);
     }
 
@@ -78,26 +90,65 @@ class RubricService {
 
     async saveRubricWithCriteria(
         rubricPayload: CreateRubricPayload,
-        criteria: Omit<CreateCriterionPayload, "rubric_id">[]
+        criteria: CreateCriterionInput[],
+        options?: { requireCriteria?: boolean }
     ): Promise<Rubric> {
-        const rubric = await this.createRubric({
-            ...rubricPayload,
-            is_public: false,
-        });
+        if (!rubricPayload.title?.trim()) {
+            throw new Error("El título de la rúbrica es obligatorio.");
+        }
 
-        const rubricId = String(rubric.id);
+        let rubric: Rubric;
+        try {
+            rubric = await this.createRubric({
+                ...rubricPayload,
+                is_public: false,
+            });
+        } catch (err) {
+            throw new Error(
+                getApiErrorMessage(err, "Error al crear la rúbrica en el servidor.")
+            );
+        }
+
+        const rubricId = String(
+            rubric.id ??
+                (rubric as { rubric_id?: string }).rubric_id ??
+                ""
+        );
         if (!rubricId || rubricId === "undefined") {
             throw new Error("El servidor no devolvió el id de la rúbrica creada.");
         }
 
-        for (const criterion of criteria) {
-            if (!criterion.name.trim()) continue;
-            await this.createCriterion({
-                rubric_id: rubricId,
-                name: criterion.name.trim(),
-                description: criterion.description.trim(),
-                weight: criterion.weight,
-            });
+        const toCreate = criteria.filter((c) => c.name.trim());
+
+        if (toCreate.length === 0) {
+            if (options?.requireCriteria) {
+                throw new Error("Agrega al menos un criterio con nombre antes de continuar.");
+            }
+            return rubric;
+        }
+
+        let createdCount = 0;
+        for (const criterion of toCreate) {
+            try {
+                await criterionService.createCriterion({
+                    rubric_id: rubricId,
+                    name: criterion.name.trim(),
+                    description: nonEmptyText(criterion.description, "Sin descripción"),
+                    weight: Number(criterion.weight),
+                });
+            } catch (err) {
+                throw new Error(
+                    getApiErrorMessage(
+                        err,
+                        `Error al guardar el criterio «${criterion.name.trim()}».`
+                    )
+                );
+            }
+            createdCount += 1;
+        }
+
+        if (createdCount === 0) {
+            throw new Error("No se pudieron guardar los criterios en el servidor.");
         }
 
         return rubric;
@@ -105,12 +156,8 @@ class RubricService {
 }
 
 export function getRubricErrorMessage(error: unknown): string {
-    if (axios.isAxiosError(error)) {
-        const data = error.response?.data as { message?: string; error?: string } | undefined;
-        return data?.message ?? data?.error ?? error.message;
-    }
     if (error instanceof Error) return error.message;
-    return "Error desconocido al guardar la rúbrica.";
+    return getApiErrorMessage(error, "Error desconocido al guardar la rúbrica.");
 }
 
 export const rubricService = new RubricService();

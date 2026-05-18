@@ -4,7 +4,7 @@
 import { Subject } from '../../models/Subjects/Subject';
 import { subjectService } from '../../services/subjectService';
 import { loadTeacherGroupOptions } from './groupOptions';
-import { resolveTeacherRecord } from './resolveTeacherId';
+import { resolveVerifiedTeacherId } from './resolveTeacherId';
 import type { AuthUser, TeacherSubjectOption } from './types';
 
 export async function loadTeacherSubjects(user: AuthUser): Promise<TeacherSubjectOption[]> {
@@ -23,8 +23,8 @@ export async function loadTeacherSubjects(user: AuthUser): Promise<TeacherSubjec
 }
 
 export async function resolveTeacherIdForApi(user: AuthUser): Promise<string | null> {
-  const teacher = await resolveTeacherRecord(user);
-  return teacher?.id ? String(teacher.id) : null;
+  const verified = await resolveVerifiedTeacherId(user);
+  return verified ?? null;
 }
 
 export async function getSubjectByIdSafe(id?: string | number | null): Promise<Subject | null> {

@@ -1,7 +1,7 @@
-import axios from "axios";
 import { api } from "../interceptors/authInterceptor";
 import { Scale } from "../models/Evaluation/Scale";
 import { ApiEnvelope } from "../types/ApiResponse";
+import { coerceApiId, getApiErrorMessage, nonEmptyText } from "../utils/apiPayload";
 import { unwrapApiData } from "../utils/unwrapApiResponse";
 
 const API_URL = "/evaluation/scales";
@@ -39,7 +39,13 @@ class ScaleService {
     }
 
     async createScale(payload: CreateScalePayload): Promise<Scale> {
-        const response = await api.post<ApiEnvelope<Scale>>(API_URL, payload);
+        const body: CreateScalePayload = {
+            criterion_id: String(coerceApiId(payload.criterion_id)),
+            name: payload.name.trim(),
+            description: nonEmptyText(payload.description, "Sin descripción"),
+            value: Number(payload.value),
+        };
+        const response = await api.post<ApiEnvelope<Scale>>(API_URL, body);
         return unwrapApiData(response);
     }
 
@@ -70,12 +76,8 @@ class ScaleService {
 }
 
 export function getScaleErrorMessage(error: unknown): string {
-    if (axios.isAxiosError(error)) {
-        const data = error.response?.data as { message?: string } | undefined;
-        return data?.message ?? error.message;
-    }
     if (error instanceof Error) return error.message;
-    return "Error al guardar la escala.";
+    return getApiErrorMessage(error, "Error al guardar la escala.");
 }
 
 export const scaleService = new ScaleService();

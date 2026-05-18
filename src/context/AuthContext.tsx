@@ -63,9 +63,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   });
 
   const [token, setToken] = useState<string | null>(() => {
+    const backendToken = SecurityService.getToken();
     const storedToken = localStorage.getItem("token");
-    if (storedToken) console.log("Token restaurado desde localStorage:", storedToken);
-    return storedToken;
+    const resolved = backendToken || storedToken;
+    if (resolved) console.log("Token de API restaurado desde almacenamiento");
+    return resolved;
   });
 
   const [loading, setLoading] = useState<boolean>(true);
@@ -85,8 +87,45 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       phone: storedUser.phone,
       speciality: storedUser.speciality,
       user_id: storedUser.user_id,
+      profile: storedUser.profile,
     };
   };
+
+  // Completa profile.id en sesiones guardadas antes de persistir el perfil completo
+  useEffect(() => {
+    const appUser = user as AppUser | null;
+    if (!appUser?.id || !token || appUser.profile?.id) return;
+    if (appUser.role !== 'TEACHER' && appUser.role !== 'STUDENT') return;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const profileRes = await fetch(
+          `${import.meta.env.VITE_API_URL}/users/${appUser.id}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        if (!profileRes.ok || cancelled) return;
+        const data = await profileRes.json();
+        const profileData = data?.data?.profile;
+        if (!profileData?.id || cancelled) return;
+        setUser((prev) => {
+          if (!prev || (prev as AppUser).profile?.id) return prev;
+          return {
+            ...(prev as AppUser),
+            profile: profileData,
+            first_name: profileData.first_name || (prev as AppUser).first_name,
+            last_name: profileData.last_name || (prev as AppUser).last_name,
+          };
+        });
+      } catch (err) {
+        console.error('No se pudo hidratar el perfil del usuario', err);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user, token]);
 
   // Guarda usuario en cache cada vez que cambia
   useEffect(() => {
@@ -110,12 +149,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [token]);
 
+  const resolveApiToken = (firebaseIdToken: string): string => {
+    const backendToken = SecurityService.getToken();
+    if (backendToken && backendToken !== firebaseIdToken) {
+      return backendToken;
+    }
+    try {
+      const storedUser = localStorage.getItem("user");
+      const parsed = storedUser ? (JSON.parse(storedUser) as AppUser) : null;
+      if (parsed?.role && backendToken) {
+        return backendToken;
+      }
+    } catch {
+      /* ignore */
+    }
+    return firebaseIdToken;
+  };
+
   // Observa el estado de Firebase (inicio/cierre de sesión)
   useEffect(() => {
     const unsubscribe = firebaseAuthService.onAuthStateChange((firebaseUser, idToken) => {
       if (firebaseUser && idToken) {
         setUser((prevUser) => mergeFirebaseAndStoredUser(firebaseUser, prevUser));
-        setToken(idToken);
+        setToken(resolveApiToken(idToken));
         console.log("Usuario autenticado desde Firebase:", firebaseUser);
       } else {
         console.log("Usuario cerró sesión o no está autenticado.");
@@ -200,19 +256,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // Paso 3: Obtener el perfil completo desde el backend usando el token
       let firstName = "";
       let lastName = "";
+      let profile: AppUser["profile"] = undefined;
       try {
           const profileRes = await fetch(`${import.meta.env.VITE_API_URL}/users/${appUser.id}`, {
               headers: { 'Authorization': `Bearer ${response.token}` }
           });
           if (profileRes.ok) {
               const data = await profileRes.json();
-              const profile = data?.data?.profile;
-              if (profile) {
-                  firstName = profile.first_name || "";
-                  lastName = profile.last_name || "";
+              const profileData = data?.data?.profile;
+              if (profileData) {
+                  profile = profileData;
+                  firstName = profileData.first_name || "";
+                  lastName = profileData.last_name || "";
               } else if (appUser.role === 'ADMIN') {
-                  // Los administradores no tienen tabla de perfil en la BD, así que usamos un nombre genérico
-                  // o su código de usuario, tal cual hace el transformUsersForList
                   firstName = "Administrador";
                   lastName = `(${appUser.code || ''})`;
               }
@@ -221,25 +277,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           console.error("No se pudo obtener el perfil extra del usuario", err);
       }
 
-      // Paso 4: Unimos la data de Firebase con la del Backend para no perder el rol y el nombre.
       const firebaseUserJson = JSON.parse(JSON.stringify(firebaseUser));
       const mergedUser = { 
           ...appUser, 
           ...firebaseUserJson, 
           role: appUser.role, 
           first_name: firstName, 
-          last_name: lastName 
+          last_name: lastName,
+          profile,
       };
 
-      // Paso 5: Actualizar el estado de React Context con el usuario combinado y el token de Firebase.
+      // Token del API Flask (no el de Firebase) para Authorization en peticiones REST.
+      const apiToken = response.token;
+
       setUser(mergedUser);
-      setToken(idToken);
-      
-      // Paso 6: Guardamos el usuario del backend en Redux y LocalStorage para la UI.
-      // Persistir la sesion guardando el usuario y el token en localStorage asegura que 
-      // la sesion sobreviva a recargas de pagina.
+      setToken(apiToken);
+
       localStorage.setItem("user", JSON.stringify(mergedUser));
-      localStorage.setItem("token", idToken);
+      localStorage.setItem("token", apiToken);
       store.dispatch(setReduxUser(JSON.parse(JSON.stringify(mergedUser)) as any));
       
     } catch (error) {
@@ -252,6 +307,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = async () => {
     console.log("Cerrando sesión...");
     await firebaseAuthService.logout();
+    SecurityService.logout();
     setUser(null);
     setToken(null);
     store.dispatch(clearUser());

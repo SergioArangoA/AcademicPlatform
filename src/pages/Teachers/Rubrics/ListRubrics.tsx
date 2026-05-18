@@ -5,12 +5,12 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Breadcrumb from '../../../components/Breadcrumb';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
-import { Rubric } from '../../../models/Evaluation/Rubric';
 import { Criterion } from '../../../models/Evaluation/Criterion';
 import { criterionService } from '../../../services/criterionService';
-import { loadTeacherRubricsData } from '../../../utils/teacher';
+import { getCriterionRubricId } from '../../../utils/criterionWeight';
+import { loadTeacherRubricsData, TeacherRubricRow } from '../../../utils/teacher';
 
-type RubricRow = Rubric & { criteriaCount: number };
+type RubricRow = TeacherRubricRow & { criteriaCount: number };
 
 const ListRubrics: React.FC = () => {
   const { user } = useAuth();
@@ -31,13 +31,14 @@ const ListRubrics: React.FC = () => {
 
       const rubricIds = new Set(rubrics.map((r) => String(r.id)));
       const allCriteria = await criterionService.getCriteria();
-      const criteria = allCriteria.filter((c: Criterion) =>
-        rubricIds.has(String(c.rubric_id))
-      );
+      const criteria = allCriteria.filter((c: Criterion) => {
+        const rid = getCriterionRubricId(c);
+        return rid != null && rubricIds.has(rid);
+      });
 
       const countByRubric = new Map<string, number>();
       criteria.forEach((c: Criterion) => {
-        const key = String(c.rubric_id);
+        const key = getCriterionRubricId(c) ?? '';
         countByRubric.set(key, (countByRubric.get(key) ?? 0) + 1);
       });
 
@@ -102,6 +103,7 @@ const ListRubrics: React.FC = () => {
               <thead>
                 <tr className="bg-gray-2 text-left dark:bg-meta-4">
                   <th className="py-3 px-4">Título</th>
+                  <th className="py-3 px-4">Asignatura</th>
                   <th className="py-3 px-4 text-center">Criterios</th>
                   <th className="py-3 px-4 text-center">Estado</th>
                   <th className="py-3 px-4 text-center">Acciones</th>
@@ -118,6 +120,9 @@ const ListRubrics: React.FC = () => {
                       {rubric.description && (
                         <p className="text-xs text-gray-500 mt-1 line-clamp-2">{rubric.description}</p>
                       )}
+                    </td>
+                    <td className="py-4 px-4 text-gray-600 dark:text-gray-300">
+                      {rubric.subject_label}
                     </td>
                     <td className="py-4 px-4 text-center">{rubric.criteriaCount}</td>
                     <td className="py-4 px-4 text-center">

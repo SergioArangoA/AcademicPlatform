@@ -1,9 +1,13 @@
 /**
- * Filtros para mostrar solo grupos y rúbricas asignados al docente logueado.
+ * Filtros para grupos y rúbricas del docente.
+ * Rúbricas: por asignatura (subject_id), no por docente — cualquier profe de la misma asignatura las ve.
  */
 import { Group } from '../../models/Groups/Group';
 import { Rubric } from '../../models/Evaluation/Rubric';
-import { Teacher } from '../../models/Teachers/Teacher';
+import {
+    collectRubricIdsForTeacherSubjects,
+    enrichRubricWithOwnership,
+} from '../rubricOwnershipStorage';
 
 type GroupWithTeacherRef = Group & {
   teacherId?: string | number | null;
@@ -17,23 +21,15 @@ export function getGroupTeacherId(group: Group): string | null {
   return String(raw);
 }
 
-export function isGroupAssignedToTeacher(group: Group, teacher: Teacher): boolean {
-  const assignedId = getGroupTeacherId(group);
-  if (!assignedId) return false;
-
-  const teacherRecordId = String(teacher.id);
-  if (assignedId === teacherRecordId) return true;
-  if (teacher.user_id && assignedId === String(teacher.user_id)) return true;
-
-  return false;
-}
-
-export function filterGroupsAssignedToTeacher<T extends Group>(
+export function filterGroupsByTeacherMatchIds<T extends Group>(
   groups: T[],
-  teacher: Teacher | null | undefined
+  matchIds: Set<string>
 ): T[] {
-  if (!teacher?.id) return [];
-  return groups.filter((group) => isGroupAssignedToTeacher(group, teacher));
+  if (matchIds.size === 0) return [];
+  return groups.filter((group) => {
+    const assignedId = getGroupTeacherId(group);
+    return assignedId != null && matchIds.has(assignedId);
+  });
 }
 
 type RubricWithTeacherRef = Rubric & {
@@ -48,21 +44,63 @@ export function getRubricTeacherId(rubric: Rubric): string | null {
   return String(raw);
 }
 
-export function isRubricAssignedToTeacher(rubric: Rubric, teacher: Teacher): boolean {
-  const assignedId = getRubricTeacherId(rubric);
-  if (!assignedId) return false;
-
-  const teacherRecordId = String(teacher.id);
-  if (assignedId === teacherRecordId) return true;
-  if (teacher.user_id && assignedId === String(teacher.user_id)) return true;
-
-  return false;
+export function getRubricSubjectId(rubric: Rubric): string | null {
+  if (rubric.subject_id == null || rubric.subject_id === '') return null;
+  return String(rubric.subject_id);
 }
 
+export function filterRubricsByTeacherMatchIds<T extends Rubric>(
+  rubrics: T[],
+  matchIds: Set<string>
+): T[] {
+  if (matchIds.size === 0) return [];
+  return rubrics.filter((rubric) => {
+    const assignedId = getRubricTeacherId(rubric);
+    return assignedId != null && matchIds.has(assignedId);
+  });
+}
+
+export type RubricFilterOptions = {
+  publicOnly?: boolean;
+  evaluations?: Array<{ rubric_id?: string | null; subject_id?: string | number | null }>;
+};
+
+/**
+ * Rúbricas de las asignaturas que imparte el docente (grupos asignados).
+ * Incluye rúbricas creadas por otros docentes de la misma asignatura.
+ */
+export function filterRubricsForTeacher<T extends Rubric>(
+  rubrics: T[],
+  _teacherMatchIds: Set<string>,
+  subjectIds: Set<string>,
+  options?: RubricFilterOptions
+): T[] {
+  if (subjectIds.size === 0) return [];
+
+  const linkedIds = collectRubricIdsForTeacherSubjects(subjectIds, options?.evaluations);
+
+  return rubrics
+    .map((rubric) => enrichRubricWithOwnership(rubric))
+    .filter((rubric) => {
+      const rubricId = rubric.id != null ? String(rubric.id) : '';
+      if (!rubricId || !linkedIds.has(rubricId)) return false;
+      if (options?.publicOnly && !rubric.is_public) return false;
+      return true;
+    });
+}
+
+/** @deprecated Usar filterGroupsByTeacherMatchIds con resolveTeacherMatchIds */
+export function filterGroupsAssignedToTeacher<T extends Group>(
+  groups: T[],
+  matchIds: Set<string>
+): T[] {
+  return filterGroupsByTeacherMatchIds(groups, matchIds);
+}
+
+/** @deprecated Usar filterRubricsByTeacherMatchIds con resolveTeacherMatchIds */
 export function filterRubricsAssignedToTeacher<T extends Rubric>(
   rubrics: T[],
-  teacher: Teacher | null | undefined
+  matchIds: Set<string>
 ): T[] {
-  if (!teacher?.id) return [];
-  return rubrics.filter((rubric) => isRubricAssignedToTeacher(rubric, teacher));
+  return filterRubricsByTeacherMatchIds(rubrics, matchIds);
 }

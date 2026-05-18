@@ -1,3 +1,5 @@
+import { BaseProfile } from './Users/BaseProfile';
+
 export interface User {
     id?: string;
     first_name?: string;
@@ -10,4 +12,6 @@ export interface User {
     email?: string;
     photoURL?: string;
     code?: string;
+    /** Id en tabla teachers/students (es el que usa group.teacher_id y rubric.teacher_id) */
+    profile?: BaseProfile;
 }
