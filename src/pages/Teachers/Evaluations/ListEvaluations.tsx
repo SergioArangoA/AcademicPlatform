@@ -1,37 +1,33 @@
 /**
- * Evaluaciones (docente, CU-10): listado para elegir una evaluación y asociarle rúbrica
- * o ir a calificar estudiantes. Entrada al flujo /evaluaciones/...
+ * Evaluaciones del docente (CU-10, CU-11, CU-12): solo grupos asignados al docente logueado.
  */
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import Breadcrumb from '../../../components/Breadcrumb';
 import { Link } from 'react-router-dom';
-import { evaluationService } from '../../../services/evaluationService';
-import { enrollmentService } from '../../../services/enrollmentService';
-import { Evaluation } from '../../../models/Evaluation/Evaluation';
+import { useAuth } from '../../../context/AuthContext';
+import {
+  loadTeacherEvaluationsData,
+  TeacherEvaluationRow,
+} from '../../../utils/teacher/evaluationData';
 
 const ListEvaluations: React.FC = () => {
-  const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
+  const { user } = useAuth();
+  const [rows, setRows] = useState<TeacherEvaluationRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setLoadError(null);
+    const { evaluations, error } = await loadTeacherEvaluationsData(user);
+    setRows(evaluations);
+    setLoadError(error);
+    setLoading(false);
+  }, [user]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      const evalsData = await evaluationService.getEvaluations();
-      setEvaluations(evalsData);
-      setLoading(false);
-    };
-    void fetchData();
-  }, []);
-
-  const sorted = useMemo(
-    () =>
-      [...evaluations].sort((a, b) =>
-        (b.updated_at ?? b.created_at ?? '').localeCompare(
-          a.updated_at ?? a.created_at ?? ''
-        )
-      ),
-    [evaluations]
-  );
+    void load();
+  }, [load]);
 
   return (
     <>
@@ -41,38 +37,57 @@ const ListEvaluations: React.FC = () => {
         <div className="mb-6 flex flex-wrap justify-between items-center gap-3">
           <div>
             <h4 className="text-xl font-semibold text-black dark:text-white">
-              Evaluaciones del docente
+              Mis evaluaciones
             </h4>
             <p className="mt-1 text-sm text-gray-500">
-              CU-10, CU-11 y CU-12 — asociar rúbricas, calificar y registrar notas finales.
+              Asociar rúbricas (CU-10), calificar estudiantes (CU-11) y registrar notas finales
+              (CU-12).
             </p>
           </div>
-          <Link
-            to="/teachers/rubrics/list"
-            className="text-sm font-medium text-[#6366f1] hover:underline"
-          >
-            Mis rúbricas →
-          </Link>
+          <div className="flex flex-wrap gap-3">
+            <Link
+              to="/teachers/rubrics/list"
+              className="text-sm font-medium text-[#6366f1] hover:underline"
+            >
+              Mis rúbricas →
+            </Link>
+            <Link
+              to="/teachers/grades"
+              className="text-sm font-medium text-[#6366f1] hover:underline"
+            >
+              Notas finales →
+            </Link>
+          </div>
         </div>
+
+        {loadError && (
+          <p className="mb-4 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {loadError}
+          </p>
+        )}
 
         {loading ? (
           <p className="py-6 text-center text-gray-500">Cargando...</p>
-        ) : sorted.length === 0 ? (
-          <p className="py-6 text-center text-gray-500">No hay evaluaciones registradas.</p>
+        ) : rows.length === 0 ? (
+          <p className="py-6 text-center text-gray-500">
+            No hay evaluaciones en tus grupos asignados.
+          </p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full table-auto text-sm">
               <thead>
                 <tr className="bg-gray-2 text-left dark:bg-meta-4">
                   <th className="py-3 px-4">Evaluación</th>
+                  <th className="py-3 px-4">Asignatura</th>
                   <th className="py-3 px-4">Grupo</th>
                   <th className="py-3 px-4 text-center">Peso</th>
                   <th className="py-3 px-4 text-center">Rúbrica</th>
+                  <th className="py-3 px-4 text-center">Calificados</th>
                   <th className="py-3 px-4 text-center">Acciones</th>
                 </tr>
               </thead>
               <tbody>
-                {sorted.map((evaluation) => (
+                {rows.map((evaluation) => (
                   <tr
                     key={evaluation.id}
                     className="border-b border-stroke dark:border-strokedark"
@@ -80,7 +95,8 @@ const ListEvaluations: React.FC = () => {
                     <td className="py-4 px-4 font-medium text-black dark:text-white">
                       {evaluation.name}
                     </td>
-                    <td className="py-4 px-4 text-gray-600">{evaluation.group_id}</td>
+                    <td className="py-4 px-4 text-gray-600">{evaluation.subject_label}</td>
+                    <td className="py-4 px-4 text-gray-600">{evaluation.group_label}</td>
                     <td className="py-4 px-4 text-center">{evaluation.weight}%</td>
                     <td className="py-4 px-4 text-center">
                       {evaluation.rubric_id ? (
@@ -89,23 +105,33 @@ const ListEvaluations: React.FC = () => {
                         <span className="text-amber-600 text-xs">Sin rúbrica</span>
                       )}
                     </td>
+                    <td className="py-4 px-4 text-center text-xs text-gray-600">
+                      {evaluation.rubric_id
+                        ? `${evaluation.students_graded_sent}/${evaluation.students_total}`
+                        : '—'}
+                    </td>
                     <td className="py-4 px-4">
                       <div className="flex flex-wrap justify-center gap-2">
                         <Link
                           to={`/evaluaciones/${evaluation.id}/asociar-rubrica`}
                           className="rounded border border-stroke px-2 py-1 text-xs hover:bg-gray-50 dark:border-strokedark"
                         >
-                          Asociar rúbrica
+                          Rúbrica
                         </Link>
                         {evaluation.rubric_id && (
-                          <EvaluationGradeLink evaluation={evaluation} />
+                          <Link
+                            to={`/evaluaciones/${evaluation.id}/estudiantes`}
+                            className="rounded bg-[#6366f1] px-2 py-1 text-xs text-white hover:bg-opacity-90"
+                          >
+                            Calificar
+                          </Link>
                         )}
                         {evaluation.group_id && (
                           <Link
                             to={`/calificaciones/${evaluation.group_id}/nota-final`}
                             className="rounded bg-[#6366f1]/10 px-2 py-1 text-xs text-[#6366f1] hover:underline"
                           >
-                            Nota final grupo
+                            Nota final
                           </Link>
                         )}
                       </div>
@@ -120,31 +146,5 @@ const ListEvaluations: React.FC = () => {
     </>
   );
 };
-
-function EvaluationGradeLink({ evaluation }: { evaluation: Evaluation }) {
-  const [firstEnrollment, setFirstEnrollment] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!evaluation.group_id) return;
-    enrollmentService.getEnrollments(String(evaluation.group_id)).then((list) => {
-      if (list[0]?.id) setFirstEnrollment(String(list[0].id));
-    });
-  }, [evaluation.group_id]);
-
-  if (!firstEnrollment) {
-    return (
-      <span className="text-xs text-gray-400">Sin inscripciones</span>
-    );
-  }
-
-  return (
-    <Link
-      to={`/evaluaciones/${evaluation.id}/calificar/${firstEnrollment}`}
-      className="rounded bg-[#6366f1] px-2 py-1 text-xs text-white hover:bg-opacity-90"
-    >
-      Calificar
-    </Link>
-  );
-}
 
 export default ListEvaluations;

@@ -54,3 +54,9 @@ export {
   resolveTeacherIdForApi,
   getSubjectByIdSafe,
 } from './evaluationHelpers';
+
+export {
+  loadTeacherEvaluationsData,
+  loadEvaluationStudentsRows,
+} from './evaluationData';
+export type { TeacherEvaluationRow, EvaluationStudentRow } from './evaluationData';

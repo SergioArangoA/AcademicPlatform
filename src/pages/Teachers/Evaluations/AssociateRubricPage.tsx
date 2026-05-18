@@ -34,6 +34,7 @@ import {
     resolveTeacherRecord,
     type TeacherSubjectOption,
 } from '../../../utils/teacher';
+import { registerRubricForSubject } from '../../../utils/rubricOwnershipStorage';
 
 type RubricRow = Rubric & {
     criteriaCount: number;
@@ -176,6 +177,9 @@ const AssociateRubricPage = () => {
                 rubric_id: selectedRubricId,
                 subject_id: selectedSubjectId,
             });
+            if (selectedSubjectId) {
+                registerRubricForSubject(selectedRubricId, selectedSubjectId);
+            }
             toast.success('Asociación confirmada correctamente.');
             navigate('/evaluaciones');
         } catch (err) {

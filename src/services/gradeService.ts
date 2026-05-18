@@ -102,11 +102,9 @@ class GradeService {
         return unwrapApiData(response);
     }
 
-    async saveGrade(payload: GradeStudentPayload, existingGradeId?: string): Promise<Grade> {
-        if (existingGradeId) {
-            return this.updateGrade(existingGradeId, payload);
-        }
-        return this.gradeStudent(payload);
+    /** El API hace upsert por inscripción + rúbrica vía POST /grades (grade_student). */
+    async saveGrade(_payload: GradeStudentPayload, _existingGradeId?: string): Promise<Grade> {
+        return this.gradeStudent(_payload);
     }
 
     async registerFinalScores(groupId: string): Promise<RegisterFinalScoreRow[]> {

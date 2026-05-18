@@ -55,6 +55,7 @@ const TeacherFinalGrades = lazy(() => import('../pages/Teachers/Evaluations/Fina
 const AssociateRubricPage = lazy(() => import('../pages/Teachers/Evaluations/AssociateRubricPage'));
 const GradeStudentPage = lazy(() => import('../pages/Teachers/Evaluations/GradeStudentPage'));
 const RegisterFinalGradePage = lazy(() => import('../pages/Teachers/Evaluations/RegisterFinalGradePage'));
+const EvaluationStudentsPage = lazy(() => import('../pages/Teachers/Evaluations/EvaluationStudentsPage'));
 const TeacherGroupList = lazy(() => import('../pages/Teachers/Groups/ListGroups'));
 const TeacherStudentList = lazy(() => import('../pages/Teachers/Students/ListStudents'));
 const TeacherScaleList = lazy(() => import('../pages/Teachers/Scales/ListScales'));
@@ -329,6 +330,12 @@ const coreRoutes = [
     path: '/evaluaciones/:evaluacionId/asociar-rubrica',
     title: 'Asociar rúbrica',
     component: AssociateRubricPage,
+    allowedRoles: ['TEACHER'],
+  },
+  {
+    path: '/evaluaciones/:evaluacionId/estudiantes',
+    title: 'Estudiantes de la evaluación',
+    component: EvaluationStudentsPage,
     allowedRoles: ['TEACHER'],
   },
   {
