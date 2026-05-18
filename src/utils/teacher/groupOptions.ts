@@ -5,13 +5,14 @@ import { Subject } from '../../models/Subjects/Subject';
 import { SubjectGroupOption } from '../../models/Subjects/SubjectGroupOption';
 import { groupService } from '../../services/groupService';
 import { subjectService } from '../../services/subjectService';
-import { filterGroupsAssignedToTeacher } from './filters';
-import { resolveTeacherRecord } from './resolveTeacherId';
+import { filterGroupsByTeacherMatchIds } from './filters';
+import { resolveTeacherMatchIds, resolveTeacherRecord } from './resolveTeacherId';
 import type { AuthUser } from './types';
 
 export async function loadTeacherGroupOptions(user: AuthUser): Promise<SubjectGroupOption[]> {
   const teacher = await resolveTeacherRecord(user);
-  if (!teacher) return [];
+  const matchIds = resolveTeacherMatchIds(user, teacher);
+  if (matchIds.size === 0) return [];
 
   const [groups, subjects] = await Promise.all([
     groupService.getGroups(),
@@ -28,7 +29,7 @@ export async function loadTeacherGroupOptions(user: AuthUser): Promise<SubjectGr
     }
   });
 
-  const assignedGroups = filterGroupsAssignedToTeacher(groups, teacher);
+  const assignedGroups = filterGroupsByTeacherMatchIds(groups, matchIds);
 
   return assignedGroups.map((group) => {
     const subjectKey = group.subject_id ? String(group.subject_id) : '';

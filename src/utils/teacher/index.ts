@@ -17,16 +17,38 @@ export type {
   TeacherSubjectOption,
 } from './types';
 
-export { resolveTeacherRecord, resolveTeacherId } from './resolveTeacherId';
+export {
+  resolveTeacherRecord,
+  resolveTeacherId,
+  resolveVerifiedTeacherId,
+  resolveTeacherMatchIds,
+  getTeacherEntityId,
+  getResolvedTeacherProfileId,
+} from './resolveTeacherId';
 
 export {
   getGroupTeacherId,
-  isGroupAssignedToTeacher,
-  filterGroupsAssignedToTeacher,
   getRubricTeacherId,
-  isRubricAssignedToTeacher,
+  filterGroupsByTeacherMatchIds,
+  filterRubricsByTeacherMatchIds,
+  filterRubricsForTeacher,
+  filterRubricsVisibleToTeacher,
+  filterRubricsWithoutEvaluation,
+  collectAllLinkedRubricIds,
+  collectRubricIdsFromTeacherEvaluations,
+  collectRubricIdsFromEvaluations,
+  ensureRubricsLoaded,
+  mergeRubricsFromTeacherEvaluations,
+  buildRubricSubjectLabelMap,
+  buildRubricSubjectIdMap,
+  getRubricSubjectId,
+  filterGroupsAssignedToTeacher,
   filterRubricsAssignedToTeacher,
 } from './filters';
+
+export type { RubricVisibility, RubricWithVisibility, RubricFilterOptions } from './filters';
+
+export { getTeacherProfileId } from '../authUser';
 
 export { loadTeacherGroupOptions } from './groupOptions';
 
@@ -36,9 +58,16 @@ export {
   loadTeacherRubricsData,
   loadTeacherScalesData,
 } from './tableData';
+export type { TeacherRubricRow } from './tableData';
 
 export {
   loadTeacherSubjects,
   resolveTeacherIdForApi,
   getSubjectByIdSafe,
 } from './evaluationHelpers';
+
+export {
+  loadTeacherEvaluationsData,
+  loadEvaluationStudentsRows,
+} from './evaluationData';
+export type { TeacherEvaluationRow, EvaluationStudentRow } from './evaluationData';

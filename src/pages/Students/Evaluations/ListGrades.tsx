@@ -1,6 +1,19 @@
+/**
+ * Listado de calificaciones del estudiante (CU relacionado con notas).
+ *
+ * Por qué se cambió la forma de enlazar asignatura/grupo/evaluación:
+ * - En el API actual la rúbrica NO trae subject_id (solo title, description, flags).
+ * - La asignatura y el grupo viven en Evaluación: subject_id + group_id + rubric_id.
+ * - Antes se leía rubric.subject_id y se buscaba evaluación “por asignatura”, lo cual
+ *   fallaba con el modelo nuevo y podía mostrar datos incorrectos.
+ * - Ahora: grade.rubric_id → evaluación que usa esa rúbrica → subject_id y group_id.
+ *
+ * El filtro final sigue mostrando solo notas de evaluaciones de grupos ACTIVE del alumno.
+ */
 import React, { useEffect, useState } from "react";
 import { Grade } from "../../../models/Evaluation/Grade";
-import { GradeDetails } from "../../../models/Evaluation/GradeDetails";
+import { GradeDetail } from "../../../models/Evaluation/GradeDetails";
+import { isGradeSent } from "../../../services/gradeService";
 import { Rubric } from "../../../models/Evaluation/Rubric";
 import { Subject } from "../../../models/Subjects/Subject";
 import { Group } from "../../../models/Groups/Group";
@@ -37,14 +50,14 @@ const Grades: React.FC = () => {
         fetchData();
     }, []);
 
-    const normalizeDetails = (details: any): GradeDetails[] => {
+    const normalizeDetails = (details: any): GradeDetail[] => {
         if (!details) return [];
         if (Array.isArray(details)) return details;
         return [details];
     };
 
     const calculateGradeValue = (
-        details: GradeDetails[],
+        details: GradeDetail[],
         scaleMap: Map<string, Scale>,
         criterionMap: Map<string, Criterion>
     ) => {
@@ -59,13 +72,15 @@ const Grades: React.FC = () => {
     };
 
     const fetchData = async () => {
+        const storageProvider = new LocalStorageProvider();
+        const userInStorage = storageProvider.getParsedItem("user") as { id?: string } | null;
+        const id = userInStorage?.id;
+        if (!id) return;
+
         const users = await userPService.getUsers();
         const user = users.find((u) => u.profile?.id === id || u.id === id);
-        const enrollments = await enrollmentService.getStudentEnrollments(user?.profile?.id);
-        const storageProvider = new LocalStorageProvider();
-        const userInStorage = storageProvider.getParsedItem("user");
-        
-        const id = userInStorage.id;
+        const profileId = user?.profile?.id ?? id;
+        const enrollments = await enrollmentService.getStudentEnrollments(profileId);
         const [grades, rubrics, subjects, groups, evaluations, scales, criteria] =
             await Promise.all([
                 gradeService.getGrades(),
@@ -86,9 +101,6 @@ const Grades: React.FC = () => {
         const groupMap = new Map<string, Group>(
             groups.map((group) => [String((group as any).id || group.group_code || ""), group])
         );
-        const evaluationMap = new Map<string, Evaluation>(
-            evaluations.map((evaluation) => [String(evaluation.id || evaluation.name), evaluation])
-        );
         const scaleMap = new Map<string, Scale>(
             scales.map((scale) => [String(scale.id), scale])
         );
@@ -96,21 +108,19 @@ const Grades: React.FC = () => {
             criteria.map((criterion) => [String(criterion.id), criterion])
         );
 
-        const rows: GradeRow[] = grades.map((grade) => {
+        const rows: GradeRow[] = grades
+            .filter((grade) => isGradeSent(grade.status))
+            .map((grade) => {
+            // Cadena correcta según backend: nota → rúbrica → evaluación → asignatura/grupo.
             const rubric = rubricMap.get(String(grade.rubric_id));
-            const subject = rubric
-                ? subjectMap.get(String(rubric.subject_id))?.name || "-"
+            const evaluation = evaluations.find(
+                (ev) =>
+                    ev.rubric_id &&
+                    String(ev.rubric_id) === String(grade.rubric_id)
+            );
+            const subject = evaluation?.subject_id
+                ? subjectMap.get(String(evaluation.subject_id))?.name || "-"
                 : "-";
-
-            const evaluationFromGrade = grade.hasOwnProperty("evaluation_id")
-                ? evaluationMap.get(String((grade as any).evaluation_id))
-                : undefined;
-
-            const evaluationFromSubject = !evaluationFromGrade && rubric?.subject_id
-                ? evaluations.find((evaluation) => evaluation.subject_id === String(rubric.subject_id))
-                : undefined;
-
-            const evaluation = evaluationFromGrade || evaluationFromSubject;
             const group = evaluation
                 ? groupMap.get(String(evaluation.group_id))?.name || String(evaluation.group_id)
                 : "-";
@@ -128,7 +138,8 @@ const Grades: React.FC = () => {
                 rubricTitle: rubric?.title || String(grade.rubric_id),
             };
         });
-        // 1. grupos activos del usuario
+
+        // Solo notas de evaluaciones en grupos donde el estudiante está ACTIVE.
         const activeGroupIds = new Set(
             enrollments
                 .filter(en => en.status === "ACTIVE")

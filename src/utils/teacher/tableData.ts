@@ -14,11 +14,25 @@ import { semesterService } from '../../services/semesterService';
 import { subjectService } from '../../services/subjectService';
 import { userPService } from '../../services/userPService';
 import { criterionService } from '../../services/criterionService';
+import { getCriterionRubricId } from '../criterionWeight';
 import { rubricService } from '../../services/rubricService';
+import { evaluationService } from '../../services/evaluationService';
 import { scaleService } from '../../services/scaleService';
-import { transformUsersForList } from '../userTransformers';
-import { filterGroupsAssignedToTeacher, filterRubricsAssignedToTeacher } from './filters';
-import { resolveTeacherRecord } from './resolveTeacherId';
+import { buildStudentLookupMap, resolveStudentFromEnrollment, transformUsersForList } from '../userTransformers';
+import {
+  filterGroupsByTeacherMatchIds,
+  filterRubricsVisibleToTeacher,
+  collectRubricIdsFromTeacherEvaluations,
+  ensureRubricsLoaded,
+  buildRubricSubjectLabelMap,
+} from './filters';
+import type { RubricVisibility } from './rubricFilters';
+import { buildGroupSubjectMap } from '../rubricContext';
+import {
+  getResolvedTeacherProfileId,
+  resolveTeacherMatchIds,
+  resolveTeacherRecord,
+} from './resolveTeacherId';
 import type {
   AuthUser,
   TeacherGroupRow,
@@ -55,9 +69,10 @@ export async function loadTeacherGroupsData(user: AuthUser): Promise<{
 }> {
   try {
     const teacher = await resolveTeacherRecord(user);
-    const teacherId = teacher?.id ? String(teacher.id) : null;
+    const matchIds = resolveTeacherMatchIds(user, teacher);
+    const teacherId = getResolvedTeacherProfileId(user, teacher);
 
-    if (!teacher) {
+    if (matchIds.size === 0) {
       return {
         teacherId: null,
         groups: [],
@@ -87,7 +102,7 @@ export async function loadTeacherGroupsData(user: AuthUser): Promise<{
       if (s.id != null) semesterMap.set(String(s.id), s);
     });
 
-    const assignedGroups = filterGroupsAssignedToTeacher(groupsSource, teacher);
+    const assignedGroups = filterGroupsByTeacherMatchIds(groupsSource, matchIds);
     const groups = assignedGroups.map((g) => mapGroupRow(g, subjectMap, semesterMap));
 
     const assignedSubjectIds = new Set(
@@ -142,14 +157,14 @@ export async function loadTeacherStudentsData(user: AuthUser): Promise<{
     const enrollments = Array.isArray(allEnrollments) ? allEnrollments : [];
     const usersList = Array.isArray(usersRaw) ? usersRaw : [];
     const students = transformUsersForList(usersList).filter((u) => u.role === 'STUDENT');
-    const studentMap = new Map(students.map((s) => [String(s.id), s]));
+    const studentMap = buildStudentLookupMap(students);
 
     const rows = enrollments
       .filter((e: Enrollment) => groupIds.has(String(e.group_id)))
       .map((e: Enrollment) => {
         const group = groupMap.get(String(e.group_id));
         const subject = group?.subject_id ? subjectMap.get(String(group.subject_id)) : undefined;
-        const student = studentMap.get(String(e.student_id));
+        const student = resolveStudentFromEnrollment(studentMap, String(e.student_id));
         const statusRaw = e.status ?? '';
         const status =
           statusRaw === 'ACTIVE' || statusRaw === 'Activa' ? 'Activa' : statusRaw || '—';
@@ -158,7 +173,11 @@ export async function loadTeacherStudentsData(user: AuthUser): Promise<{
           enrollment_id: String(e.id),
           student_id: String(e.student_id),
           student_code: student?.code ?? '—',
-          student_name: student?.name ?? `Estudiante ${String(e.student_id).slice(0, 8)}…`,
+          student_name:
+            student?.name ??
+            (student?.profile
+              ? `${student.profile.first_name} ${student.profile.last_name}`.trim()
+              : `Estudiante ${String(e.student_id).slice(0, 8)}…`),
           student_email: student?.email ?? '—',
           group_label: group?.name ?? group?.group_code ?? String(e.group_id),
           subject_label: subject ? `${subject.code} — ${subject.name}` : '—',
@@ -176,24 +195,101 @@ export async function loadTeacherStudentsData(user: AuthUser): Promise<{
   }
 }
 
+export type TeacherRubricRow = Rubric & {
+  subject_label: string;
+  visibility: RubricVisibility;
+};
+
+/**
+ * Carga rúbricas del docente y aplica filtro mine | shared (rubricFilters.ts).
+ */
 export async function loadTeacherRubricsData(user: AuthUser): Promise<{
   teacherId: string | null;
-  rubrics: Rubric[];
+  rubrics: TeacherRubricRow[];
   error: string | null;
 }> {
   try {
     const teacher = await resolveTeacherRecord(user);
-    const teacherId = teacher?.id ? String(teacher.id) : null;
+    const matchIds = resolveTeacherMatchIds(user, teacher);
+    const teacherId = getResolvedTeacherProfileId(user, teacher);
 
-    if (!teacher) {
-      return { teacherId: null, rubrics: [], error: null };
+    if (matchIds.size === 0) {
+      return {
+        teacherId: null,
+        rubrics: [],
+        error:
+          'No se encontró tu perfil de docente. Inicia sesión de nuevo o pide al administrador vincular tu usuario.',
+      };
     }
 
-    const rubricsRaw = await rubricService.getRubrics();
-    const rubrics = filterRubricsAssignedToTeacher(
-      Array.isArray(rubricsRaw) ? rubricsRaw : [],
-      teacher
+    let rubricsRaw: Rubric[];
+    let groupsSource: Group[];
+    let subjectsRaw: Subject[];
+    let evaluationsRaw: Awaited<ReturnType<typeof evaluationService.getEvaluations>>;
+
+    try {
+      [rubricsRaw, groupsSource, subjectsRaw, evaluationsRaw] = await Promise.all([
+        rubricService.getRubrics(undefined, { throwOnError: true }),
+        groupService.getGroups(),
+        subjectService.getSubjects(),
+        evaluationService.getEvaluations(),
+      ]);
+    } catch {
+      return {
+        teacherId,
+        rubrics: [],
+        error:
+          'No se pudieron cargar las rúbricas desde el servidor. Comprueba que el backend esté activo en http://localhost:5000.',
+      };
+    }
+
+    const evaluations = Array.isArray(evaluationsRaw) ? evaluationsRaw : [];
+    const subjects = Array.isArray(subjectsRaw) ? subjectsRaw : [];
+    const subjectMap = new Map<string, Subject>();
+    subjects.forEach((s) => {
+      if (s.id != null) subjectMap.set(String(s.id), s);
+    });
+    const assignedGroups = filterGroupsByTeacherMatchIds(
+      Array.isArray(groupsSource) ? groupsSource : [],
+      matchIds
     );
+    const groupIds = new Set(
+      assignedGroups.map((g) => (g.id != null ? String(g.id) : '')).filter(Boolean)
+    );
+    const groupSubjectById = buildGroupSubjectMap(assignedGroups);
+    const subjectLabelById = new Map<string, string>();
+    subjects.forEach((s) => {
+      if (s.id != null) {
+        subjectLabelById.set(String(s.id), `${s.code} — ${s.name}`);
+      }
+    });
+
+    // Rúbricas enlazadas a evaluaciones del docente (pueden no venir en GET /rubrics).
+    const mineIds = collectRubricIdsFromTeacherEvaluations(evaluations, groupIds);
+    const allLoaded = await ensureRubricsLoaded(
+      rubricsRaw,
+      mineIds,
+      (id) => rubricService.getRubricById(id)
+    );
+
+    const rubricSubjectLabels = buildRubricSubjectLabelMap(
+      evaluations,
+      groupIds,
+      subjectLabelById,
+      groupSubjectById
+    );
+
+    // Aplica reglas mine | shared (ver rubricFilters.ts).
+    const rubrics = filterRubricsVisibleToTeacher(allLoaded, {
+      evaluations,
+      groupIds,
+    }).map((rubric) => ({
+      ...rubric,
+      subject_label:
+        rubric.visibility === 'mine' && rubric.id != null
+          ? rubricSubjectLabels.get(String(rubric.id)) ?? '—'
+          : 'Sin evaluación asociada',
+    }));
 
     return { teacherId, rubrics, error: null };
   } catch (error) {
@@ -213,30 +309,50 @@ export async function loadTeacherScalesData(user: AuthUser): Promise<{
 }> {
   try {
     const teacher = await resolveTeacherRecord(user);
+    const matchIds = resolveTeacherMatchIds(user, teacher);
 
-    if (!teacher) {
+    if (matchIds.size === 0) {
       return { rows: [], rubrics: [], error: null };
     }
 
-    const [rubricsRaw, criteriaRaw, scalesRaw] = await Promise.all([
+    const [rubricsRaw, criteriaRaw, scalesRaw, groupsSource, evaluationsRaw] = await Promise.all([
       rubricService.getRubrics(),
       criterionService.getCriteria(),
       scaleService.getScales(),
+      groupService.getGroups(),
+      evaluationService.getEvaluations(),
     ]);
+    const evaluations = Array.isArray(evaluationsRaw) ? evaluationsRaw : [];
 
-    const rubrics = filterRubricsAssignedToTeacher(
-      Array.isArray(rubricsRaw) ? rubricsRaw : [],
-      teacher
+    const assignedGroups = filterGroupsByTeacherMatchIds(
+      Array.isArray(groupsSource) ? groupsSource : [],
+      matchIds
     );
+    const groupIds = new Set(
+      assignedGroups.map((g) => (g.id != null ? String(g.id) : '')).filter(Boolean)
+    );
+
+    const mineIds = collectRubricIdsFromTeacherEvaluations(evaluations, groupIds);
+    const allLoaded = await ensureRubricsLoaded(
+      Array.isArray(rubricsRaw) ? rubricsRaw : [],
+      mineIds,
+      (id) => rubricService.getRubricById(id)
+    );
+
+    const rubrics = filterRubricsVisibleToTeacher(allLoaded, {
+      evaluations,
+      groupIds,
+    });
     const rubricIds = new Set(rubrics.map((r) => String(r.id)));
     const rubricMap = new Map<string, Rubric>();
     rubrics.forEach((r) => {
       if (r.id) rubricMap.set(String(r.id), r);
     });
 
-    const criteria = (Array.isArray(criteriaRaw) ? criteriaRaw : []).filter((c) =>
-      rubricIds.has(String(c.rubric_id))
-    );
+    const criteria = (Array.isArray(criteriaRaw) ? criteriaRaw : []).filter((c) => {
+      const rid = getCriterionRubricId(c);
+      return rid != null && rubricIds.has(rid);
+    });
     const criterionMap = new Map<string, Criterion>();
     criteria.forEach((c) => {
       if (c.id) criterionMap.set(String(c.id), c);
@@ -247,13 +363,12 @@ export async function loadTeacherScalesData(user: AuthUser): Promise<{
       .filter((s: Scale) => criterionMap.has(String(s.criterion_id)))
       .map((s: Scale) => {
         const criterion = criterionMap.get(String(s.criterion_id));
-        const rubric = criterion?.rubric_id
-          ? rubricMap.get(String(criterion.rubric_id))
-          : undefined;
+        const criterionRubricId = criterion ? getCriterionRubricId(criterion) : null;
+        const rubric = criterionRubricId ? rubricMap.get(criterionRubricId) : undefined;
 
         return {
           id: String(s.id),
-          rubric_id: String(criterion?.rubric_id ?? ''),
+          rubric_id: criterionRubricId ?? '',
           rubric_title: rubric?.title ?? '—',
           criterion_id: String(s.criterion_id),
           criterion_name: criterion?.name ?? '—',

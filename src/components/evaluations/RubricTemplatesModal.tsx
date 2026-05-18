@@ -7,9 +7,16 @@ import toast from 'react-hot-toast';
 import { Rubric } from '../../models/Evaluation/Rubric';
 import { Criterion } from '../../models/Evaluation/Criterion';
 import { rubricService } from '../../services/rubricService';
+import { evaluationService } from '../../services/evaluationService';
 import { criterionService } from '../../services/criterionService';
 import { getCriterionWeight } from '../../utils/criterionWeight';
-import { filterRubricsAssignedToTeacher, resolveTeacherRecord } from '../../utils/teacher';
+import { groupService } from '../../services/groupService';
+import {
+  filterGroupsByTeacherMatchIds,
+  filterRubricsVisibleToTeacher,
+  resolveTeacherMatchIds,
+  resolveTeacherRecord,
+} from '../../utils/teacher';
 import { useAuth } from '../../context/AuthContext';
 
 export interface LocalCriterionDraft {
@@ -39,19 +46,33 @@ const RubricTemplatesModal: React.FC<RubricTemplatesModalProps> = ({
   const [applyingId, setApplyingId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!open || !teacherId) return;
+    if (!open) return;
 
     const load = async () => {
       setLoading(true);
       const teacher = await resolveTeacherRecord(user);
-      const data = await rubricService.getPublicRubrics();
-      const mine = teacher ? filterRubricsAssignedToTeacher(data, teacher) : [];
+      const matchIds = resolveTeacherMatchIds(user, teacher);
+      const [groups, evaluationsRaw] = await Promise.all([
+        groupService.getGroups(),
+        evaluationService.getEvaluations(),
+      ]);
+      const assignedGroups = filterGroupsByTeacherMatchIds(groups, matchIds);
+      const groupIds = new Set(
+        assignedGroups.map((g) => (g.id != null ? String(g.id) : '')).filter(Boolean)
+      );
+      const evaluations = Array.isArray(evaluationsRaw) ? evaluationsRaw : [];
+      const data = await rubricService.getRubrics();
+      const visible = filterRubricsVisibleToTeacher(data, {
+        evaluations,
+        groupIds,
+      });
+      const mine = visible.filter((r) => !r.is_public);
       setTemplates(mine);
       setLoading(false);
     };
 
     load();
-  }, [open, teacherId, user]);
+  }, [open, user]);
 
   const handleClone = async (rubric: Rubric) => {
     if (!rubric.id) return;

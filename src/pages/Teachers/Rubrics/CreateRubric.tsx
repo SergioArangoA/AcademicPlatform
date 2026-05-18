@@ -1,19 +1,32 @@
 /**
- * Crear rúbrica (CU-08): título, criterios con pesos que suman 100 %, plantillas, borrador o publicar.
+ * Crear rúbrica (CU-08): título, criterios con pesos que suman 100 %, luego escalas.
  * Guardo rúbrica y criterios en el API; luego puedo ir a revisión y a definir escalas.
- * Las asignaturas/grupos del select salen de loadTeacherGroupOptions.
+ * La rúbrica es independiente de asignatura; se asocia a evaluación en CU-10.
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import Swal from 'sweetalert2';
-import { useAuth } from '../../../context/AuthContext';
-import { rubricService, getRubricErrorMessage } from '../../../services/rubricService';
-import { SubjectGroupOption } from '../../../models/Subjects/SubjectGroupOption';
-import { resolveTeacherId, loadTeacherGroupOptions } from '../../../utils/teacher';
+import {
+  rubricService,
+  getRubricErrorMessage,
+  resolveRubricId,
+} from '../../../services/rubricService';
+import { criterionService } from '../../../services/criterionService';
+import {
+  isRubricEditable,
+  RUBRIC_EDIT_BLOCKED_MESSAGE,
+} from '../../../utils/rubricEditRules';
 import RubricInfoCard from '../../../components/evaluations/RubricCard';
-import RubricTemplatesModal, { LocalCriterionDraft } from '../../../components/evaluations/RubricTemplatesModal';
 import { Criterion } from '../../../models/Evaluation/Criterion';
+
+interface LocalCriterionDraft {
+  id_temp: string;
+  name: string;
+  description: string;
+  weight: number;
+  orden: number;
+}
 
 const PUBLISH_ERROR =
   'la rúbrica debe tener al menos un criterio y la suma de los pesos debe ser 100 %.';
@@ -28,21 +41,15 @@ const newCriterion = (orden: number): LocalCriterionDraft => ({
 
 const CreateRubric: React.FC = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const [teacherId, setTeacherId] = useState('');
-
-  const [subjectOptions, setSubjectOptions] = useState<SubjectGroupOption[]>([]);
-  const [loadingSubjects, setLoadingSubjects] = useState(true);
-  const [savingDraft, setSavingDraft] = useState(false);
+  const { id: editRubricId } = useParams<{ id: string }>();
+  const isEditMode = Boolean(editRubricId);
+  const [loadingRubric, setLoadingRubric] = useState(isEditMode);
   const [savingPublish, setSavingPublish] = useState(false);
-  const [templatesOpen, setTemplatesOpen] = useState(false);
   const [savedRubricId, setSavedRubricId] = useState<string | null>(null);
   const [isDirty, setIsDirty] = useState(false);
   const [errorBanner, setErrorBanner] = useState('');
 
   const [rubric, setRubric] = useState({
-    group_id: '',
-    subject_id: '',
     title: '',
     description: '',
     is_public: false,
@@ -55,14 +62,6 @@ const CreateRubric: React.FC = () => {
   );
   const puedePublicar = criterios.length > 0 && sumaTotal === 100;
 
-  const selectedSubjectLabel = useMemo(
-    () =>
-      subjectOptions.find((o) => o.group_id === rubric.group_id)?.label ??
-      subjectOptions.find((o) => o.subject_id === rubric.subject_id)?.label ??
-      '—',
-    [subjectOptions, rubric.group_id, rubric.subject_id]
-  );
-
   const markDirty = useCallback(() => setIsDirty(true), []);
 
   const updateRubric = <K extends keyof typeof rubric>(key: K, value: (typeof rubric)[K]) => {
@@ -71,27 +70,55 @@ const CreateRubric: React.FC = () => {
   };
 
   useEffect(() => {
+    if (!editRubricId) return;
+
     let cancelled = false;
 
-    const load = async () => {
-      setLoadingSubjects(true);
-      const resolvedTeacherId = await resolveTeacherId(user);
+    const loadRubricForEdit = async () => {
+      setLoadingRubric(true);
+      const rubricData = await rubricService.getRubricById(editRubricId);
       if (cancelled) return;
 
-      setTeacherId(resolvedTeacherId);
-      const options = await loadTeacherGroupOptions(user);
+      if (!rubricData) {
+        toast.error('No se encontró la rúbrica.');
+        navigate('/teachers/rubrics/list');
+        return;
+      }
+
+      if (!isRubricEditable(rubricData)) {
+        toast.error(RUBRIC_EDIT_BLOCKED_MESSAGE);
+        navigate(`/teachers/rubrics/${editRubricId}/revision`);
+        return;
+      }
+
+      const criteriaData = await criterionService.getCriteriaByRubricId(editRubricId);
+
       if (cancelled) return;
 
-      setSubjectOptions(options);
-      setLoadingSubjects(false);
+      setSavedRubricId(editRubricId);
+      setRubric({
+        title: rubricData.title ?? '',
+        description: rubricData.description ?? '',
+        is_public: Boolean(rubricData.is_public),
+      });
+      setCriterios(
+        criteriaData.map((c, index) => ({
+          id_temp: c.id ? String(c.id) : `crit-${index}`,
+          name: c.name ?? '',
+          description: c.description ?? '',
+          weight: Number(c.weight ?? 0),
+          orden: c.order ?? index + 1,
+        }))
+      );
+      setLoadingRubric(false);
     };
 
-    void load();
+    void loadRubricForEdit();
 
     return () => {
       cancelled = true;
     };
-  }, [user]);
+  }, [editRubricId, navigate]);
 
   const reindexCriterios = (list: LocalCriterionDraft[]) =>
     list.map((c, i) => ({ ...c, orden: i + 1 }));
@@ -129,15 +156,9 @@ const CreateRubric: React.FC = () => {
     });
   };
 
-  const applyTemplate = (cloned: LocalCriterionDraft[]) => {
-    markDirty();
-    setCriterios(reindexCriterios(cloned));
-    toast.success('Criterios copiados desde la plantilla.');
-  };
-
   const validateBaseFields = (): boolean => {
-    if (!rubric.group_id || !rubric.subject_id || !rubric.title.trim()) {
-      setErrorBanner('Selecciona un grupo asignado y completa el título de la rúbrica.');
+    if (!rubric.title.trim()) {
+      setErrorBanner('Completa el título de la rúbrica.');
       return false;
     }
     if (rubric.description.length > 500) {
@@ -157,19 +178,24 @@ const CreateRubric: React.FC = () => {
   const saveRubric = async (asPublic: boolean) => {
     setErrorBanner('');
 
-    if (!validateBaseFields()) return;
-    if (!teacherId) {
-      toast.error('No se pudo identificar al docente autenticado.');
-      return;
+    if (isEditMode && editRubricId) {
+      const current = await rubricService.getRubricById(editRubricId);
+      if (!isRubricEditable(current)) {
+        toast.error(RUBRIC_EDIT_BLOCKED_MESSAGE);
+        return;
+      }
     }
 
-    if (asPublic && (criterios.length === 0 || sumaTotal !== 100)) {
+    if (!validateBaseFields()) return;
+
+    const namedCriteria = buildCriteriaPayload().filter((c) => c.name.trim());
+
+    if (asPublic && (namedCriteria.length === 0 || sumaTotal !== 100)) {
       setErrorBanner(PUBLISH_ERROR);
       return;
     }
 
-    const setLoading = asPublic ? setSavingPublish : setSavingDraft;
-    setLoading(true);
+    setSavingPublish(true);
 
     try {
       const saved = await rubricService.saveRubricWithCriteria(
@@ -179,30 +205,41 @@ const CreateRubric: React.FC = () => {
           is_public: false,
           is_archived: false,
         },
-        buildCriteriaPayload()
+        namedCriteria,
+        {
+          requireCriteria: asPublic,
+          existingRubricId: savedRubricId ?? editRubricId ?? undefined,
+          onRubricPersisted: (persisted) => {
+            setSavedRubricId(resolveRubricId(persisted));
+          },
+        }
       );
 
-      setSavedRubricId(String(saved.id));
+      const rubricId = resolveRubricId(
+        saved,
+        savedRubricId ?? editRubricId ?? undefined
+      );
+      setSavedRubricId(rubricId);
       setIsDirty(false);
 
-      if (saved.id) {
-        localStorage.setItem(`rubric_meta_${saved.id}_subject`, selectedSubjectLabel);
-        const groupLabel =
-          subjectOptions.find((o) => o.group_id === rubric.group_id)?.groupName ?? rubric.group_id;
-        localStorage.setItem(`rubric_meta_${saved.id}_group`, groupLabel);
+      if (!rubricId) {
+        toast.error('La rúbrica se guardó pero no se recibió su id. Vuelve al listado e inténtalo de nuevo.');
+        return;
       }
-
-      if (asPublic) {
-        toast.success('Criterios guardados. Continúa con las escalas (CU-09).');
-        navigate(`/teachers/rubrics/${saved.id}/escalas`);
-      } else {
-        toast.success('Rúbrica guardada como borrador.');
-      }
+      toast.success('Rúbrica guardada. Continúa con las escalas.');
+      navigate(`/teachers/rubrics/${rubricId}/escalas`, { replace: true });
     } catch (err) {
+      const partialId =
+        err && typeof err === 'object' && 'rubricId' in err
+          ? String((err as { rubricId?: string }).rubricId)
+          : savedRubricId;
+      if (partialId) {
+        setSavedRubricId(partialId);
+      }
       toast.error(getRubricErrorMessage(err));
       if (asPublic) setErrorBanner(PUBLISH_ERROR);
     } finally {
-      setLoading(false);
+      setSavingPublish(false);
     }
   };
 
@@ -235,11 +272,21 @@ const CreateRubric: React.FC = () => {
     rubric_id: '',
   }));
 
+  if (loadingRubric) {
+    return (
+      <div className="font-sans bg-[#F8F9FA] min-h-screen flex items-center justify-center dark:bg-boxdark-2">
+        <p className="text-[14px] text-[#6B7280]">Cargando rúbrica...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="font-sans bg-[#F8F9FA] min-h-screen pb-20 dark:bg-boxdark-2">
       <div className="flex justify-between items-start mb-6 pt-4 px-2">
         <div>
-          <h1 className="text-[22px] font-bold text-[#111827] dark:text-white">Crear rúbrica de evaluación</h1>
+          <h1 className="text-[22px] font-bold text-[#111827] dark:text-white">
+            {isEditMode ? 'Editar rúbrica de evaluación' : 'Crear rúbrica de evaluación'}
+          </h1>
           <p className="text-[13px] text-[#6B7280] mt-1 dark:text-gray-400">
             Diseña los criterios y asigna los pesos porcentuales para tu rúbrica.
           </p>
@@ -266,46 +313,6 @@ const CreateRubric: React.FC = () => {
               <div className="flex flex-col gap-4">
                 <div>
                   <label className="block text-[13px] font-medium text-[#374151] mb-1.5 dark:text-gray-300">
-                    Asignatura <span className="text-[#EF4444]">*</span>
-                  </label>
-                  <div className="relative">
-                    <select
-                      value={rubric.group_id}
-                      onChange={(e) => {
-                        const option = subjectOptions.find((o) => o.group_id === e.target.value);
-                        markDirty();
-                        setRubric((prev) => ({
-                          ...prev,
-                          group_id: e.target.value,
-                          subject_id: option?.subject_id ?? '',
-                        }));
-                      }}
-                      disabled={loadingSubjects}
-                      className="w-full h-10 px-3 text-[14px] text-[#111827] bg-white border border-[#D1D5DB] rounded-md appearance-none focus:outline-none focus:ring-1 focus:ring-[#6D28D9] focus:border-[#6D28D9] dark:bg-form-input dark:border-form-strokedark dark:text-white disabled:opacity-60"
-                    >
-                      <option value="" disabled>
-                        {loadingSubjects
-                          ? 'Cargando grupos asignados...'
-                          : subjectOptions.length === 0
-                            ? 'No tienes grupos asignados'
-                            : 'Seleccione una asignatura...'}
-                      </option>
-                      {subjectOptions.map((opt) => (
-                        <option key={opt.group_id} value={opt.group_id}>
-                          {opt.label}
-                        </option>
-                      ))}
-                    </select>
-                    <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-[#6B7280]">
-                      <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20">
-                        <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-[13px] font-medium text-[#374151] mb-1.5 dark:text-gray-300">
                     Título <span className="text-[#EF4444]">*</span>
                   </label>
                   <input
@@ -315,6 +322,9 @@ const CreateRubric: React.FC = () => {
                     placeholder="Ej. Rúbrica para Proyecto de Programación"
                     className="w-full h-10 px-3 text-[14px] text-[#111827] bg-white border border-[#D1D5DB] rounded-md focus:outline-none focus:ring-1 focus:ring-[#6D28D9] focus:border-[#6D28D9] dark:bg-form-input dark:border-form-strokedark dark:text-white"
                   />
+                  <p className="mt-2 text-[12px] text-[#6B7280] dark:text-gray-400">
+                    La asignatura se define al vincular la rúbrica a una evaluación.
+                  </p>
                 </div>
               </div>
 
@@ -366,17 +376,6 @@ const CreateRubric: React.FC = () => {
               <div className="flex gap-3">
                 <button
                   type="button"
-                  onClick={() => setTemplatesOpen(true)}
-                  disabled={!teacherId}
-                  className="flex items-center gap-2 px-4 py-2 bg-white border border-[#D1D5DB] rounded-md text-[14px] font-medium text-[#374151] hover:bg-gray-50 disabled:opacity-50 dark:bg-meta-4 dark:text-white dark:border-strokedark"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184" />
-                  </svg>
-                  <span>Plantillas de rúbricas</span>
-                </button>
-                <button
-                  type="button"
                   onClick={addCriterion}
                   className="flex items-center gap-2 px-4 py-2 bg-[#6D28D9] rounded-md text-[14px] font-semibold text-white hover:bg-[#5B21B6] transition-colors"
                 >
@@ -401,7 +400,7 @@ const CreateRubric: React.FC = () => {
                   {criterios.length === 0 ? (
                     <tr>
                       <td colSpan={6} className="py-8 text-center text-[13px] text-[#9CA3AF]">
-                        No hay criterios. Agrega uno o usa una plantilla.
+                        No hay criterios. Usa el botón «Agregar criterio».
                       </td>
                     </tr>
                   ) : (
@@ -522,71 +521,17 @@ const CreateRubric: React.FC = () => {
               title: rubric.title,
               description: rubric.description,
               is_public: rubric.is_public,
-              subject_id: rubric.subject_id,
+              is_archived: false,
             }}
             criteria={criteriaForCard}
-            subjectLabel={selectedSubjectLabel}
+            subjectLabel="Sin evaluación asociada"
           />
 
-          <div
-            className={`rounded-lg p-4 transition-colors ${
-              puedePublicar && rubric.title.trim()
-                ? 'bg-[#F0FDF4] border border-[#D1FAE5]'
-                : 'bg-white border border-[#E5E7EB] opacity-60 dark:bg-boxdark dark:border-strokedark'
-            }`}
-          >
-            <div className="flex items-center gap-2 mb-1">
-              <div
-                className={`flex items-center justify-center w-5 h-5 rounded-full text-white text-[11px] ${
-                  puedePublicar ? 'bg-[#10B981]' : 'bg-[#9CA3AF]'
-                }`}
-              >
-                ✓
-              </div>
-              <h4
-                className={`text-[14px] font-bold ${
-                  puedePublicar ? 'text-[#065F46]' : 'text-[#6B7280] dark:text-gray-300'
-                }`}
-              >
-                Listo para publicar
-              </h4>
-            </div>
-            <p
-              className={`text-[13px] mt-2 ${
-                puedePublicar ? 'text-[#065F46]' : 'text-[#6B7280] dark:text-gray-400'
-              }`}
-            >
-              {puedePublicar
-                ? 'Puedes publicar esta rúbrica cuando lo desees.'
-                : 'Agrega criterios y completa el 100 % de pesos para publicar.'}
-            </p>
-          </div>
-
-          <div className="bg-[#FFFBEB] border border-[#FEF3C7] rounded-lg p-4 dark:bg-meta-4 dark:border-strokedark">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-[#F59E0B]">💡</span>
-              <h4 className="text-[14px] font-bold text-[#374151] dark:text-gray-200">Incluye CU-09</h4>
-            </div>
-            <p className="text-[13px] text-[#6B7280] mb-3 dark:text-gray-400">
-              Después de crear los criterios, puedes definir las escalas de evaluación para cada criterio.
-            </p>
-            {savedRubricId ? (
-              <Link
-                to={`/teachers/rubrics/${savedRubricId}/escalas`}
-                className="inline-block text-[13px] font-medium text-[#374151] bg-white border border-[#D1D5DB] rounded-md px-3 py-1.5 hover:bg-gray-50 transition-colors dark:bg-boxdark dark:text-white dark:border-strokedark"
-              >
-                Definir escalas (CU-09) →
-              </Link>
-            ) : (
-              <button
-                type="button"
-                disabled
-                className="text-[13px] font-medium text-[#9CA3AF] bg-white border border-[#E5E7EB] rounded-md px-3 py-1.5 cursor-not-allowed dark:bg-boxdark dark:border-strokedark"
-              >
-                Definir escalas (CU-09) →
-              </button>
-            )}
-          </div>
+          <p className="text-[13px] text-[#6B7280] dark:text-gray-400">
+            {puedePublicar
+              ? 'Listo: al guardar irás a definir las escalas de cada criterio.'
+              : 'Los pesos deben sumar 100 % para continuar.'}
+          </p>
         </div>
       </div>
 
@@ -598,37 +543,20 @@ const CreateRubric: React.FC = () => {
         >
           Cancelar
         </button>
-        <div className="flex gap-4">
-          <button
-            type="button"
-            disabled={savingDraft || savingPublish}
-            onClick={() => saveRubric(false)}
-            className="flex items-center gap-2 text-[14px] font-medium text-[#374151] bg-white border border-[#D1D5DB] rounded-md px-5 py-2.5 hover:bg-gray-50 transition-colors disabled:opacity-50 dark:bg-meta-4 dark:text-white dark:border-strokedark"
-          >
-            {savingDraft ? 'Guardando...' : 'Guardar como borrador'}
-          </button>
-          <button
-            type="button"
-            disabled={!puedePublicar || savingDraft || savingPublish}
-            onClick={() => saveRubric(true)}
-            className={`flex items-center gap-2 text-[14px] font-semibold rounded-md px-5 py-2.5 transition-colors disabled:opacity-50 ${
-              puedePublicar
-                ? 'text-white bg-[#6D28D9] hover:bg-[#5B21B6]'
-                : 'text-[#9CA3AF] bg-[#E5E7EB] cursor-not-allowed'
-            }`}
-          >
-            {savingPublish ? 'Procesando...' : 'Guardar y definir escalas →'}
-          </button>
-        </div>
+        <button
+          type="button"
+          disabled={!puedePublicar || savingPublish}
+          onClick={() => saveRubric(true)}
+          className={`flex items-center gap-2 text-[14px] font-semibold rounded-md px-5 py-2.5 transition-colors disabled:opacity-50 ${
+            puedePublicar
+              ? 'text-white bg-[#6D28D9] hover:bg-[#5B21B6]'
+              : 'text-[#9CA3AF] bg-[#E5E7EB] cursor-not-allowed'
+          }`}
+        >
+          {savingPublish ? 'Guardando...' : 'Guardar y continuar a escalas →'}
+        </button>
       </div>
-
-      <RubricTemplatesModal
-        open={templatesOpen}
-        teacherId={teacherId}
-        onClose={() => setTemplatesOpen(false)}
-        onApply={applyTemplate}
-      />
-    </div>
+</div>
   );
 };
 
@@ -638,9 +566,7 @@ const WizardStepper: React.FC = () => (
     <WizardDivider />
     <WizardStep n={2} active label="Criterios" />
     <WizardDivider />
-    <WizardStep n={3} label="Revisión" />
-    <WizardDivider />
-    <WizardStep n={4} label="Publicar o guardar" />
+    <WizardStep n={3} label="Escalas" />
   </div>
 );
 

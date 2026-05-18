@@ -11,7 +11,13 @@ import { Rubric } from '../../../models/Evaluation/Rubric';
 import { criterionService } from '../../../services/criterionService';
 import { rubricService, getRubricErrorMessage } from '../../../services/rubricService';
 import { scaleService, getScaleErrorMessage } from '../../../services/scaleService';
+import { getRubricEvaluationContext } from '../../../utils/rubricContext';
 import { scalesByCriterion, validateScalesForPublish } from '../../../utils/rubricScoring';
+import { getCriterionWeight } from '../../../utils/criterionWeight';
+import {
+  isRubricEditable,
+  RUBRIC_EDIT_BLOCKED_MESSAGE,
+} from '../../../utils/rubricEditRules';
 
 const emptyScaleForm = () => ({
   name: '',
@@ -44,12 +50,12 @@ const DefineScales: React.FC = () => {
   const [scales, setScales] = useState<Scale[]>([]);
   const [activeCriterionId, setActiveCriterionId] = useState('');
   const [scaleForm, setScaleForm] = useState(emptyScaleForm);
-  const [cloneFromCriterionId, setCloneFromCriterionId] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
-  const [showReusePanel, setShowReusePanel] = useState(false);
   const [dragScaleIndex, setDragScaleIndex] = useState<number | null>(null);
+  const [metaSubject, setMetaSubject] = useState('—');
+  const [metaGroup, setMetaGroup] = useState('—');
   const scaleNameInputRef = useRef<HTMLInputElement>(null);
 
   const focusAddScaleRow = () => {
@@ -67,6 +73,13 @@ const DefineScales: React.FC = () => {
         scaleService.getScales(),
       ]);
       setRubric(rubricData);
+
+      const ctx = rubricData?.id
+        ? await getRubricEvaluationContext(String(rubricData.id))
+        : null;
+      setMetaSubject(ctx?.subjectLabel ?? '—');
+      setMetaGroup(ctx?.groupLabel ?? '—');
+
       const sortedCriteria = criteriaData.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
       setCriteria(sortedCriteria);
       const criterionIds = sortedCriteria.map((c) => String(c.id));
@@ -98,7 +111,7 @@ const DefineScales: React.FC = () => {
   );
 
   const totalWeight = useMemo(
-    () => criteria.reduce((acc, c) => acc + Number(c.weight ?? 0), 0),
+    () => criteria.reduce((acc, c) => acc + getCriterionWeight(c), 0),
     [criteria]
   );
 
@@ -114,18 +127,20 @@ const DefineScales: React.FC = () => {
 
   const allCriteriaReady = criteria.length > 0 && criteriaWithScalesCount === criteria.length;
 
+  const readOnly = rubric ? !isRubricEditable(rubric) : false;
+
+  const blockIfReadOnly = (): boolean => {
+    if (!readOnly) return false;
+    toast.error(RUBRIC_EDIT_BLOCKED_MESSAGE);
+    return true;
+  };
+
   const firstIncompleteCriterion = useMemo(() => {
     return criteria.find((c) => scalesByCriterion(scales, String(c.id)).length < 2);
   }, [criteria, scales]);
 
-  const metaSubject =
-    (rubric?.subject_id && String(rubric.subject_id)) ||
-    (id ? localStorage.getItem(`rubric_meta_${id}_subject`) : null) ||
-    '—';
-  const metaGroup =
-    (id ? localStorage.getItem(`rubric_meta_${id}_group`) : null) || '—';
-
   const handleAddScale = async () => {
+    if (blockIfReadOnly()) return;
     if (!activeCriterionId) return;
     const value = Number(scaleForm.value);
     if (!scaleForm.name.trim()) {
@@ -164,6 +179,7 @@ const DefineScales: React.FC = () => {
   };
 
   const handleDeleteScale = async (scaleId: string) => {
+    if (blockIfReadOnly()) return;
     if (!window.confirm('¿Eliminar esta escala?')) return;
     try {
       await scaleService.deleteScale(scaleId);
@@ -174,35 +190,8 @@ const DefineScales: React.FC = () => {
     }
   };
 
-  const handleCloneScales = async () => {
-    if (!cloneFromCriterionId || !activeCriterionId) return;
-    if (cloneFromCriterionId === activeCriterionId) {
-      toast.error('Selecciona un criterio distinto para clonar.');
-      return;
-    }
-    setSaving(true);
-    try {
-      const created = await scaleService.cloneScalesToCriterion(
-        cloneFromCriterionId,
-        activeCriterionId
-      );
-      setScales((prev) => {
-        const withoutTarget = prev.filter(
-          (s) => String(s.criterion_id) !== String(activeCriterionId)
-        );
-        return [...withoutTarget, ...created];
-      });
-      setShowReusePanel(false);
-      setCloneFromCriterionId('');
-      toast.success('Escalas clonadas al criterio actual.');
-    } catch (err) {
-      toast.error(getScaleErrorMessage(err));
-    } finally {
-      setSaving(false);
-    }
-  };
-
   const handlePublish = async () => {
+    if (blockIfReadOnly()) return;
     if (!id) return;
     if (!publishCheck.ready) {
       toast.error(publishCheck.issues[0] ?? 'Completa las escalas antes de publicar.');
@@ -211,7 +200,7 @@ const DefineScales: React.FC = () => {
     setPublishing(true);
     try {
       await rubricService.publishRubric(id);
-      toast.success('Rúbrica publicada (es_publica = true).');
+      toast.success('Rúbrica publicada. Asóciala a una evaluación desde el listado de evaluaciones (CU-10).');
       navigate('/teachers/rubrics/list');
     } catch (err) {
       toast.error(getRubricErrorMessage(err));
@@ -277,8 +266,15 @@ const DefineScales: React.FC = () => {
           Definir criterios y escalas
         </h1>
         <p className="text-[14px] text-[#6B7280] mt-1 dark:text-gray-400">
-          Define los niveles de desempeño (escalas) para cada criterio de la rúbrica.
+          {readOnly
+            ? 'Consulta los niveles de desempeño definidos. Las rúbricas publicadas no se pueden modificar.'
+            : 'Define los niveles de desempeño (escalas) para cada criterio de la rúbrica.'}
         </p>
+        {readOnly && (
+          <p className="mt-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100">
+            {RUBRIC_EDIT_BLOCKED_MESSAGE}
+          </p>
+        )}
         <nav className="text-[12px] text-[#9CA3AF] mt-3 flex flex-wrap items-center gap-1">
           <Link to="/" className="hover:text-[#6366F1]">
             Inicio
@@ -353,7 +349,7 @@ const DefineScales: React.FC = () => {
                       {idx + 1}. {c.name}
                     </span>
                     <span className="text-[13px] font-semibold text-[#6366F1] shrink-0">
-                      {c.weight} %
+                      {getCriterionWeight(c)} %
                     </span>
                   </div>
                   {c.description && (
@@ -387,54 +383,14 @@ const DefineScales: React.FC = () => {
 
         {/* CENTER — scales */}
         <main className="flex-1 min-w-0 space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-4 py-3">
-            <p className="flex-1 text-[13px] text-[#1E40AF] flex items-start gap-2">
+          <div className="rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] px-4 py-3">
+            <p className="text-[13px] text-[#1E40AF] flex items-start gap-2">
               <span className="shrink-0">ℹ</span>
               <span>
-                Selecciona un criterio para definir sus niveles de desempeño. Cada criterio debe
-                tener entre 2 y 5 niveles de escala.
+                Selecciona un criterio y agrega entre 2 y 5 niveles de desempeño para cada uno.
               </span>
             </p>
-            <button
-              type="button"
-              onClick={() => setShowReusePanel((v) => !v)}
-              className="shrink-0 rounded-lg border border-[#93C5FD] bg-white px-3 py-1.5 text-[13px] font-medium text-[#1D4ED8] hover:bg-[#DBEAFE]"
-            >
-              ⇄ Reutilizar escala existente
-            </button>
           </div>
-
-          {showReusePanel && activeCriterion && (
-            <div className="rounded-lg border border-[#FDE68A] bg-[#FFFBEB] p-4">
-              <p className="text-[13px] font-semibold text-[#92400E] mb-2">
-                Clonar niveles desde otro criterio
-              </p>
-              <div className="flex flex-wrap gap-2 items-end">
-                <select
-                  value={cloneFromCriterionId}
-                  onChange={(e) => setCloneFromCriterionId(e.target.value)}
-                  className="rounded-lg border border-[#D1D5DB] px-3 py-2 text-sm min-w-[180px]"
-                >
-                  <option value="">Seleccionar criterio origen...</option>
-                  {criteria
-                    .filter((c) => String(c.id) !== activeCriterionId)
-                    .map((c) => (
-                      <option key={c.id} value={String(c.id)}>
-                        {c.name}
-                      </option>
-                    ))}
-                </select>
-                <button
-                  type="button"
-                  disabled={!cloneFromCriterionId || saving}
-                  onClick={handleCloneScales}
-                  className="rounded-lg bg-[#6366F1] px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-                >
-                  Clonar al criterio actual
-                </button>
-              </div>
-            </div>
-          )}
 
           {activeCriterion ? (
             <>
@@ -448,7 +404,7 @@ const DefineScales: React.FC = () => {
                   </p>
                 </div>
                 <span className="inline-flex items-center rounded-full bg-[#EDE9FE] px-3 py-1 text-[13px] font-semibold text-[#5B21B6]">
-                  Peso del criterio: {activeCriterion.weight} %
+                  Peso del criterio: {getCriterionWeight(activeCriterion)} %
                 </span>
               </div>
 
@@ -462,7 +418,7 @@ const DefineScales: React.FC = () => {
                   </div>
                   <button
                     type="button"
-                    disabled={saving || activeScales.length >= 5}
+                    disabled={readOnly || saving || activeScales.length >= 5}
                     onClick={focusAddScaleRow}
                     className="rounded-lg bg-[#6366F1] px-4 py-2 text-[14px] font-semibold text-white hover:bg-[#4F46E5] disabled:opacity-50"
                   >
@@ -664,23 +620,6 @@ const DefineScales: React.FC = () => {
             />
           </SideCard>
 
-          <div className="rounded-lg border border-[#FDE68A] bg-[#FFFBEB] p-4 shadow-[0_1px_3px_rgba(0,0,0,0.08)]">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-[#F59E0B] text-lg">💡</span>
-              <h3 className="font-bold text-[14px] text-[#92400E]">Reutilizar escala existente</h3>
-            </div>
-            <p className="text-[13px] text-[#78350F] mb-3">
-              Puedes clonar los niveles de una escala que ya hayas definido en otro criterio.
-            </p>
-            <button
-              type="button"
-              onClick={() => setShowReusePanel(true)}
-              className="w-full rounded-lg border border-[#FCD34D] bg-white py-2 text-[13px] font-medium text-[#92400E] hover:bg-[#FEF3C7]"
-            >
-              Ver escalas existentes →
-            </button>
-          </div>
-
           <SideCard title="Reglas">
             <RulesList />
           </SideCard>
@@ -723,30 +662,40 @@ const DefineScales: React.FC = () => {
           Cancelar
         </button>
         <div className="flex flex-wrap gap-3">
-          <button
-            type="button"
-            onClick={handleSaveChanges}
-            className="text-[14px] font-medium text-[#374151] bg-white border border-[#D1D5DB] rounded-lg px-5 py-2.5 hover:bg-[#F9FAFB] dark:bg-meta-4 dark:border-strokedark dark:text-white"
-          >
-            Guardar cambios
-          </button>
-          <button
-            type="button"
-            disabled={!allCriteriaReady}
-            onClick={handleContinueToReview}
-            className="text-[14px] font-semibold text-white bg-[#6366F1] rounded-lg px-5 py-2.5 hover:bg-[#4F46E5] disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Continuar a revisión →
-          </button>
-          {!rubric.is_public && (
-            <button
-              type="button"
-              disabled={!publishCheck.ready || publishing}
-              onClick={handlePublish}
-              className="text-[14px] font-semibold text-white bg-[#16A34A] rounded-lg px-5 py-2.5 hover:bg-[#15803D] disabled:opacity-50"
+          {!readOnly && (
+            <>
+              <button
+                type="button"
+                onClick={handleSaveChanges}
+                className="text-[14px] font-medium text-[#374151] bg-white border border-[#D1D5DB] rounded-lg px-5 py-2.5 hover:bg-[#F9FAFB] dark:bg-meta-4 dark:border-strokedark dark:text-white"
+              >
+                Guardar cambios
+              </button>
+              <button
+                type="button"
+                disabled={!allCriteriaReady}
+                onClick={handleContinueToReview}
+                className="text-[14px] font-semibold text-white bg-[#6366F1] rounded-lg px-5 py-2.5 hover:bg-[#4F46E5] disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Continuar a revisión →
+              </button>
+              <button
+                type="button"
+                disabled={!publishCheck.ready || publishing}
+                onClick={handlePublish}
+                className="text-[14px] font-semibold text-white bg-[#16A34A] rounded-lg px-5 py-2.5 hover:bg-[#15803D] disabled:opacity-50"
+              >
+                {publishing ? 'Publicando...' : 'Publicar rúbrica'}
+              </button>
+            </>
+          )}
+          {readOnly && id && (
+            <Link
+              to={`/teachers/rubrics/${id}/revision`}
+              className="text-[14px] font-semibold text-white bg-[#6366F1] rounded-lg px-5 py-2.5 hover:bg-[#4F46E5]"
             >
-              {publishing ? 'Publicando...' : 'Publicar rúbrica'}
-            </button>
+              Ver revisión →
+            </Link>
           )}
         </div>
       </footer>

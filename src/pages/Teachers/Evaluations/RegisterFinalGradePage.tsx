@@ -14,11 +14,11 @@ import { Grade } from '../../../models/Evaluation/Grade';
 import { groupService } from '../../../services/groupService';
 import { evaluationService } from '../../../services/evaluationService';
 import { enrollmentService } from '../../../services/enrollmentService';
-import { gradeService, getGradeErrorMessage } from '../../../services/gradeService';
+import { gradeService, getGradeErrorMessage, isGradeRecorded } from '../../../services/gradeService';
 import { semesterService } from '../../../services/semesterService';
 import { subjectService } from '../../../services/subjectService';
 import { userPService } from '../../../services/userPService';
-import { transformUsersForList } from '../../../utils/userTransformers';
+import { buildStudentLookupMap, resolveStudentFromEnrollment, transformUsersForList } from '../../../utils/userTransformers';
 import { avatarColorFromName, studentInitials } from '../../../utils/evaluationFormat';
 
 interface StudentRow {
@@ -74,11 +74,13 @@ const RegisterFinalGradePage = () => {
             setSemesterActive(sem?.is_active !== false);
             setTeacherLabel(group?.teacher_id ? `Docente #${group.teacher_id}` : '—');
 
-            const users = transformUsersForList(await userPService.getUsers());
-            const studentMap = new Map(users.filter((u) => u.role === 'STUDENT').map((s) => [s.id, s]));
+            const users = transformUsersForList(await userPService.getUsers()).filter(
+                (u) => u.role === 'STUDENT'
+            );
+            const studentMap = buildStudentLookupMap(users);
 
             const studentRows: StudentRow[] = enrollments.map((enr) => {
-                const st = studentMap.get(String(enr.student_id));
+                const st = resolveStudentFromEnrollment(studentMap, String(enr.student_id));
                 const evalScores: Record<string, { raw: number | null; weighted: number | null }> =
                     {};
                 let finalScore = 0;
@@ -88,9 +90,9 @@ const RegisterFinalGradePage = () => {
                     const grade = gradesAll.find(
                         (g: Grade) =>
                             String(g.enrollment_id) === String(enr.id) &&
-                            (String(g.rubric_id) === String(ev.rubric_id) ||
-                                String(g.evaluation_id) === String(ev.id)) &&
-                            g.status === 'SENT'
+                            ev.rubric_id &&
+                            String(g.rubric_id) === String(ev.rubric_id) &&
+                            isGradeRecorded(g.status)
                     );
                     const raw =
                         grade?.final_score != null ? Number(grade.final_score) : null;

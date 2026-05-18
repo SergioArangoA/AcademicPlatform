@@ -50,11 +50,13 @@ const TeacherCreateRubric = lazy(() => import('../pages/Teachers/Rubrics/CreateR
 const TeacherReviewRubric = lazy(() => import('../pages/Teachers/Rubrics/ReviewRubric'));
 const TeacherDefineScales = lazy(() => import('../pages/Teachers/Rubrics/DefineScales'));
 const TeacherListEvaluations = lazy(() => import('../pages/Teachers/Evaluations/ListEvaluations'));
+const TeacherCreateEvaluation = lazy(() => import('../pages/Teachers/Evaluations/CreateEvaluation'));
 const TeacherGradeStudent = lazy(() => import('../pages/Teachers/Evaluations/GradeStudent'));
 const TeacherFinalGrades = lazy(() => import('../pages/Teachers/Evaluations/FinalGrades'));
 const AssociateRubricPage = lazy(() => import('../pages/Teachers/Evaluations/AssociateRubricPage'));
 const GradeStudentPage = lazy(() => import('../pages/Teachers/Evaluations/GradeStudentPage'));
 const RegisterFinalGradePage = lazy(() => import('../pages/Teachers/Evaluations/RegisterFinalGradePage'));
+const EvaluationStudentsPage = lazy(() => import('../pages/Teachers/Evaluations/EvaluationStudentsPage'));
 const TeacherGroupList = lazy(() => import('../pages/Teachers/Groups/ListGroups'));
 const TeacherStudentList = lazy(() => import('../pages/Teachers/Students/ListStudents'));
 const TeacherScaleList = lazy(() => import('../pages/Teachers/Scales/ListScales'));
@@ -302,6 +304,12 @@ const coreRoutes = [
     allowedRoles: ['TEACHER'],
   },
   {
+    path: '/teachers/rubrics/:id/edit',
+    title: 'Editar Rúbrica',
+    component: TeacherCreateRubric,
+    allowedRoles: ['TEACHER'],
+  },
+  {
     path: '/teachers/rubrics/:id/revision',
     title: 'Revisión de Rúbrica',
     component: TeacherReviewRubric,
@@ -320,6 +328,12 @@ const coreRoutes = [
     allowedRoles: ['TEACHER'],
   },
   {
+    path: '/evaluaciones/crear',
+    title: 'Crear evaluación',
+    component: TeacherCreateEvaluation,
+    allowedRoles: ['TEACHER'],
+  },
+  {
     path: '/teachers/evaluations/list',
     title: 'Calificar Evaluaciones',
     component: TeacherListEvaluations,
@@ -329,6 +343,12 @@ const coreRoutes = [
     path: '/evaluaciones/:evaluacionId/asociar-rubrica',
     title: 'Asociar rúbrica',
     component: AssociateRubricPage,
+    allowedRoles: ['TEACHER'],
+  },
+  {
+    path: '/evaluaciones/:evaluacionId/estudiantes',
+    title: 'Estudiantes de la evaluación',
+    component: EvaluationStudentsPage,
     allowedRoles: ['TEACHER'],
   },
   {

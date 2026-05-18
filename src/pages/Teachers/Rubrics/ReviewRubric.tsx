@@ -6,10 +6,11 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { rubricService } from '../../../services/rubricService';
 import { criterionService } from '../../../services/criterionService';
-import { subjectService } from '../../../services/subjectService';
+import { getRubricEvaluationContext } from '../../../utils/rubricContext';
 import { Rubric } from '../../../models/Evaluation/Rubric';
 import { Criterion } from '../../../models/Evaluation/Criterion';
 import { getCriterionWeight } from '../../../utils/criterionWeight';
+import { isRubricEditable } from '../../../utils/rubricEditRules';
 import RubricInfoCard from '../../../components/evaluations/RubricCard';
 
 const ReviewRubric: React.FC = () => {
@@ -32,9 +33,9 @@ const ReviewRubric: React.FC = () => {
       setRubric(rubricData);
       setCriteria(criteriaData.sort((a, b) => (a.order ?? 0) - (b.order ?? 0)));
 
-      if (rubricData?.subject_id) {
-        const subject = await subjectService.getSubjectById(rubricData.subject_id);
-        if (subject?.name) setSubjectName(subject.name);
+      if (rubricData?.id) {
+        const ctx = await getRubricEvaluationContext(String(rubricData.id));
+        if (ctx?.subjectLabel) setSubjectName(ctx.subjectLabel);
       }
       setLoading(false);
     };
@@ -62,6 +63,7 @@ const ReviewRubric: React.FC = () => {
   }
 
   const totalWeight = criteria.reduce((acc, c) => acc + getCriterionWeight(c), 0);
+  const editable = isRubricEditable(rubric);
 
   return (
     <div className="font-sans bg-[#F8F9FA] min-h-screen pb-20 dark:bg-boxdark-2">
@@ -97,7 +99,7 @@ const ReviewRubric: React.FC = () => {
                       <div className="text-[#6B7280] dark:text-gray-400">{c.description}</div>
                     )}
                   </td>
-                  <td className="py-2 px-3">{c.weight}%</td>
+                  <td className="py-2 px-3">{getCriterionWeight(c)}%</td>
                 </tr>
               ))}
             </tbody>
@@ -128,14 +130,17 @@ const ReviewRubric: React.FC = () => {
           Volver al listado
         </button>
         <div className="flex gap-3">
-          <Link
-            to={`/teachers/rubrics/${id}/escalas`}
-            className="text-[14px] font-semibold text-white bg-[#6D28D9] rounded-md px-5 py-2.5 hover:bg-[#5B21B6]"
-          >
-            Definir escalas (CU-09) →
-          </Link>
-          {rubric.is_public && (
-            <span className="text-[13px] text-[#16A34A] self-center font-medium">Rúbrica publicada</span>
+          {editable ? (
+            <Link
+              to={`/teachers/rubrics/${id}/escalas`}
+              className="text-[14px] font-semibold text-white bg-[#6D28D9] rounded-md px-5 py-2.5 hover:bg-[#5B21B6]"
+            >
+              Definir escalas (CU-09) →
+            </Link>
+          ) : (
+            <span className="text-[13px] text-[#16A34A] self-center font-medium">
+              Rúbrica publicada — solo lectura
+            </span>
           )}
         </div>
       </div>
