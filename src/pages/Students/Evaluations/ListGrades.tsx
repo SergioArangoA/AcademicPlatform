@@ -15,6 +15,9 @@ import { groupService } from "../../../services/groupService";
 import { evaluationService } from "../../../services/evaluationService";
 import { scaleService } from "../../../services/scaleService";
 import { criteriaService } from "../../../services/criterionService";
+import { userPService } from "../../../services/userPService";
+import { LocalStorageProvider } from "../../../storage/LocalStorageProvider";
+import { enrollmentService } from "../../../services/enrollmentService";
 import { useNavigate } from "react-router-dom";
 
 interface GradeRow {
@@ -56,6 +59,13 @@ const Grades: React.FC = () => {
     };
 
     const fetchData = async () => {
+        const users = await userPService.getUsers();
+        const user = users.find((u) => u.profile?.id === id || u.id === id);
+        const enrollments = await enrollmentService.getStudentEnrollments(user?.profile?.id);
+        const storageProvider = new LocalStorageProvider();
+        const userInStorage = storageProvider.getParsedItem("user");
+        
+        const id = userInStorage.id;
         const [grades, rubrics, subjects, groups, evaluations, scales, criteria] =
             await Promise.all([
                 gradeService.getGrades(),
@@ -118,8 +128,28 @@ const Grades: React.FC = () => {
                 rubricTitle: rubric?.title || String(grade.rubric_id),
             };
         });
+        // 1. grupos activos del usuario
+        const activeGroupIds = new Set(
+            enrollments
+                .filter(en => en.status === "ACTIVE")
+                .map(en => en.group_id)
+        );
 
-        setData(rows);
+        // 2. evaluaciones del usuario
+        const userEvaluationIds = new Set(
+            evaluations
+                .filter(ev => activeGroupIds.has(ev.group_id))
+                .map(ev => ev.id)
+        );
+
+        // 3. filtrar grades
+        const filteredRows = rows.filter(row =>
+            userEvaluationIds.has(
+                evaluations.find(ev => ev.name === row.evaluationName)?.id ?? ""
+            )
+        );
+
+        setData(filteredRows);
     };
 
     const handleAction = (action: string, item: GradeRow) => {
