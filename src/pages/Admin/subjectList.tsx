@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
 import GenericTable from "../../components/GenericTable";
 import FilterBar, { FilterValues } from "../../components/FilterBar";
 import { Subject } from "../../models/Subjects/Subject";
@@ -117,11 +118,18 @@ const SubjectList = () => {
 					return;
 				}
 
-				const confirmed = window.confirm(
-					`¿Seguro que deseas eliminar la materia ${item.name ?? "seleccionada"}?`
-				);
+				const subjectLabel = item.name || item.code || "esta materia";
+				const confirmed = await Swal.fire({
+					title: "Confirmar eliminación",
+					text: `¿Seguro que desea eliminar la materia "${subjectLabel}"?`,
+					icon: "warning",
+					showCancelButton: true,
+					confirmButtonText: "Sí, eliminar",
+					cancelButtonText: "Cancelar",
+					reverseButtons: true,
+				});
 
-				if (!confirmed) {
+				if (!confirmed.isConfirmed) {
 					return;
 				}
 
@@ -129,9 +137,19 @@ const SubjectList = () => {
 
 				if (ok) {
 					await fetchSubjects();
-					window.alert("Materia eliminada correctamente.");
+					await Swal.fire({
+						title: "Completado",
+						text: "Materia eliminada correctamente.",
+						icon: "success",
+						timer: 3000,
+					});
 				} else {
-					window.alert("No se pudo eliminar la materia.");
+					await Swal.fire({
+						title: "Error",
+						text: "No se pudo eliminar la materia.",
+						icon: "error",
+						timer: 3000,
+					});
 				}
 				break;
 			}
