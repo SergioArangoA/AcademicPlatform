@@ -15,8 +15,46 @@ import {
 import { loadTeacherGroupOptions } from '../../../utils/teacher';
 import { validateEvaluationWeightChange } from '../../../utils/evaluationWeights';
 
+type CreateEvaluationFormState = {
+  group_id: string;
+  name: string;
+  description: string;
+  weight: string;
+};
 
+/** Validación síncrona del formulario antes de consultar pesos en el servidor. */
+function validateCreateEvaluationForm(
+  form: CreateEvaluationFormState,
+  selectedGroup: SubjectGroupOption | undefined
+): string | null {
+  if (!form.group_id || !selectedGroup?.subject_id) {
+    return 'Selecciona un grupo de tus asignaturas asignadas.';
+  }
+  if (!form.name.trim()) {
+    return 'El nombre de la evaluación es obligatorio.';
+  }
+  const weight = Number(form.weight);
+  if (Number.isNaN(weight) || weight <= 0 || weight > 100) {
+    return 'El peso debe ser un número entre 1 y 100.';
+  }
+  if (form.description.length > 500) {
+    return 'La descripción no puede superar 500 caracteres.';
+  }
+  return null;
+}
 
+function buildCreateEvaluationPayload(
+  selectedGroup: SubjectGroupOption,
+  form: CreateEvaluationFormState
+) {
+  return {
+    subject_id: String(selectedGroup.subject_id),
+    group_id: form.group_id,
+    name: form.name.trim(),
+    description: form.description.trim() || 'Sin descripción',
+    weight: Number(form.weight),
+  };
+}
 
 const CreateEvaluation: React.FC = () => {
   const navigate = useNavigate();
@@ -57,29 +95,18 @@ const CreateEvaluation: React.FC = () => {
   );
 
   const validate = async (): Promise<boolean> => {
-    if (!form.group_id || !selectedGroup?.subject_id) {
-      setErrorBanner('Selecciona un grupo de tus asignaturas asignadas.');
-      return false;
-    }
-    if (!form.name.trim()) {
-      setErrorBanner('El nombre de la evaluación es obligatorio.');
-      return false;
-    }
-    const weight = Number(form.weight);
-    if (Number.isNaN(weight) || weight <= 0 || weight > 100) {
-      setErrorBanner('El peso debe ser un número entre 1 y 100.');
+    const formError = validateCreateEvaluationForm(form, selectedGroup);
+    if (formError) {
+      setErrorBanner(formError);
       return false;
     }
 
     const subjectId = String(selectedGroup!.subject_id);
+    const weight = Number(form.weight);
     const existing = await evaluationService.getEvaluations();
     const weightCheck = validateEvaluationWeightChange(existing, subjectId, weight);
     if (!weightCheck.allowed) {
       setErrorBanner(weightCheck.message);
-      return false;
-    }
-    if (form.description.length > 500) {
-      setErrorBanner('La descripción no puede superar 500 caracteres.');
       return false;
     }
     setErrorBanner('');
@@ -92,13 +119,9 @@ const CreateEvaluation: React.FC = () => {
 
     setSaving(true);
     try {
-      const created = await evaluationService.createEvaluation({
-        subject_id: String(selectedGroup!.subject_id),
-        group_id: form.group_id,
-        name: form.name.trim(),
-        description: form.description.trim() || 'Sin descripción',
-        weight: Number(form.weight),
-      });
+      await evaluationService.createEvaluation(
+        buildCreateEvaluationPayload(selectedGroup!, form)
+      );
 
       toast.success('Evaluación creada. Podrás asociar la rúbrica cuando esté lista.');
       const subjectId = String(selectedGroup!.subject_id);
@@ -245,9 +268,10 @@ const CreateEvaluation: React.FC = () => {
   );
 };
 
+/** Variante de prueba: reutiliza el mismo formulario de creación. */
 const CreateEvaluationPrueba: React.FC = () => {
-
-  console.log("michael canson")
+  return <CreateEvaluation />;
 };
 
 export default CreateEvaluation;
+export { CreateEvaluationPrueba, buildCreateEvaluationPayload, validateCreateEvaluationForm };
