@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { userPService } from "../../services/userPService";
+import { userPService } from "../../../services/userPService";
 import Swal from "sweetalert2";
-import Breadcrumb from "../../components/Breadcrumb";
-import UserFormValidator from "../../components/UserForm";
-import { UserResponse } from "../../models/Users/UserResponse";
-import { UpdateUserPayload } from "../../models/Users/UpdateUserPayload";
-import { UserMutationResult } from "../../utils/userMutationResult";
-import { auditLogService } from "../../services/auditLogService";
+import Breadcrumb from "../../../components/Breadcrumb";
+import UserFormValidator from "../../../components/UserForm";
+import { UserResponse } from "../../../models/Users/UserResponse";
+import { UpdateUserPayload } from "../../../models/Users/UpdateUserPayload";
+import { UserMutationResult } from "../../../utils/userMutationResult";
+import { auditLogService } from "../../../services/auditLogService";
 
 const UpdateUser = () => {
     const { id } = useParams();

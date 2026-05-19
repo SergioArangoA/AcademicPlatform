@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Career } from "../../models/Careers/Career";
-import { Subject } from "../../models/Subjects/Subject";
-import { StudyPlan } from "../../models/StudyPlan/StudyPlan";
-import { careerService } from "../../services/careerService";
-import { studyplanService } from "../../services/studyplanService";
-import { subjectService } from "../../services/subjectService";
-import GenericTable from "../../components/GenericTable";
+import { Career } from "../../../models/Careers/Career";
+import { Subject } from "../../../models/Subjects/Subject";
+import { StudyPlan } from "../../../models/StudyPlan/StudyPlan";
+import { careerService } from "../../../services/careerService";
+import { studyplanService } from "../../../services/studyplanService";
+import { subjectService } from "../../../services/subjectService";
+import GenericTable from "../../../components/GenericTable";
 
 type StudyPlanRow = {
     id: string;
@@ -441,6 +441,19 @@ const PlanStudios = () => {
                             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-white hover:bg-opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
                         >
                             {isLoadingPlan ? "Cargando..." : "Cargar"}
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={() => {
+                                if (selectedPlanId) {
+                                    navigate(`/admin/study-plans/edit/${selectedPlanId}`);
+                                }
+                            }}
+                            disabled={!selectedPlanId || isPerformingAction}
+                            className="inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                            Actualizar
                         </button>
 
                         <button

@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
-import GenericTable from "../../components/GenericTable";
-import FilterBar, { FilterValues } from "../../components/FilterBar";
-import { Subject } from "../../models/Subjects/Subject";
-import { subjectService } from "../../services/subjectService";
+import GenericTable from "../../../components/GenericTable";
+import FilterBar, { FilterValues } from "../../../components/FilterBar";
+import { Subject } from "../../../models/Subjects/Subject";
+import { subjectService } from "../../../services/subjectService";
 
 const initialFilterValues: FilterValues = {
 	search: "",

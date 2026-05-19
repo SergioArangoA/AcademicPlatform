@@ -23,23 +23,24 @@ const UserUpdate= lazy(() => import('../pages/Users/Update'));
 const RoleList= lazy(() => import('../pages/Roles/List'));
 const Posts= lazy(() => import('../pages/Posts/List'));
 const StudentsEvaluations= lazy(() => import('../pages/Students/Evaluations/ListEvaluations'));
-const UserList = lazy(() => import('../pages/Admin/userList'));
-const SubjectList = lazy(() => import('../pages/Admin/subjectList'));
-const CreateSubject = lazy(() => import('../pages/Admin/createSubject'));
-const UpdateSubject = lazy(() => import('../pages/Admin/updateSubject'));
-const ViewSubject = lazy(() => import('../pages/Admin/viewSubject'));
-const CreateUser = lazy(() => import('../pages/Admin/createUser'));
-const UpdateUser = lazy(() => import('../pages/Admin/updateUser'));
-const ViewUser = lazy(() => import('../pages/Admin/viewUser'));
-const CareerAndSemesterList = lazy(() => import('../pages/Admin/careerAndSemesterList'));
-const CreateCareer = lazy(() => import('../pages/Admin/createCareer'));
-const UpdateCareer = lazy(() => import('../pages/Admin/updateCareer'));
-const ViewCareer = lazy(() => import('../pages/Admin/viewCareer.tsx'));
-const CreateSemester = lazy(() => import('../pages/Admin/createSemester.tsx'));
-const UpdateSemester = lazy(() => import('../pages/Admin/updateSemester.tsx'));
-const ViewSemester = lazy(() => import('../pages/Admin/viewSemester.tsx'));
-const PlanStudios = lazy(() => import('../pages/Admin/StudyPlans.tsx'));
-const CreateStudyPlan = lazy(() => import('../pages/Admin/createStudyPlan.tsx') as unknown as Promise<{ default: any }>);
+const UserList = lazy(() => import('../pages/Admin/users/userList'));
+const SubjectList = lazy(() => import('../pages/Admin/subjects/subjectList.tsx'));
+const CreateSubject = lazy(() => import('../pages/Admin/subjects/createSubject.tsx'));
+const UpdateSubject = lazy(() => import('../pages/Admin/subjects/updateSubject'));
+const ViewSubject = lazy(() => import('../pages/Admin/subjects/viewSubject'));
+const CreateUser = lazy(() => import('../pages/Admin/users/createUser.tsx'));
+const UpdateUser = lazy(() => import('../pages/Admin/users/updateUser.tsx'));
+const ViewUser = lazy(() => import('../pages/Admin/users/viewUser'));
+const CareerAndSemesterList = lazy(() => import('../pages/Admin/careersandsemesters/careerAndSemesterList'));
+const CreateCareer = lazy(() => import('../pages/Admin/careersandsemesters/createCareer'));
+const UpdateCareer = lazy(() => import('../pages/Admin/careersandsemesters/updateCareer'));
+const ViewCareer = lazy(() => import('../pages/Admin/careersandsemesters/viewCareer.tsx'));
+const CreateSemester = lazy(() => import('../pages/Admin/careersandsemesters/createSemester.tsx'));
+const UpdateSemester = lazy(() => import('../pages/Admin/careersandsemesters/updateSemester.tsx'));
+const ViewSemester = lazy(() => import('../pages/Admin/careersandsemesters/viewSemester.tsx'));
+const PlanStudios = lazy(() => import('../pages/Admin/studyplans/StudyPlans.tsx'));
+const CreateStudyPlan = lazy(() => import('../pages/Admin/studyplans/createStudyPlan.tsx'));
+const UpdateStudyPlan = lazy(() => import('../pages/Admin/studyplans/updateStudyPlan.tsx'));
 const ViewEvaluation = lazy(()=> import('../pages/Students/Evaluations/ViewEvaluation'));
 const StudentsRubrics = lazy(()=> import ('../pages/Students/Rubrics/ListRubrics'));
 const GradesList = lazy(()=> import ('../pages/Students/Evaluations/ListGrades'));
@@ -64,9 +65,9 @@ const TeacherScaleList = lazy(() => import('../pages/Teachers/Scales/ListScales'
 const UserRegistrationList = lazy(()=>import('../pages/Admin/registrations/userRegistrationList.tsx'));
 const UserRegistration = lazy(()=>import('../pages/Admin/registrations/userRegistration.tsx'));
 const AssignTeacher = lazy(() => import('../pages/Admin/assignTeacher'));
-const GroupList = lazy(() => import('../pages/Admin/groupList'));
-const CreateGroup = lazy(() => import('../pages/Admin/createGroup'));
-const UpdateGroup = lazy(() => import('../pages/Admin/updateGroup'));
+const GroupList = lazy(() => import('../pages/Admin/groups/groupList'));
+const CreateGroup = lazy(() => import('../pages/Admin/groups/createGroup'));
+const UpdateGroup = lazy(() => import('../pages/Admin/groups/updateGroup'));
 const UserEnrollmentList = lazy(() => import('../pages/Admin/enrollments/userEnrollmentList'));
 const UserEnrollment = lazy(()=>import('../pages/Admin/enrollments/userEnrollment.tsx'));
 
@@ -208,6 +209,12 @@ const coreRoutes = [
     path: '/admin/study-plans/create',
     title: 'Nuevo plan de estudios',
     component: CreateStudyPlan,
+    allowedRoles: ['ADMIN'],
+  },
+  {
+    path: '/admin/study-plans/edit/:id',
+    title: 'Editar plan de estudios',
+    component: UpdateStudyPlan,
     allowedRoles: ['ADMIN'],
   },
   {

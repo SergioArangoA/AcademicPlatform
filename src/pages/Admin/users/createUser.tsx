@@ -1,11 +1,11 @@
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
-import Breadcrumb from "../../components/Breadcrumb";
-import UserFormValidator from "../../components/UserForm";
-import { UpdateUserPayload } from "../../models/Users/UpdateUserPayload";
-import { auditLogService } from "../../services/auditLogService";
-import { userPService } from "../../services/userPService";
-import FirebaseAuthService from "../../services/firebaseAuthService"
+import Breadcrumb from "../../../components/Breadcrumb";
+import UserFormValidator from "../../../components/UserForm";
+import { UpdateUserPayload } from "../../../models/Users/UpdateUserPayload";
+import { auditLogService } from "../../../services/auditLogService";
+import { userPService } from "../../../services/userPService";
+import FirebaseAuthService from "../../../services/firebaseAuthService"
 
 const normalizeDuplicateMessage = (message: string) => {
     const normalized = message.toLowerCase();
