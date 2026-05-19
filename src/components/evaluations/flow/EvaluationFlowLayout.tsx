@@ -1,5 +1,5 @@
 /**
- * Layout con pasos del wizard para el docente: asociar rúbrica, calificar y nota final (CU-10/11/12).
+ * Layout con pasos del wizard para el docente: asociar rúbrica y calificar (CU-10/11).
  */
 import { ReactNode } from 'react';
 import { Check } from 'lucide-react';

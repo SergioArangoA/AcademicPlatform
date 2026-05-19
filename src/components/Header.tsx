@@ -35,8 +35,6 @@ const Header = (props: {
       : pathname.includes('calificar')
         ? 'Calificar estudiante'
         : 'Evaluaciones';
-  } else if (pathname.includes('/calificaciones') && pathname.includes('nota-final')) {
-    pageTitle = 'Nota final del grupo';
   } else if (pathname.includes('/teachers/dashboard') || pathname === '/') {
     pageTitle = 'Inicio';
   }

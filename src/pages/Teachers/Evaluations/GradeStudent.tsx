@@ -157,20 +157,18 @@ const GradeStudent: React.FC = () => {
         comment: g.comment?.trim() || undefined,
       }));
 
-  const handleSave = async (send: boolean) => {
+  const handleSave = async () => {
     if (!selectedEnrollment || !id) {
       toast.error('Selecciona un estudiante.');
       return;
     }
 
-    if (send) {
-      const missing = criteria.filter((c) => !grades[String(c.id)]?.scaleId);
-      if (missing.length > 0) {
-        toast.error(
-          `E1: Faltan criterios por calificar: ${missing.map((c) => c.name).join(', ')}`
-        );
-        return;
-      }
+    const missing = criteria.filter((c) => !grades[String(c.id)]?.scaleId);
+    if (missing.length > 0) {
+      toast.error(
+        `Faltan criterios por calificar: ${missing.map((c) => c.name).join(', ')}`
+      );
+      return;
     }
 
     setSaving(true);
@@ -178,15 +176,13 @@ const GradeStudent: React.FC = () => {
       const saved = await gradeService.gradeStudent({
         enrollment_id: selectedEnrollment,
         evaluation_id: id,
-        status: send ? 'SENT' : 'DRAFT',
+        status: 'DRAFT',
         observations: observations.trim() || undefined,
         details: buildDetails(),
       });
       setGradeStatus(saved.status ?? '');
       toast.success(
-        send
-          ? 'Calificación enviada. El estudiante puede consultarla (CU-13).'
-          : 'Borrador guardado. Puedes editarlo más tarde.'
+        'Calificación guardada en borrador. Publícala con «Publicar notas» en Mis evaluaciones cuando todos estén calificados.'
       );
     } catch (err) {
       toast.error(getGradeErrorMessage(err));
@@ -249,7 +245,7 @@ const GradeStudent: React.FC = () => {
           {gradeStatus && (
             <p className="mt-2 text-sm text-gray-500">
               Estado actual: <strong>{gradeStatus}</strong>
-              {gradeStatus === 'SENT' && ' — ya fue enviada'}
+              {gradeStatus === 'SENT' && ' — publicada (visible para el estudiante)'}
             </p>
           )}
 
@@ -341,18 +337,10 @@ const GradeStudent: React.FC = () => {
                 <button
                   type="button"
                   disabled={saving}
-                  onClick={() => handleSave(false)}
-                  className="rounded border border-stroke px-5 py-2.5 text-sm dark:border-strokedark"
-                >
-                  Guardar borrador
-                </button>
-                <button
-                  type="button"
-                  disabled={saving}
-                  onClick={() => handleSave(true)}
+                  onClick={() => void handleSave()}
                   className="rounded bg-primary px-5 py-2.5 text-sm font-medium text-white"
                 >
-                  Enviar calificación
+                  Guardar calificación (borrador)
                 </button>
               </div>
             </>

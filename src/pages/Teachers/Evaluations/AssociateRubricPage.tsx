@@ -523,7 +523,7 @@ const AssociateRubricPage = () => {
                                 title="No se puede cambiar la rúbrica"
                                 message="Ya existen notas registradas para esta evaluación con la rúbrica actual. No es posible cambiar la rúbrica asociada."
                                 actionLabel="Ver calificaciones"
-                                onAction={() => navigate('/teachers/grades')}
+                                onAction={() => navigate('/evaluaciones')}
                             />
                         )}
                     </>

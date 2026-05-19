@@ -1,6 +1,7 @@
 /**
  * Listado de estudiantes de una evaluación para calificar (CU-11).
  * Ruta: /evaluaciones/:evaluacionId/estudiantes
+ * La publicación de notas se hace desde Mis evaluaciones (SweetAlert2 + API).
  */
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
@@ -56,7 +57,7 @@ const EvaluationStudentsPage = () => {
 
   return (
     <>
-      <Breadcrumb pageName="Calificar evaluación" />
+      <Breadcrumb pageName="Estudiantes y notas" />
 
       <div className="rounded-sm border border-stroke bg-white px-5 pt-6 pb-6 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5">
         <div className="mb-6 flex flex-wrap justify-between items-start gap-3">
@@ -65,8 +66,12 @@ const EvaluationStudentsPage = () => {
             <p className="mt-1 text-sm text-gray-500">
               {subjectLabel} · {groupLabel}
             </p>
+            <p className="mt-2 text-xs text-gray-500">
+              Para publicar las calificaciones ya guardadas, usa <strong>Publicar notas</strong> en la
+              lista <strong>Mis evaluaciones</strong>.
+            </p>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 items-center">
             <Link
               to="/evaluaciones"
               className="rounded border border-stroke px-3 py-2 text-sm hover:bg-gray-50 dark:border-strokedark"

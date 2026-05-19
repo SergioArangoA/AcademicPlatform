@@ -1,6 +1,6 @@
 /**
  * Rutas de la app: admin, estudiante y docente. Abajo del archivo está el bloque TEACHER
- * (rúbricas, evaluaciones, grupos, calificaciones). El Sidebar enlaza a estas paths.
+ * (rúbricas, evaluaciones, grupos). El Sidebar enlaza a estas paths.
  */
 import { lazy } from 'react';
 import Rubrics from '../pages/Students/Rubrics/ListRubrics';
@@ -52,10 +52,8 @@ const TeacherDefineScales = lazy(() => import('../pages/Teachers/Rubrics/DefineS
 const TeacherListEvaluations = lazy(() => import('../pages/Teachers/Evaluations/ListEvaluations'));
 const TeacherCreateEvaluation = lazy(() => import('../pages/Teachers/Evaluations/CreateEvaluation'));
 const TeacherGradeStudent = lazy(() => import('../pages/Teachers/Evaluations/GradeStudent'));
-const TeacherFinalGrades = lazy(() => import('../pages/Teachers/Evaluations/FinalGrades'));
 const AssociateRubricPage = lazy(() => import('../pages/Teachers/Evaluations/AssociateRubricPage'));
 const GradeStudentPage = lazy(() => import('../pages/Teachers/Evaluations/GradeStudentPage'));
-const RegisterFinalGradePage = lazy(() => import('../pages/Teachers/Evaluations/RegisterFinalGradePage'));
 const EvaluationStudentsPage = lazy(() => import('../pages/Teachers/Evaluations/EvaluationStudentsPage'));
 const TeacherGroupList = lazy(() => import('../pages/Teachers/Groups/ListGroups'));
 const TeacherStudentList = lazy(() => import('../pages/Teachers/Students/ListStudents'));
@@ -287,8 +285,8 @@ const coreRoutes = [
   /**
    * Perfil docente (rol TEACHER): rutas que armé para el menú lateral del Sidebar.
    * - Rúbricas: listar, crear (CU-08), revisar y definir escalas por criterio.
-   * - Evaluaciones: listado, asociar rúbrica (CU-10), calificar con rúbrica (CU-11), nota final (CU-12).
-   * - Consulta: mis grupos, mis estudiantes, escalas y calificaciones consolidadas.
+   * - Evaluaciones: listado, asociar rúbrica (CU-10), calificar con rúbrica (CU-11).
+   * - Consulta: mis grupos, mis estudiantes y escalas.
    * Los datos del docente logueado los resuelvo con utils/teacher (resolveTeacherId, tableData, filters).
    */
   {
@@ -358,21 +356,9 @@ const coreRoutes = [
     allowedRoles: ['TEACHER'],
   },
   {
-    path: '/calificaciones/:grupoId/nota-final',
-    title: 'Nota final del grupo',
-    component: RegisterFinalGradePage,
-    allowedRoles: ['TEACHER'],
-  },
-  {
     path: '/teachers/evaluations/:id/grade',
     title: 'Calificar Estudiante',
     component: TeacherGradeStudent,
-    allowedRoles: ['TEACHER'],
-  },
-  {
-    path: '/teachers/grades',
-    title: 'Calificaciones Finales',
-    component: TeacherFinalGrades,
     allowedRoles: ['TEACHER'],
   },
   {
