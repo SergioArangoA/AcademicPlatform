@@ -41,7 +41,7 @@ class StudyPlanService{
 
     async createStudyPlan(payload: StudyPlanPayload): Promise<StudyPlan | null> {
         try {
-            const response = await api.post<StudyPlanResponse>(API_URL, payload);
+            const response = await api.post<StudyPlanResponse>(API_URL1, payload);
             return response.data.data;
         } catch (error) {
             if (axios.isAxiosError(error)) {
@@ -80,6 +80,26 @@ class StudyPlanService{
                 console.error("Error al buscar Plan de Estudio:", error.response?.data || error.message);
             } else {
                 console.error("Error inesperado al buscar Plan de Estudio:", error);
+            }
+            return [];
+        }
+    }
+
+    async searchStudyPlanByCareerId(careerId: string): Promise<StudyPlan[]> {
+        try {
+            if (!careerId) {
+                return [];
+            }
+
+            const response = await api.get<StudyPlansResponse>(`${API_URL}search`, {
+                params: { career_id: careerId },
+            });
+            return response.data.data;
+        } catch (error) {
+            if (axios.isAxiosError(error)) {
+                console.error("Error al buscar Plan de Estudio por carrera:", error.response?.data || error.message);
+            } else {
+                console.error("Error inesperado al buscar Plan de Estudio por carrera:", error);
             }
             return [];
         }

@@ -6,6 +6,7 @@ import SubjectForm from "../../components/SubjectForm";
 import { Subject } from "../../models/Subjects/Subject";
 import { SubjectPayload } from "../../models/Subjects/SubjectPayload";
 import { subjectService } from "../../services/subjectService";
+import { hasGroupsInActiveSpringterm } from "../../utils/checkGroupsBySubject";
 
 const UpdateSubject = () => {
     const { id } = useParams();
@@ -32,6 +33,12 @@ const UpdateSubject = () => {
         try {
             if (!subject?.id) {
                 throw new Error("ID de la asignatura no disponible");
+            }
+
+            // Verificar si existe algún grupo para esta asignatura en el semestre activo
+            const hasGroups = await hasGroupsInActiveSpringterm(subject.id);
+            if (hasGroups) {
+                throw new Error("No se puede cambiar una asignatura con grupo en el semestre activo");
             }
 
             const subjectLabel = subject.name || subject.code || "esta asignatura";
@@ -65,9 +72,10 @@ const UpdateSubject = () => {
             throw new Error("No se pudo actualizar la asignatura");
         } catch (error) {
             console.error("Error al actualizar asignatura:", error);
+            const errorMessage = error instanceof Error ? error.message : "Existe un problema al momento de actualizar el registro";
             Swal.fire({
                 title: "Error",
-                text: "Existe un problema al momento de actualizar el registro",
+                text: errorMessage,
                 icon: "error",
                 timer: 3000,
             });

@@ -39,6 +39,7 @@ const CreateSemester = lazy(() => import('../pages/Admin/createSemester.tsx'));
 const UpdateSemester = lazy(() => import('../pages/Admin/updateSemester.tsx'));
 const ViewSemester = lazy(() => import('../pages/Admin/viewSemester.tsx'));
 const PlanStudios = lazy(() => import('../pages/Admin/StudyPlans.tsx'));
+const CreateStudyPlan = lazy(() => import('../pages/Admin/createStudyPlan.tsx') as unknown as Promise<{ default: any }>);
 const ViewEvaluation = lazy(()=> import('../pages/Students/Evaluations/ViewEvaluation'));
 const StudentsRubrics = lazy(()=> import ('../pages/Students/Rubrics/ListRubrics'));
 const GradesList = lazy(()=> import ('../pages/Students/Evaluations/ListGrades'));
@@ -201,6 +202,12 @@ const coreRoutes = [
     path: '/admin/study-plans',
     title: 'Plan de estudios',
     component: PlanStudios,
+    allowedRoles: ['ADMIN'],
+  },
+  {
+    path: '/admin/study-plans/create',
+    title: 'Nuevo plan de estudios',
+    component: CreateStudyPlan,
     allowedRoles: ['ADMIN'],
   },
   {
