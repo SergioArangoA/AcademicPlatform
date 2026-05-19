@@ -156,12 +156,6 @@ const SemesterForm: React.FC<SemesterFormProps> = ({
 							</div>
 						</div>
 
-						{!isEditMode && (
-							<div className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800 dark:border-green-900/50 dark:bg-green-900/20 dark:text-green-200">
-								Al activar este semestre, el sistema desactivará automáticamente el semestre activo actual.
-							</div>
-						)}
-
 						{isEditMode && (
 							<div>
 								<label className="mb-2 block text-sm font-semibold text-gray-700 dark:text-gray-200">
@@ -175,6 +169,9 @@ const SemesterForm: React.FC<SemesterFormProps> = ({
 									<option value="true">Activo</option>
 									<option value="false">Inactivo</option>
 								</Field>
+								<div className="mt-3 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800 dark:border-green-900/50 dark:bg-green-900/20 dark:text-green-200">
+									Al activar este semestre, el sistema desactivará automáticamente el semestre activo actual.
+								</div>
 							</div>
 						)}
 					</div>

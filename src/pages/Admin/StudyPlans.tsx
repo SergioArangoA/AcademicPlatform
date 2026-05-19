@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Career } from "../../models/Careers/Career";
 import { Subject } from "../../models/Subjects/Subject";
 import { StudyPlan } from "../../models/StudyPlan/StudyPlan";
+import { careerService } from "../../services/careerService";
 import { studyplanService } from "../../services/studyplanService";
 import { subjectService } from "../../services/subjectService";
 import GenericTable from "../../components/GenericTable";
@@ -18,6 +20,8 @@ const normalizeText = (value: string) => value.trim().toLowerCase();
 
 const PlanStudios = () => {
     const navigate = useNavigate();
+    const [careers, setCareers] = useState<Career[]>([]);
+    const [selectedCareerId, setSelectedCareerId] = useState<string>("");
     const [subjects, setSubjects] = useState<Subject[]>([]);
     const [subjectSearch, setSubjectSearch] = useState("");
     const [subjectPage, setSubjectPage] = useState(1);
@@ -28,6 +32,8 @@ const PlanStudios = () => {
     const [selectedPlanSemester, setSelectedPlanSemester] = useState<number>(0);
     const [studyPlanRows, setStudyPlanRows] = useState<any[]>([]);
 
+    const [isLoadingCareers, setIsLoadingCareers] = useState(false);
+    const [isLoadingPlans, setIsLoadingPlans] = useState(false);
     const [isLoadingSubjects, setIsLoadingSubjects] = useState(false);
     const [isLoadingPlan, setIsLoadingPlan] = useState(false);
     const [isPerformingAction, setIsPerformingAction] = useState(false);
@@ -44,19 +50,50 @@ const PlanStudios = () => {
         }
     };
 
-    const fetchPlans = async () => {
+    const fetchCareers = async () => {
+        setIsLoadingCareers(true);
         try {
-            const data = await studyplanService.getStudyPlan();
-            setPlans(data);
+            const data = await careerService.getCareers();
+            setCareers(data);
         } catch (error) {
-            console.error("Error al cargar planes:", error);
+            console.error("Error al cargar carreras:", error);
+        } finally {
+            setIsLoadingCareers(false);
         }
     };
 
     useEffect(() => {
         fetchSubjects();
-        fetchPlans();
+        fetchCareers();
     }, []);
+
+    useEffect(() => {
+        const fetchPlansByCareer = async () => {
+            if (!selectedCareerId) {
+                setPlans([]);
+                setSelectedPlanId("");
+                setSelectedPlanName("");
+                setSelectedPlanSemester(0);
+                setStudyPlanRows([]);
+                return;
+            }
+
+            setIsLoadingPlans(true);
+            setSelectedPlanId("");
+            setSelectedPlanName("");
+            setSelectedPlanSemester(0);
+            setStudyPlanRows([]);
+
+            try {
+                const data = await studyplanService.searchStudyPlanByCareerId(selectedCareerId);
+                setPlans(data);
+            } finally {
+                setIsLoadingPlans(false);
+            }
+        };
+
+        void fetchPlansByCareer();
+    }, [selectedCareerId]);
 
     const handleSearchPlan = async () => {
         if (!selectedPlanId) {
@@ -75,6 +112,7 @@ const PlanStudios = () => {
     };
 
     const handleClearPlanFilters = () => {
+        setSelectedCareerId("");
         setSelectedPlanId("");
         setSelectedPlanName("");
         setSelectedPlanSemester(0);
@@ -274,7 +312,23 @@ const PlanStudios = () => {
                 <h1 className="text-xl font-semibold text-black dark:text-white">Plan de estudios</h1>
                 <p className="mt-1 text-sm text-gray-500">Define y versiona las asignaturas por semestre.</p>
 
-                <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-3">
+                    <div>
+                        <label className="mb-2 block text-sm font-medium text-black dark:text-white">Seleccionar carrera</label>
+                        <select
+                            value={selectedCareerId}
+                            onChange={(event) => setSelectedCareerId(event.target.value)}
+                            className="w-full rounded-lg border border-stroke bg-transparent px-4 py-2.5 text-black outline-none transition focus:border-primary dark:border-strokedark dark:text-white"
+                        >
+                            <option value="">Seleccionar carrera</option>
+                            {careers.map((career) => (
+                                <option key={career.id} value={String(career.id)}>
+                                    {career.name}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
                     <div>
                         <label className="mb-2 block text-sm font-medium text-black dark:text-white">Seleccionar plan</label>
                         <select
@@ -282,14 +336,15 @@ const PlanStudios = () => {
                             onChange={(event) => {
                                 const planId = event.target.value;
                                 setSelectedPlanId(planId);
-                                
-                                const plan = plans.find(p => String(p.id) === planId);
+
+                                const plan = plans.find((p) => String(p.id) === planId);
                                 setSelectedPlanSemester(plan?.suggested_semester ?? 0);
                                 setSelectedPlanName(plan ? `${plan.name || "Plan"} - ${plan.year || ""}` : "");
                             }}
-                            className="w-full rounded-lg border border-stroke bg-transparent px-4 py-2.5 text-black outline-none transition focus:border-primary dark:border-strokedark dark:text-white"
+                            disabled={!selectedCareerId || isLoadingPlans}
+                            className="w-full rounded-lg border border-stroke bg-transparent px-4 py-2.5 text-black outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:opacity-60 dark:border-strokedark dark:text-white"
                         >
-                            <option value="">-- Seleccionar un plan --</option>
+                            <option value="">{isLoadingPlans ? "Cargando planes..." : "Seleccionar plan"}</option>
                             {plans.map((plan) => (
                                 <option key={plan.id} value={String(plan.id)}>
                                     {plan.name} - {plan.year}
@@ -338,7 +393,7 @@ const PlanStudios = () => {
                             className="mb-4 w-full rounded-lg border border-stroke bg-transparent px-4 py-2.5 text-black outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:opacity-50 dark:border-strokedark dark:text-white"
                         />
 
-                        {isLoadingSubjects ? (
+                        {isLoadingCareers || isLoadingSubjects ? (
                             <p className="py-6 text-sm text-gray-500">Cargando asignaturas...</p>
                         ) : paginatedSubjects.length > 0 ? (
                             <>

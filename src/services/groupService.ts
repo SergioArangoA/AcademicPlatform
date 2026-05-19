@@ -114,16 +114,8 @@ class GroupService {
     }
 
     /** Cambiar docente en otra pantalla; no lo uso al crear el grupo */
-    async assignTeacherToGroup(groupId: string, teacherId: string): Promise<boolean> {
-        try {
-            await api.patch(`${API_URL}/${groupId}/assign-teacher/${teacherId}`);
-            return true;
-        } catch (error) {
-            if (axios.isAxiosError(error)) {
-                console.error("Error al asignar docente:", error.response?.data || error.message);
-            }
-            return false;
-        }
+    async assignTeacherToGroup(groupId: string, teacherId: string): Promise<void> {
+        await api.patch(`${API_URL}/${groupId}/assign-teacher/${teacherId}`);
     }
 
     /** Mensaje amigable cuando falla guardar o editar */

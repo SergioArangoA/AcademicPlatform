@@ -212,7 +212,7 @@ const AssignTeacher = () => {
 
         setIsAssigningTeacher(true);
         try {
-            const ok = await groupService.assignTeacherToGroup(selectedGroupId, selectedTeacherId);
+            await groupService.assignTeacherToGroup(selectedGroupId, selectedTeacherId);
             const subjectLabel = selectedGroup
                 ? {
                     subjectName: selectedGroup.subject_name,
@@ -225,32 +225,29 @@ const AssignTeacher = () => {
                     groupName: "",
                 };
 
-            if (ok) {
-                socket.emit("assign_teacher_notification", {
-                    teacherId: selectedTeacherId,
-                    teacherUserId: selectedTeacher?.user_id ?? "",
-                    teacherName,
-                    subjectName: subjectLabel.subjectName,
-                    subjectCode: subjectLabel.subjectCode,
-                    groupName: subjectLabel.groupName,
-                    createdAt: new Date().toISOString(),
-                });
+            socket.emit("assign_teacher_notification", {
+                teacherId: selectedTeacherId,
+                teacherUserId: selectedTeacher?.user_id ?? "",
+                teacherName,
+                subjectName: subjectLabel.subjectName,
+                subjectCode: subjectLabel.subjectCode,
+                groupName: subjectLabel.groupName,
+                createdAt: new Date().toISOString(),
+            });
 
-                await Swal.fire({
-                    icon: "success",
-                    title: "Docente asignado",
-                    text: "El grupo fue actualizado correctamente.",
-                    timer: 1800,
-                    showConfirmButton: false,
-                });
-                await loadGroups();
-                return;
-            }
-
+            await Swal.fire({
+                icon: "success",
+                title: "Docente asignado",
+                text: "El grupo fue actualizado correctamente.",
+                timer: 1800,
+                showConfirmButton: false,
+            });
+            await loadGroups();
+        } catch (error) {
             Swal.fire({
                 icon: "error",
                 title: "No se pudo asignar",
-                text: "Revisa la conexión o la respuesta de la API.",
+                text: groupService.getErrorMessage(error),
             });
         } finally {
             setIsAssigningTeacher(false);

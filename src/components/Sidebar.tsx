@@ -116,8 +116,10 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                 <li>
                   <NavLink
                     to="/"
-                    className={`group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${
-                      pathname === '/' && 'bg-graydark dark:bg-meta-4'
+                    className={`group relative flex items-center gap-2.5 py-2 px-4 text-[13px] duration-300 ease-in-out hover:bg-[#EDE9FE] hover:text-[#6D28D9] dark:hover:bg-meta-4 ${
+                      pathname === '/'
+                        ? 'bg-[#EDE9FE] text-[#6D28D9] border-l-[3px] border-[#6D28D9] font-semibold'
+                        : 'text-[#374151] font-medium dark:text-bodydark1'
                     }`}
                   >
                     <svg
@@ -161,8 +163,10 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                 <li>
                   <NavLink
                     to="/admin/careers-semesters"
-                    className={`group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-black dark:text-white duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${
-                      (pathname.includes('/admin/careers-semesters') || pathname.includes('/admin/careers') || pathname.includes('/admin/semesters')) && 'bg-graydark dark:bg-meta-4 text-white'
+                    className={`group relative flex items-center gap-2.5 py-2 px-4 text-[13px] duration-300 ease-in-out hover:bg-[#EDE9FE] hover:text-[#6D28D9] dark:hover:bg-meta-4 ${
+                      (pathname.includes('/admin/careers-semesters') || pathname.includes('/admin/careers') || pathname.includes('/admin/semesters'))
+                        ? 'bg-[#EDE9FE] text-[#6D28D9] border-l-[3px] border-[#6D28D9] font-semibold'
+                        : 'text-[#374151] font-medium dark:text-bodydark1'
                     }`}
                   >
 
@@ -188,8 +192,10 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                   </NavLink>
                   <NavLink
                     to="/admin/subjects-list"
-                    className={`group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-black dark:text-white duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${
-                      pathname.includes('/admin/subjects') && 'bg-graydark dark:bg-meta-4 text-white'
+                    className={`group relative flex items-center gap-2.5 py-2 px-4 text-[13px] duration-300 ease-in-out hover:bg-[#EDE9FE] hover:text-[#6D28D9] dark:hover:bg-meta-4 ${
+                      pathname.includes('/admin/subjects')
+                        ? 'bg-[#EDE9FE] text-[#6D28D9] border-l-[3px] border-[#6D28D9] font-semibold'
+                        : 'text-[#374151] font-medium dark:text-bodydark1'
                     }`}
                   >
                     <svg
@@ -214,8 +220,10 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                   </NavLink>
                   <NavLink
                     to="/admin/enrollment/users/list"
-                    className={`group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-black dark:text-white duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${
-                      pathname.includes('/admin/enrollment/') && 'bg-graydark dark:bg-meta-4 text-white'
+                    className={`group relative flex items-center gap-2.5 py-2 px-4 text-[13px] duration-300 ease-in-out hover:bg-[#EDE9FE] hover:text-[#6D28D9] dark:hover:bg-meta-4 ${
+                      pathname.includes('/admin/enrollment/')
+                        ? 'bg-[#EDE9FE] text-[#6D28D9] border-l-[3px] border-[#6D28D9] font-semibold'
+                        : 'text-[#374151] font-medium dark:text-bodydark1'
                     }`}
                   >
 
@@ -249,8 +257,10 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                 <li>
                   <NavLink
                     to="/admin/user-list"
-                    className={`group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-black dark:text-white duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${
-                      (pathname.includes('/admin/user-list')||(pathname.includes('/admin/users'))) && 'bg-graydark dark:bg-meta-4 text-white'
+                    className={`group relative flex items-center gap-2.5 py-2 px-4 text-[13px] duration-300 ease-in-out hover:bg-[#EDE9FE] hover:text-[#6D28D9] dark:hover:bg-meta-4 ${
+                      (pathname.includes('/admin/user-list') || pathname.includes('/admin/users'))
+                        ? 'bg-[#EDE9FE] text-[#6D28D9] border-l-[3px] border-[#6D28D9] font-semibold'
+                        : 'text-[#374151] font-medium dark:text-bodydark1'
                     }`}
                   >
 
@@ -276,8 +286,10 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                   </NavLink>
                   <NavLink
                     to="/admin/registration/users/list"
-                    className={`group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-black dark:text-white duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${
-                      pathname.includes('/admin/registration/') && 'bg-graydark dark:bg-meta-4 text-white'
+                    className={`group relative flex items-center gap-2.5 py-2 px-4 text-[13px] duration-300 ease-in-out hover:bg-[#EDE9FE] hover:text-[#6D28D9] dark:hover:bg-meta-4 ${
+                      pathname.includes('/admin/registration/')
+                        ? 'bg-[#EDE9FE] text-[#6D28D9] border-l-[3px] border-[#6D28D9] font-semibold'
+                        : 'text-[#374151] font-medium dark:text-bodydark1'
                     }`}
                   >
 
@@ -303,8 +315,10 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                   </NavLink>
                   <NavLink
                     to="/admin/groups/list"
-                    className={`group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-black dark:text-white duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${
-                      pathname.includes('/admin/groups') && 'bg-graydark dark:bg-meta-4 text-white'
+                    className={`group relative flex items-center gap-2.5 py-2 px-4 text-[13px] duration-300 ease-in-out hover:bg-[#EDE9FE] hover:text-[#6D28D9] dark:hover:bg-meta-4 ${
+                      pathname.includes('/admin/groups')
+                        ? 'bg-[#EDE9FE] text-[#6D28D9] border-l-[3px] border-[#6D28D9] font-semibold'
+                        : 'text-[#374151] font-medium dark:text-bodydark1'
                     }`}
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 fill-current">
@@ -314,8 +328,10 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                   </NavLink>
                   <NavLink
                     to="/admin/assign-teacher"
-                    className={`group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-black dark:text-white duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${
-                      pathname.includes('/admin/assign-teacher') && 'bg-graydark dark:bg-meta-4 text-white'
+                    className={`group relative flex items-center gap-2.5 py-2 px-4 text-[13px] duration-300 ease-in-out hover:bg-[#EDE9FE] hover:text-[#6D28D9] dark:hover:bg-meta-4 ${
+                      pathname.includes('/admin/assign-teacher')
+                        ? 'bg-[#EDE9FE] text-[#6D28D9] border-l-[3px] border-[#6D28D9] font-semibold'
+                        : 'text-[#374151] font-medium dark:text-bodydark1'
                     }`}
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 fill-current">
@@ -326,8 +342,10 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                   </NavLink>
                   <NavLink
                     to="/admin/study-plans"
-                    className={`group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-black dark:text-white duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${
-                      pathname.includes('/admin/study-plans') && 'bg-graydark dark:bg-meta-4 text-white'
+                    className={`group relative flex items-center gap-2.5 py-2 px-4 text-[13px] duration-300 ease-in-out hover:bg-[#EDE9FE] hover:text-[#6D28D9] dark:hover:bg-meta-4 ${
+                      pathname === '/admin/study-plans'
+                        ? 'bg-[#EDE9FE] text-[#6D28D9] border-l-[3px] border-[#6D28D9] font-semibold'
+                        : 'text-[#374151] font-medium dark:text-bodydark1'
                     }`}
                   >
                     <svg
@@ -340,6 +358,27 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                     </svg>
 
                     <span>Plan de estudios</span>
+                  </NavLink>
+                  <NavLink
+                    to="/admin/study-plans/create"
+                    className={`group relative flex items-center gap-2.5 py-2 px-4 text-[13px] duration-300 ease-in-out hover:bg-[#EDE9FE] hover:text-[#6D28D9] dark:hover:bg-meta-4 ${
+                      pathname.includes('/admin/study-plans/create')
+                        ? 'bg-[#EDE9FE] text-[#6D28D9] border-l-[3px] border-[#6D28D9] font-semibold'
+                        : 'text-[#374151] font-medium dark:text-bodydark1'
+                    }`}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={1.5}
+                      stroke="currentColor"
+                      className="w-4 h-4"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                    </svg>
+
+                    <span>Nuevo plan de estudios</span>
                   </NavLink>
                 </li>
               </ul>
@@ -355,8 +394,10 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                 <li>
                   <NavLink
                     to="/students/evaluations/list"
-                    className={`group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${
-                      pathname.includes('students/evaluations/list') && 'bg-graydark dark:bg-meta-4'
+                    className={`group relative flex items-center gap-2.5 py-2 px-4 text-[13px] duration-300 ease-in-out hover:bg-[#EDE9FE] hover:text-[#6D28D9] dark:hover:bg-meta-4 ${
+                      pathname.includes('students/evaluations/list')
+                        ? 'bg-[#EDE9FE] text-[#6D28D9] border-l-[3px] border-[#6D28D9] font-semibold'
+                        : 'text-[#374151] font-medium dark:text-bodydark1'
                     }`}
                   >
 
@@ -382,8 +423,10 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                   </NavLink>
                   <NavLink
                     to="/students/evaluations/grades/list"
-                    className={`group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${
-                      pathname.includes('students/evaluations/grades') && 'bg-graydark dark:bg-meta-4'
+                    className={`group relative flex items-center gap-2.5 py-2 px-4 text-[13px] duration-300 ease-in-out hover:bg-[#EDE9FE] hover:text-[#6D28D9] dark:hover:bg-meta-4 ${
+                      pathname.includes('students/evaluations/grades')
+                        ? 'bg-[#EDE9FE] text-[#6D28D9] border-l-[3px] border-[#6D28D9] font-semibold'
+                        : 'text-[#374151] font-medium dark:text-bodydark1'
                     }`}
                   >
                     <svg
