@@ -4,16 +4,16 @@
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Breadcrumb from "../../components/Breadcrumb";
-import FilterBar, { FilterValues } from "../../components/FilterBar";
-import GenericTable from "../../components/GenericTable";
-import { Semester } from "../../models/Semesters/Semester";
-import { Subject } from "../../models/Subjects/Subject";
-import { Teacher } from "../../models/Teachers/Teacher";
-import { groupService, GroupWithMeta } from "../../services/groupService";
-import { semesterService } from "../../services/semesterService";
-import { subjectService } from "../../services/subjectService";
-import { teacherService } from "../../services/teacherService";
+import Breadcrumb from "../../../components/Breadcrumb";
+import FilterBar, { FilterValues } from "../../../components/FilterBar";
+import GenericTable from "../../../components/GenericTable";
+import { Semester } from "../../../models/Semesters/Semester";
+import { Subject } from "../../../models/Subjects/Subject";
+import { Teacher } from "../../../models/Teachers/Teacher";
+import { groupService, GroupWithMeta } from "../../../services/groupService";
+import { semesterService } from "../../../services/semesterService";
+import { subjectService } from "../../../services/subjectService";
+import { teacherService } from "../../../services/teacherService";
 
 const initialFilters: FilterValues = {
     search: "",

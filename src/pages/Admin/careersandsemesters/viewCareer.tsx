@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import Breadcrumb from "../../components/Breadcrumb";
-import { Career } from "../../models/Careers/Career";
-import { careerService } from "../../services/careerService";
+import Breadcrumb from "../../../components/Breadcrumb";
+import { Career } from "../../../models/Careers/Career";
+import { careerService } from "../../../services/careerService";
 
 const formatDateTime = (value: string) => {
 	if (!value) {

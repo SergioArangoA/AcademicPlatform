@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Swal from "sweetalert2";
-import Breadcrumb from "../../components/Breadcrumb";
-import SemesterForm from "../../components/SemesterForm";
-import { Semester } from "../../models/Semesters/Semester";
-import { SemesterPayload } from "../../models/Semesters/SemesterPayload";
-import { semesterService } from "../../services/semesterService";
+import Breadcrumb from "../../../components/Breadcrumb";
+import SemesterForm from "../../../components/SemesterForm";
+import { Semester } from "../../../models/Semesters/Semester";
+import { SemesterPayload } from "../../../models/Semesters/SemesterPayload";
+import { semesterService } from "../../../services/semesterService";
 
 const UpdateSemester = () => {
 	const { id } = useParams();

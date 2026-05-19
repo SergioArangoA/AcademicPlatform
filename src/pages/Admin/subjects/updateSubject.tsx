@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Swal from "sweetalert2";
-import Breadcrumb from "../../components/Breadcrumb";
-import SubjectForm from "../../components/SubjectForm";
-import { Subject } from "../../models/Subjects/Subject";
-import { SubjectPayload } from "../../models/Subjects/SubjectPayload";
-import { subjectService } from "../../services/subjectService";
-import { hasGroupsInActiveSpringterm } from "../../utils/checkGroupsBySubject";
+import Breadcrumb from "../../../components/Breadcrumb";
+import SubjectForm from "../../../components/SubjectForm";
+import { Subject } from "../../../models/Subjects/Subject";
+import { SubjectPayload } from "../../../models/Subjects/SubjectPayload";
+import { subjectService } from "../../../services/subjectService";
+import { hasGroupsInActiveSpringterm } from "../../../utils/checkGroupsBySubject";
 
 const UpdateSubject = () => {
     const { id } = useParams();

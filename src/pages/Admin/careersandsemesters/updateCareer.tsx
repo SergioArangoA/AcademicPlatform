@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Swal from "sweetalert2";
-import Breadcrumb from "../../components/Breadcrumb";
-import CareerForm from "../../components/CareerForm";
-import { Career } from "../../models/Careers/Career";
-import { CareerPayload } from "../../models/Careers/CareerPayload";
-import { careerService } from "../../services/careerService";
+import Breadcrumb from "../../../components/Breadcrumb";
+import CareerForm from "../../../components/CareerForm";
+import { Career } from "../../../models/Careers/Career";
+import { CareerPayload } from "../../../models/Careers/CareerPayload";
+import { careerService } from "../../../services/careerService";
 
 const UpdateCareer = () => {
 	const { id } = useParams();

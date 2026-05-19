@@ -1,9 +1,9 @@
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
-import Breadcrumb from "../../components/Breadcrumb";
-import CareerForm from "../../components/CareerForm";
-import { CareerPayload } from "../../models/Careers/CareerPayload";
-import { careerService } from "../../services/careerService";
+import Breadcrumb from "../../../components/Breadcrumb";
+import CareerForm from "../../../components/CareerForm";
+import { CareerPayload } from "../../../models/Careers/CareerPayload";
+import { careerService } from "../../../services/careerService";
 
 const CreateCareer = () => {
 	const navigate = useNavigate();

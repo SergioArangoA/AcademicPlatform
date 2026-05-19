@@ -14,22 +14,15 @@ import EvaluationCard from "../../../components/evaluations/EvaluationCard";
 import { evaluationService } from "../../../services/evaluationService";
 import { subjectService } from "../../../services/subjectService";
 import { groupService } from "../../../services/groupService";
-import { userService  } from "../../../services/userService";
+import { userPService } from "../../../services/userPService";
 import { rubricService } from "../../../services/rubricService";
 import { criteriaService } from "../../../services/criterionService";
 import { scaleService } from "../../../services/scaleService";
 import { gradeService } from "../../../services/gradeService";
-
-export interface GradeRow {
-    rowNumber: number;
-    criterionName: string;
-    criterionDescription: string;
-    obtainedLevel: string;
-    scaleDescription: string;
-    scoreObtained: number;
-    maxScore: number;
-    comment: string;
-}
+import { Navigate } from "react-router-dom";
+import { LocalStorageProvider } from "../../../storage/LocalStorageProvider";
+import { GradeRow } from "../../../models/Evaluation/GradeRow";
+import { generateGradeReport } from "../../../utils/jsPDF";
 
 const GradeDetails: React.FC = () => {
     const navigate = useNavigate();
@@ -40,9 +33,9 @@ const GradeDetails: React.FC = () => {
     const [teacher, setTeacher] = useState<User>();
     const [rubric, setRubric] = useState<Rubric | null>(null);
     const [criteria, setCriteria] = useState<Criterion[] | null>(null);
-    const [scales, setScales] = useState<Scale[] | null>(null);
     const [grade, setGrade] = useState<Grade | null>(null);
     const [gradeRows, setGradeRows] = useState<GradeRow[]>([]);
+    const [accessDenied, setAccessDenied] = useState(false);
 
     const normalizeDetails = (details: any) => {
         if (!details) return [];
@@ -94,28 +87,146 @@ const GradeDetails: React.FC = () => {
     }, []);
     // 🔹 Obtiene los datos necesarios
     const fetchData = async () => {
-        const evaluationData = await evaluationService.getEvaluationById(id);
-        
-        const subjectData = await subjectService.getSubjectById(evaluationData?.subject_id);
-        const groupData = await groupService.getGroupById(evaluationData?.group_id);
-        const teacherData = await userService.getUserById(groupData?.teacher_id);
-        const rubricData = await rubricService.getRubricById(gradeData?.rubric_id);//(evaluationData?.rubric_id);
-        const criteriaData = await criteriaService.getCriteria();
-        const scalesData = await scaleService.getScales();
+        try {
+            if (!id) return;
 
-        setEvaluation(evaluationData);
-        setSubject(subjectData);
-        setGroup(groupData);
-        setTeacher(teacherData);
-        setRubric(rubricData);
-        setCriteria(criteriaData);
-        setScales(scalesData);
-        setGrade(gradeData);
+            // 1. Obtener grade
+            const gradeData = await gradeService.getGradeById(id);
 
-        if (gradeData && criteriaData && scalesData) {
-            setGradeRows(buildGradeRows(gradeData.details, criteriaData, scalesData));
+            if (gradeData?.status === "DRAFT"){
+                setAccessDenied(true);
+                return;
+            }
+
+            if (!gradeData) return;
+
+            // Obtener usuario del localStorage
+            const storageProvider = new LocalStorageProvider();
+
+            const userInStorage = storageProvider.getParsedItem("user") as {
+                id?: string;
+            } | null;
+
+            const loggedUserId = userInStorage?.id;
+
+            if (!loggedUserId) {
+                setAccessDenied(true);
+                return;
+            }
+
+            // Buscar usuario completo
+            const usersData = await userPService.getUsers();
+
+            const currentUser = usersData.find(
+                (user: User) =>
+                    String(user.id) === String(loggedUserId)
+            );
+
+            if (!currentUser?.profile?.id) {
+                setAccessDenied(true);
+                return;
+            }
+
+            // Validar ownership usando profile.id
+            const details = normalizeDetails(gradeData.details);
+
+            const gradeBelongsToUser = details.some(
+                (detail: any) =>
+                    String(detail.student_id) ===
+                    String(currentUser.profile.id)
+            );
+
+            if (!gradeBelongsToUser) {
+                setAccessDenied(true);
+                return;
+            }
+
+            // 2. Buscar evaluación que use la misma rúbrica
+            const evaluations = await evaluationService.getEvaluations();
+
+            const evaluationData = evaluations.find(
+                (ev: Evaluation) =>
+                    String(ev.rubric_id) ===
+                    String(gradeData.rubric_id)
+            );
+
+            if (!evaluationData) return;
+
+            // 3. Obtener datos relacionados
+            const [
+                subjectData,
+                groupData,
+                rubricData,
+                criteriaData,
+                scalesData,
+                users,
+            ] = await Promise.all([
+                subjectService.getSubjectById(
+                    evaluationData.subject_id
+                ),
+
+                groupService.getGroupById(
+                    evaluationData.group_id
+                ),
+
+                rubricService.getRubricById(
+                    gradeData.rubric_id
+                ),
+
+                criteriaService.getCriteria(),
+
+                scaleService.getScales(),
+
+                userPService.getUsers(),
+            ]);
+
+            // 4. Buscar profesor:
+            // group.teacher_id guarda profile.id
+            const teacherData = users.find(
+                (user: User) =>
+                    String(user.profile?.id) ===
+                    String(groupData?.teacher_id)
+            );
+
+            // 5. Filtrar criterios de la rúbrica
+            const rubricCriteria = criteriaData.filter(
+                (criterion: Criterion) =>
+                    String(criterion.rubric_id) ===
+                    String(rubricData?.id)
+            );
+
+            // 6. Guardar estados
+            setGrade(gradeData);
+
+            setEvaluation(evaluationData);
+
+            setSubject(subjectData);
+
+            setGroup(groupData);
+
+            setTeacher(teacherData);
+
+            setRubric(rubricData);
+
+            setCriteria(rubricCriteria);
+
+            // 7. Construir tabla
+            setGradeRows(
+                buildGradeRows(
+                    gradeData.details,
+                    rubricCriteria,
+                    scalesData
+                )
+            );
+
+        } catch (error) {
+            console.error(error);
         }
     };
+    
+    if (accessDenied) {
+        return <Navigate to="/Acces-denied" replace />;
+    }
 
     return (
         <div className="p-6 space-y-6">
@@ -141,6 +252,7 @@ const GradeDetails: React.FC = () => {
                 evaluation={evaluation}
                 subject={subject}
                 group={group}
+                rubric={rubric}
                 user={teacher}
             />
 
@@ -173,136 +285,62 @@ const GradeDetails: React.FC = () => {
               subject={subject}
               evaluation={evaluation}
             />
-            <div className="w-full rounded-2xl bg-gray-900 text-white dark:bg-boxdark dark:text-white border border-gray-200 dark:border-gray-700 shadow-lg p-5 flex flex-col items-center justify-center">
+                <div className="w-full rounded-2xl bg-gray-900 text-white dark:bg-boxdark dark:text-white border border-gray-200 dark:border-gray-700 shadow-lg p-5 flex flex-col items-center">
 
-            {/* Número grande */}
-            <span
-                className={`text-6xl font-extrabold leading-none
-                ${grade?.final_score >= 80 ? "text-success" : grade?.final_score >= 60 ? "text-warning" : "text-danger"}
-                `}
-            >
-                {nota.toFixed(1)}
-            </span>
+                    {/* Número grande */}
+                    <span
+                        className={`text-6xl font-extrabold leading-none
+                        ${
+                            (grade?.final_score ?? 0) >= 80
+                                ? "text-success"
+                                : (grade?.final_score ?? 0) >= 60
+                                ? "text-warning"
+                                : "text-danger"
+                        }
+                        `}
+                    >
+                        {grade?.final_score?.toFixed(1) || "0.0"}
+                    </span>
 
-            {/* Etiqueta */}
-            <span className="text-sm text-gray-200 mt-2">
-                Nota final
-            </span>
-            </div>
+                    {/* Etiqueta */}
+                    <span className="text-sm text-gray-200 mt-2">
+                        Nota final
+                    </span>
+
+                    {/* Comentarios */}
+                    <div className="w-full mt-6">
+                        <h4 className="font-semibold text-white mb-2">
+                            Comentarios:
+                        </h4>
+
+                        <div className="rounded-lg bg-gray-800 p-3 text-sm text-gray-200 break-words">
+                            {grade?.observations || "Sin comentarios"}
+                        </div>
+                    </div>
+
+                    {/* Botón descargar */}
+                    <button
+                        onClick={() =>
+                            generateGradeReport(
+                                evaluation,
+                                subject,
+                                group,
+                                teacher,
+                                rubric,
+                                grade,
+                                gradeRows
+                            )
+                        }
+                        className="mt-6 w-full px-4 py-2 rounded-md bg-primary text-white hover:bg-opacity-90 transition"
+                    >
+                        Descargar reporte
+                    </button>
+
+                </div>
             </div>
 
         </div>
         </div>
     );
 };
-const mockEvaluations: Evaluation[] = [
-    {
-        subject_id: 1,
-        group_id: 101,
-        name: "Parcial 1",
-        description: "Primer examen del semestre",
-        weight: 30,
-    },
-    {
-        subject_id: 1,
-        group_id: 101,
-        name: "Proyecto Final",
-        description: "Entrega completa del sistema",
-        weight: 50,
-    },
-];
 export default GradeDetails;
-const mockCriteria: Criterion[] = [
-  {
-    id: "c1",
-    name: "Knowledge",
-    description: "Level of theoretical understanding",
-    rubric_id: "r1",
-    weight: 50
-  },
-  {
-    id: "c2",
-    name: "Application",
-    description: "Practical application of concepts",
-    rubric_id: "r1",
-    weight: 30
-  },
-  {
-    id: "c3",
-    name: "Presentation",
-    description: "Clarity and structure",
-    rubric_id: "r1",
-    weight: 20
-  }
-  
-];
-const mockScales: Scale[] = [
-  // Knowledge (c1)
-  {
-    id: "s1",
-    criterion_id: "c1",
-    name: "Excellent",
-    description: "Mastery of concepts",
-    value: 5
-  },
-  {
-    id: "s2",
-    criterion_id: "c1",
-    name: "Good",
-    description: "Good understanding",
-    value: 4
-  },
-  {
-    id: "s3",
-    criterion_id: "c1",
-    name: "Basic",
-    description: "Partial understanding",
-    value: 3
-  },
-
-  // Application (c2)
-  {
-    id: "s4",
-    criterion_id: "c2",
-    name: "Excellent",
-    description: "Perfect application",
-    value: 5
-  },
-  {
-    id: "s5",
-    criterion_id: "c2",
-    name: "Good",
-    description: "Minor mistakes",
-    value: 4
-  },
-  {
-    id: "s6",
-    criterion_id: "c2",
-    name: "Basic",
-    description: "Struggles applying concepts",
-    value: 3
-  },
-
-  // Presentation (c3)
-  {
-    id: "s7",
-    criterion_id: "c3",
-    name: "Excellent",
-    description: "Very clear and structured",
-    value: 5
-  },
-  {
-    id: "s8",
-    criterion_id: "c3",
-    name: "Good",
-    description: "Generally clear",
-    value: 4
-  },
-  {
-    id: "s9",
-    criterion_id: "c3",
-    name: "Basic",
-    description: "Hard to follow",
-    value: 3
-  }
-];

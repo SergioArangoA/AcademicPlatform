@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import GenericTable from "../../components/GenericTable"; // Ajusta la ruta
-import FilterBar, { FilterValues } from "../../components/FilterBar";
-import { userPService } from "../../services/userPService";
-import { transformUsersForList } from "../../utils/userTransformers";
-import { UserResponse } from "../../models/Users/UserResponse";
-import { UserForList } from "../../models/Users/UserForList";
+import GenericTable from "../../../components/GenericTable"; // Ajusta la ruta
+import FilterBar, { FilterValues } from "../../../components/FilterBar";
+import { userPService } from "../../../services/userPService";
+import { transformUsersForList } from "../../../utils/userTransformers";
+import { UserResponse } from "../../../models/Users/UserResponse";
+import { UserForList } from "../../../models/Users/UserForList";
 
 const initialFilterValues: FilterValues = {
     search: "",

@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import Breadcrumb from "../../components/Breadcrumb";
-import { Subject } from "../../models/Subjects/Subject";
-import { subjectService } from "../../services/subjectService";
+import Breadcrumb from "../../../components/Breadcrumb";
+import { Subject } from "../../../models/Subjects/Subject";
+import { subjectService } from "../../../services/subjectService";
 
 const formatDateTime = (value?: string) => {
     if (!value) {

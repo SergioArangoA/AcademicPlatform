@@ -1,15 +1,3 @@
-/**
- * Listado de calificaciones del estudiante (CU relacionado con notas).
- *
- * Por qué se cambió la forma de enlazar asignatura/grupo/evaluación:
- * - En el API actual la rúbrica NO trae subject_id (solo title, description, flags).
- * - La asignatura y el grupo viven en Evaluación: subject_id + group_id + rubric_id.
- * - Antes se leía rubric.subject_id y se buscaba evaluación “por asignatura”, lo cual
- *   fallaba con el modelo nuevo y podía mostrar datos incorrectos.
- * - Ahora: grade.rubric_id → evaluación que usa esa rúbrica → subject_id y group_id.
- *
- * El filtro final sigue mostrando solo notas de evaluaciones de grupos ACTIVE del alumno.
- */
 import React, { useEffect, useState } from "react";
 import { Grade } from "../../../models/Evaluation/Grade";
 import { GradeDetail } from "../../../models/Evaluation/GradeDetails";
@@ -49,131 +37,114 @@ const Grades: React.FC = () => {
     useEffect(() => {
         fetchData();
     }, []);
-
-    const normalizeDetails = (details: any): GradeDetail[] => {
-        if (!details) return [];
-        if (Array.isArray(details)) return details;
-        return [details];
-    };
-
-    const calculateGradeValue = (
-        details: GradeDetail[],
-        scaleMap: Map<string, Scale>,
-        criterionMap: Map<string, Criterion>
-    ) => {
-        return details.reduce((sum, detail) => {
-            const scaleId = detail.scale_id?.toString() || "";
-            const scale = scaleMap.get(scaleId);
-            if (!scale) return sum;
-            const criterion = criterionMap.get(scale.criterion_id?.toString() || "");
-            if (!criterion) return sum;
-            return sum + scale.value * (criterion.weight / 100);
-        }, 0);
-    };
-
+    
     const fetchData = async () => {
-        const storageProvider = new LocalStorageProvider();
-        const userInStorage = storageProvider.getParsedItem("user") as { id?: string } | null;
-        const id = userInStorage?.id;
-        if (!id) return;
+        try {
+            const storageProvider = new LocalStorageProvider();
 
-        const users = await userPService.getUsers();
-        const user = users.find((u) => u.profile?.id === id || u.id === id);
-        const profileId = user?.profile?.id ?? id;
-        const enrollments = await enrollmentService.getStudentEnrollments(profileId);
-        const grades = await gradeService.getGrades();
-        console.log(user.id);
-        console.log(user?.profile.id);
+            // Usuario guardado en localStorage
+            const userInStorage = storageProvider.getParsedItem("user") as {
+                id?: string;
+            } | null;
 
-        const rubricMap = new Map<string, Rubric>(
-            rubrics.map((rubric) => [String((rubric as any).id || rubric.title || ""), rubric])
-        );
-        const subjectMap = new Map<string, Subject>(
-            subjects.map((subject) => [String((subject as any).id || (subject as any).code || ""), subject])
-        );
-        const groupMap = new Map<string, Group>(
-            groups.map((group) => [String((group as any).id || group.group_code || ""), group])
-        );
-        const scaleMap = new Map<string, Scale>(
-            scales.map((scale) => [String(scale.id), scale])
-        );
-        const criterionMap = new Map<string, Criterion>(
-            criteria.map((criterion) => [String(criterion.id), criterion])
-        );
+            const id = userInStorage?.id;
 
-        const rows: GradeRow[] = grades
-            .filter((grade) => {
-                // Debe ser pública
+            if (!id) return;
+
+            // Usuario completo
+            const user = await userPService.getUserById(id);
+
+            // ID real del estudiante
+            const profileId = user?.profile?.id;
+
+            if (!profileId) return;
+
+            // Traer datos
+            const [
+                grades,
+                evaluations,
+                rubrics,
+                subjects,
+                groups,
+            ] = await Promise.all([
+                gradeService.getGrades(),
+                evaluationService.getEvaluations(),
+                rubricService.getRubrics(),
+                subjectService.getSubjects(),
+                groupService.getGroups(),
+            ]);
+
+            // Filtrar grades del estudiante
+            const studentGrades = grades.filter((grade: Grade) => {
+                // Solo grades públicas
                 if (!isGradeSent(grade.status)) return false;
 
-                // Normalizar details
-                const details = normalizeDetails((grade as any).details);
+                const details = Array.isArray((grade as any).details)
+                    ? (grade as any).details
+                    : [(grade as any).details];
 
-                // Verificar si pertenece al usuario
                 return details.some(
-                    (detail) =>
-                        String(detail.student_id) ===
-                        String(user?.id || user?.profile?.id)
+                    (detail: any) =>
+                        String(detail.student_id) === String(profileId)
                 );
-            })
-            .map((grade) => {
-                const details = normalizeDetails((grade as any).details);
+            });
 
-                // Buscar evaluación relacionada con la rúbrica
+            // Construir filas
+            const rows: GradeRow[] = studentGrades.map((grade: Grade) => {
+
+                // Buscar evaluación relacionada
                 const evaluation = evaluations.find(
-                    (ev) =>
+                    (ev: Evaluation) =>
                         String(ev.rubric_id) === String(grade.rubric_id)
                 );
 
-                const rubric = rubricMap.get(String(grade.rubric_id));
+                // Buscar rúbrica
+                const rubric = rubrics.find(
+                    (r: Rubric) =>
+                        String(r.id) === String(grade.rubric_id)
+                );
 
-                const subject = evaluation?.subject_id
-                    ? subjectMap.get(String(evaluation.subject_id))?.name || "-"
-                    : "-";
+                // Buscar asignatura
+                const subject = subjects.find(
+                    (s: Subject) =>
+                        String(s.id) ===
+                        String(evaluation?.subject_id)
+                );
 
-                const group = evaluation
-                    ? groupMap.get(String(evaluation.group_id))?.name || "-"
-                    : "-";
-
-                const rawValue = calculateGradeValue(
-                    details,
-                    scaleMap,
-                    criterionMap
+                // Buscar grupo
+                const group = groups.find(
+                    (g: Group) =>
+                        String(g.id) ===
+                        String(evaluation?.group_id)
                 );
 
                 return {
                     id: grade.id,
-                    gradeValue: rawValue.toFixed(2),
-                    subject,
-                    group,
-                    evaluationName: evaluation?.name || "-",
+
+                    gradeValue: Number(
+                        grade.final_score || 0
+                    ).toFixed(2),
+
+                    subject: subject?.name || "-",
+
+                    group:
+                        (group as any)?.name ||
+                        (group as any)?.group_code ||
+                        "-",
+
+                    evaluationName:
+                        evaluation?.name || "-",
+
                     rubricTitle:
-                        rubric?.title || String(grade.rubric_id),
+                        rubric?.title || "-",
                 };
             });
 
-        // Solo notas de evaluaciones en grupos donde el estudiante está ACTIVE.
-        const activeGroupIds = new Set(
-            enrollments
-                .filter(en => en.status === "ACTIVE")
-                .map(en => en.group_id)
-        );
+            setData(rows);
 
-        // 2. evaluaciones del usuario
-        const userEvaluationIds = new Set(
-            evaluations
-                .filter(ev => activeGroupIds.has(ev.group_id))
-                .map(ev => ev.id)
-        );
-
-        // 3. filtrar grades
-        const filteredRows = rows.filter(row =>
-            userEvaluationIds.has(
-                evaluations.find(ev => ev.name === row.evaluationName)?.id ?? ""
-            )
-        );
-
-        setData(filteredRows);
+        } catch (error) {
+            console.error(error);
+        }
     };
 
     const handleAction = (action: string, item: GradeRow) => {

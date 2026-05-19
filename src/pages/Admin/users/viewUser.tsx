@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import Breadcrumb from "../../components/Breadcrumb";
-import UserFormValidator from "../../components/UserForm";
-import { UserResponse } from "../../models/Users/UserResponse";
-import { userPService } from "../../services/userPService";
+import Breadcrumb from "../../../components/Breadcrumb";
+import UserFormValidator from "../../../components/UserForm";
+import { UserResponse } from "../../../models/Users/UserResponse";
+import { userPService } from "../../../services/userPService";
 
 const ViewUser = () => {
     const { id } = useParams();
