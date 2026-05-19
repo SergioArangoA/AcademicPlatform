@@ -9,12 +9,12 @@ const API_URL = "/evaluation/grades";
 
 export type { GradeStatus };
 
-/** Calificación guardada por el docente (antes del registro oficial). */
+/** Calificación guardada en borrador por el docente. */
 export function isGradeDraft(status?: string | null): boolean {
     return status === "DRAFT";
 }
 
-/** Calificación oficial tras registrar notas finales del grupo. */
+/** Calificación publicada (visible para el estudiante). */
 export function isGradeSent(status?: string | null): boolean {
     return status === "SENT";
 }
@@ -42,18 +42,6 @@ export interface GradeStudentPayload {
     status: GradeStatus;
     observations?: string;
     details: GradeDetailInput[];
-}
-
-export interface RegisterFinalScoreRow {
-    enrollment_id: string;
-    student_id: string;
-    official_final_score: number;
-    evaluations_count: number;
-}
-
-export interface ConfirmGroupPayload {
-    group_id: string;
-    semester_id?: string;
 }
 
 class GradeService {
@@ -134,20 +122,13 @@ class GradeService {
         return this.gradeStudent(payload);
     }
 
-    async registerFinalScores(groupId: string): Promise<RegisterFinalScoreRow[]> {
-        const response = await api.post<ApiEnvelope<RegisterFinalScoreRow[]>>(
-            `/evaluation/groups/${groupId}/register-final-scores`
-        );
-        const data = unwrapApiData(response);
-        return Array.isArray(data) ? data : [];
-    }
-
-    async confirmGroupOfficial(payload: ConfirmGroupPayload): Promise<void> {
-        try {
-            await api.patch(`${API_URL}/confirm-group`, payload);
-        } catch {
-            await this.registerFinalScores(payload.group_id);
-        }
+    /** PUT /evaluation/grades/:id — p. ej. pasar de DRAFT a SENT al publicar. */
+    async updateGrade(
+        gradeId: string,
+        payload: { status?: GradeStatus; observations?: string | null }
+    ): Promise<Grade> {
+        const response = await api.put<ApiEnvelope<Grade>>(`${API_URL}/${gradeId}`, payload);
+        return unwrapApiData(response);
     }
 }
 

@@ -6,7 +6,7 @@ export type GradeStatus = 'DRAFT' | 'SENT';
 /**
  * Nota — tabla `grades` / POST /api/evaluation/grades.
  * Identificación: enrollment_id + rubric_id.
- * Guardar calificación → DRAFT; registrar notas finales del grupo → SENT + is_locked.
+ * Guardar calificación → DRAFT; publicar desde la evaluación (PUT) → SENT.
  */
 export interface Grade extends ApiTimestamps {
   id?: string;

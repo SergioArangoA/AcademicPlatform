@@ -232,7 +232,9 @@ const GradeStudentPage = () => {
                     })),
             };
             await gradeService.saveGrade(payload);
-            toast.success('Calificación guardada en borrador.');
+            toast.success(
+                'Calificación guardada en borrador. Publícala con «Publicar notas» en Mis evaluaciones.'
+            );
             navigate('/evaluaciones');
         } catch (err) {
             toast.error(getGradeErrorMessage(err));

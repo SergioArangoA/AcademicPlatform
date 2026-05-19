@@ -4,13 +4,14 @@
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Breadcrumb from '../../../components/Breadcrumb';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import Swal from 'sweetalert2';
 import { useAuth } from '../../../context/AuthContext';
 import {
   loadTeacherEvaluationsData,
   TeacherEvaluationRow,
+  loadEvaluationStudentsRows,
 } from '../../../utils/teacher/evaluationData';
 import { loadTeacherSubjects } from '../../../utils/teacher/evaluationHelpers';
 import type { TeacherSubjectOption } from '../../../utils/teacher/types';
@@ -18,15 +19,28 @@ import {
   checkSubjectWeights,
   summarizeWeightsBySubject,
 } from '../../../utils/evaluationWeights';
-import { getSubjectFinalGradesStatus } from '../../../utils/subjectGradingStatus';
 import {
   evaluationService,
   getEvaluationErrorMessage,
 } from '../../../services/evaluationService';
+import { gradeService, getGradeErrorMessage } from '../../../services/gradeService';
+
+/** Todos tienen nota guardada y falta al menos una por enviar → se puede publicar. */
+function canPublishEvaluationGrades(ev: TeacherEvaluationRow): boolean {
+  if (!ev.rubric_id || ev.students_total <= 0) return false;
+  if (ev.students_graded !== ev.students_total) return false;
+  if (ev.students_graded_sent >= ev.students_total) return false;
+  return true;
+}
+
+/** Todas las notas están en estado enviado; el botón permanece bloqueado. */
+function allEvaluationNotesPublished(ev: TeacherEvaluationRow): boolean {
+  if (!ev.rubric_id || ev.students_total <= 0) return false;
+  return ev.students_graded_sent === ev.students_total;
+}
 
 const ListEvaluations: React.FC = () => {
   const { user } = useAuth();
-  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [rows, setRows] = useState<TeacherEvaluationRow[]>([]);
@@ -34,6 +48,7 @@ const ListEvaluations: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [publishingId, setPublishingId] = useState<string | null>(null);
 
   const [subjectFilter, setSubjectFilter] = useState(
     () => searchParams.get('subject') ?? 'all'
@@ -96,11 +111,6 @@ const ListEvaluations: React.FC = () => {
     return weightBySubject.get(subjectFilter) ?? checkSubjectWeights(rows, subjectFilter);
   }, [subjectFilter, weightBySubject, rows]);
 
-  const subjectFinalGrades = useMemo(() => {
-    if (subjectFilter === 'all') return null;
-    return getSubjectFinalGradesStatus(rows, subjectFilter);
-  }, [rows, subjectFilter]);
-
   const handleDeleteEvaluation = async (evaluation: TeacherEvaluationRow) => {
     if (!evaluation.id) return;
 
@@ -131,6 +141,51 @@ const ListEvaluations: React.FC = () => {
     }
   };
 
+  const handlePublishGrades = async (evaluation: TeacherEvaluationRow) => {
+    if (!evaluation.id || !canPublishEvaluationGrades(evaluation)) return;
+
+    const result = await Swal.fire({
+      title: '¿Publicar notas?',
+      html: `<p>Se pasarán a <strong>enviadas</strong> las calificaciones en borrador de <strong>${evaluation.name}</strong>. Los estudiantes podrán verlas.</p>`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, publicar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#16a34a',
+    });
+
+    if (!result.isConfirmed) return;
+
+    const evalId = String(evaluation.id);
+    setPublishingId(evalId);
+    try {
+      const detail = await loadEvaluationStudentsRows(evalId);
+      if (detail.error) {
+        toast.error(detail.error);
+        return;
+      }
+      const drafts = detail.students.filter(
+        (s) => s.grade_status === 'DRAFT' && s.grade_id
+      );
+      if (drafts.length === 0) {
+        toast.error('No hay notas en borrador para publicar.');
+        await load();
+        return;
+      }
+      await Promise.all(
+        drafts.map((row) =>
+          gradeService.updateGrade(String(row.grade_id), { status: 'SENT' })
+        )
+      );
+      toast.success('Notas publicadas.');
+      await load();
+    } catch (err) {
+      toast.error(getGradeErrorMessage(err));
+    } finally {
+      setPublishingId(null);
+    }
+  };
+
   return (
     <>
       <Breadcrumb pageName="Evaluaciones" />
@@ -142,8 +197,9 @@ const ListEvaluations: React.FC = () => {
               Mis evaluaciones
             </h4>
             <p className="mt-1 text-sm text-gray-500">
-              Asocia la rúbrica una sola vez, luego califica desde el listado de estudiantes.
-              Los pesos de cada asignatura deben sumar 100 %.
+              Asocia la rúbrica una sola vez; usa <strong>Ver estudiantes</strong> para ver notas y
+              calificar, y <strong>Publicar notas</strong> cuando todos tengan borrador listo. Los pesos
+              por asignatura deben sumar 100 %.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
@@ -235,27 +291,6 @@ const ListEvaluations: React.FC = () => {
           </p>
         )}
 
-        {subjectFinalGrades && subjectFilter !== 'all' && (
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-stroke bg-gray-50 px-4 py-3 dark:border-strokedark dark:bg-meta-4">
-            <div>
-              <p className="text-sm font-medium text-black dark:text-white">
-                Notas finales de la asignatura
-              </p>
-              <p className="text-xs text-gray-500 mt-0.5">{subjectFinalGrades.message}</p>
-            </div>
-            <button
-              type="button"
-              disabled={!subjectFinalGrades.canRegister}
-              onClick={() =>
-                navigate(`/teachers/grades?subject=${encodeURIComponent(subjectFilter)}`)
-              }
-              className="rounded-md bg-success px-4 py-2 text-sm font-medium text-white disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Registrar notas finales
-            </button>
-          </div>
-        )}
-
         {loadError && (
           <p className="mb-4 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700">
             {loadError}
@@ -298,6 +333,13 @@ const ListEvaluations: React.FC = () => {
                 {filteredRows.map((evaluation) => {
                   const evalId = String(evaluation.id);
                   const isDeleting = deletingId === evalId;
+                  const isPublishing = publishingId === evalId;
+                  const allPublished = allEvaluationNotesPublished(evaluation);
+                  const canPublish = canPublishEvaluationGrades(evaluation);
+                  const publishDisabled =
+                    isPublishing ||
+                    allPublished ||
+                    (!canPublish && !allPublished);
 
                   return (
                     <tr
@@ -336,12 +378,35 @@ const ListEvaluations: React.FC = () => {
                               Asociar rúbrica
                             </Link>
                           ) : (
-                            <Link
-                              to={`/evaluaciones/${evalId}/estudiantes`}
-                              className="rounded bg-[#6366f1] px-2 py-1 text-xs text-white hover:bg-opacity-90"
-                            >
-                              Calificar
-                            </Link>
+                            <>
+                              <Link
+                                to={`/evaluaciones/${evalId}/estudiantes`}
+                                className="rounded border border-stroke bg-white px-2 py-1 text-xs font-medium text-gray-800 hover:bg-gray-50 dark:border-strokedark dark:bg-boxdark dark:text-white dark:hover:bg-meta-4"
+                              >
+                                Ver estudiantes
+                              </Link>
+                              <button
+                                type="button"
+                                disabled={publishDisabled}
+                                title={
+                                  allPublished
+                                    ? 'Todas las notas de esta evaluación ya están publicadas'
+                                    : evaluation.students_graded < evaluation.students_total
+                                      ? `Faltan calificaciones (${evaluation.students_graded}/${evaluation.students_total})`
+                                      : canPublish
+                                        ? 'Publicar calificaciones en borrador'
+                                        : 'No hay borradores por publicar'
+                                }
+                                onClick={() => void handlePublishGrades(evaluation)}
+                                className="rounded bg-success px-2 py-1 text-xs font-medium text-white hover:bg-opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                {isPublishing
+                                  ? 'Publicando...'
+                                  : allPublished
+                                    ? 'Notas publicadas'
+                                    : 'Publicar notas'}
+                              </button>
+                            </>
                           )}
                           <button
                             type="button"

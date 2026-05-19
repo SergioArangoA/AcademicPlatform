@@ -1,5 +1,5 @@
 /**
- * Carga evaluaciones y progreso de calificación para el docente (CU-10, CU-11, CU-12).
+ * Carga evaluaciones y progreso de calificación para el docente (CU-10, CU-11).
  */
 import { Evaluation } from '../../models/Evaluation/Evaluation';
 import { Grade } from '../../models/Evaluation/Grade';
