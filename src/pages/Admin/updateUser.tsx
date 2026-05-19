@@ -6,6 +6,8 @@ import Breadcrumb from "../../components/Breadcrumb";
 import UserFormValidator from "../../components/UserForm";
 import { UserResponse } from "../../models/Users/UserResponse";
 import { UpdateUserPayload } from "../../models/Users/UpdateUserPayload";
+import { UserMutationResult } from "../../utils/userMutationResult";
+import { auditLogService } from "../../services/auditLogService";
 
 const UpdateUser = () => {
     const { id } = useParams();
@@ -47,18 +49,22 @@ const UpdateUser = () => {
                 return;
             }
 
-            const updatedUser = await userPService.updateUser(user.id, payload);
-            
-            if (updatedUser) {
+            const updatedUser: UserMutationResult = await userPService.updateUser(user.id, payload);
+
+            if (updatedUser.success) {
+                if (updatedUser.data) {
+                    auditLogService.recordUserMutation("update_at", updatedUser.data, updatedUser.message);
+                }
+
                 Swal.fire({
                     title: "Completado",
-                    text: "Se ha actualizado correctamente el registro",
+                    text: updatedUser.message || "Se ha actualizado correctamente el registro",
                     icon: "success",
                     timer: 3000,
                 });
                 navigate("/admin/user-list");
             } else {
-                throw new Error("No se pudo actualizar el usuario");
+                throw new Error(updatedUser.message || "No se pudo actualizar el usuario");
             }
         } catch (error) {
             console.error("Error al actualizar usuario:", error);

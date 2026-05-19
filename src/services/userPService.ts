@@ -40,23 +40,46 @@ class UserPService {
         }
     }
 
-    async updateUser(userId: string, payload: UpdateUserPayload): Promise<UserResponse | null> {
+    async updateUser(userId: string, payload: UpdateUserPayload): Promise<UserMutationResult> {
         try {
             const response = await api.put(`${API_URL}${userId}`, payload);
-            
-            // Manejar tanto envelope { data: ... } como respuesta directa
-            if (response.data && typeof response.data === 'object' && 'data' in response.data) {
-                return (response.data as any).data as UserResponse;
+
+            let updatedUser: UserResponse;
+            let message = "Usuario actualizado correctamente";
+
+            if (response.data && typeof response.data === "object" && "data" in response.data) {
+                const responsePayload = response.data as { data: UserResponse; message?: string };
+                updatedUser = responsePayload.data;
+                message = responsePayload.message || message;
+            } else {
+                updatedUser = response.data as UserResponse;
             }
-            
-            return response.data as UserResponse;
+
+            return {
+                success: true,
+                data: updatedUser,
+                message,
+            };
         } catch (error) {
             if (axios.isAxiosError(error)) {
+                const message = extractApiMessage(error.response?.data) || error.message || "No se pudo actualizar el usuario";
+
                 console.error('Error al actualizar usuario:', error.response?.data || error.message);
+
+                return {
+                    success: false,
+                    data: null,
+                    message,
+                };
             } else {
                 console.error('Error inesperado al actualizar usuario:', error);
+
+                return {
+                    success: false,
+                    data: null,
+                    message: "No se pudo actualizar el usuario",
+                };
             }
-            return null;
         }
     }
     async deactivateUser(userId: string): Promise<boolean> {
@@ -89,9 +112,11 @@ class UserPService {
                 };
             }
 
+            const createdUser = response.data as UserResponse;
+
             return {
                 success: true,
-                data: response.data as UserResponse,
+                data: createdUser,
                 message: "Usuario creado correctamente",
             };
         } catch (error) {

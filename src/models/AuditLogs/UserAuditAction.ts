@@ -1,0 +1,1 @@
+export type UserAuditAction = "create_at" | "update_at";

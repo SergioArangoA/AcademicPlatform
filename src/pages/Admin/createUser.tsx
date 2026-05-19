@@ -3,6 +3,7 @@ import Swal from "sweetalert2";
 import Breadcrumb from "../../components/Breadcrumb";
 import UserFormValidator from "../../components/UserForm";
 import { UpdateUserPayload } from "../../models/Users/UpdateUserPayload";
+import { auditLogService } from "../../services/auditLogService";
 import { userPService } from "../../services/userPService";
 import FirebaseAuthService from "../../services/firebaseAuthService"
 
@@ -63,7 +64,18 @@ const CreateUser = () => {
                 });
                 return;
             }
-            FirebaseAuthService.registerWithEmailPassword(values.email,values.password);
+
+            if (!values.email) {
+                Swal.fire({
+                    title: "Error",
+                    text: "El email es obligatorio",
+                    icon: "error",
+                    timer: 3000,
+                });
+                return;
+            }
+
+            await FirebaseAuthService.registerWithEmailPassword(values.email, values.password);
 
             const result =
                 role === "TEACHER"
@@ -71,6 +83,10 @@ const CreateUser = () => {
                     : await userPService.registerStudent(values as UpdateUserPayload & { password: string });
             
             if (result.success) {
+                if (result.data) {
+                    auditLogService.recordUserMutation("create_at", result.data, result.message);
+                }
+
                 Swal.fire({
                     title: "Completado",
                     text: result.message || "Se ha creado correctamente el usuario",
