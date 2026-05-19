@@ -243,6 +243,86 @@ const PlanStudios = () => {
         }
     };
 
+    const handlePublishPlan = async () => {
+        if (!selectedPlanId) {
+            const Swal = (await import("sweetalert2")).default;
+            Swal.fire({
+                icon: "warning",
+                title: "Selecciona un plan",
+                text: "Debes seleccionar un plan de estudios primero.",
+            });
+            return;
+        }
+
+        const plan = plans.find((p) => String(p.id) === String(selectedPlanId));
+        if (!plan) return;
+
+        // Si ya está publicado, no permitir publicar de nuevo
+        if (plan.is_published) {
+            const Swal = (await import("sweetalert2")).default;
+            Swal.fire({
+                icon: "info",
+                title: "Plan ya publicado",
+                text: "El plan de estudios ya se encuentra publicado.",
+            });
+            return;
+        }
+
+        const Swal = (await import("sweetalert2")).default;
+        const confirmation = await Swal.fire({
+            icon: "question",
+            title: "Publicar plan de estudio",
+            text: `¿Deseas publicar el plan "${plan.name}"? Esta acción hará que el plan sea visible públicamente.`,
+            showCancelButton: true,
+            confirmButtonText: "Sí, publicar",
+            cancelButtonText: "Cancelar",
+            reverseButtons: true,
+        });
+
+        if (!confirmation.isConfirmed) return;
+
+        setIsPerformingAction(true);
+        try {
+            const payload = {
+                career_id: plan.career_id ?? selectedCareerId,
+                name: `${plan.name}`,
+                year: plan.year ?? 2026,
+                suggested_semester: plan.suggested_semester ?? 2,
+                is_published: true,
+            } as any;
+
+            const updated = await studyplanService.updateStudyPlan(String(selectedPlanId), payload);
+
+            if (updated) {
+                await Swal.fire({
+                    icon: "success",
+                    title: "Publicado",
+                    text: "El plan de estudios fue publicado correctamente.",
+                    timer: 1500,
+                    showConfirmButton: false,
+                });
+
+                // Refrescar lista de planes y detalles
+                if (selectedCareerId) {
+                    const refreshed = await studyplanService.searchStudyPlanByCareerId(selectedCareerId);
+                    setPlans(refreshed);
+                }
+
+                // volver a cargar las asignaturas del plan
+                await handleSearchPlan();
+                return;
+            }
+
+            Swal.fire({
+                icon: "error",
+                title: "No se pudo publicar",
+                text: "Revisa la conexión o la respuesta de la API.",
+            });
+        } finally {
+            setIsPerformingAction(false);
+        }
+    };
+
     const subjectColumns = [
         { key: "code", label: "Código" },
         { key: "name", label: "Nombre" },
@@ -438,8 +518,18 @@ const PlanStudios = () => {
 
                 <div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark xl:col-span-2">
                     <div className="flex flex-wrap items-center justify-between border-b border-stroke px-5 py-4 dark:border-strokedark">
-                        <h2 className="font-semibold text-black dark:text-white">{selectedPlanName || "Plan de estudios"}</h2>
-                        <span className="text-sm text-gray-500">{studyPlanTableRows.length} asignaturas</span>
+                            <h2 className="font-semibold text-black dark:text-white">{selectedPlanName || "Plan de estudios"}</h2>
+                            <div className="flex items-center gap-3">
+                                <span className="text-sm text-gray-500">{studyPlanTableRows.length} asignaturas</span>
+                                <button
+                                    type="button"
+                                    onClick={handlePublishPlan}
+                                    disabled={isPerformingAction || !selectedPlanId || (plans.find((p) => String(p.id) === String(selectedPlanId))?.is_published)}
+                                    className="inline-flex items-center justify-center rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-60"
+                                >
+                                    Publicar plan de estudio
+                                </button>
+                            </div>
                     </div>
 
                     {isLoadingPlan && <p className="px-5 py-4 text-sm text-gray-500">Consultando plan...</p>}
