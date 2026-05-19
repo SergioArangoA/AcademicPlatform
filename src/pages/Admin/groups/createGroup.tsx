@@ -6,11 +6,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
-import Breadcrumb from "../../components/Breadcrumb";
-import GroupForm from "../../components/GroupForm";
-import { GroupPayload } from "../../models/Groups/GroupPayload";
-import { groupService } from "../../services/groupService";
-import { semesterService } from "../../services/semesterService";
+import Breadcrumb from "../../../components/Breadcrumb";
+import GroupForm from "../../../components/GroupForm";
+import { GroupPayload } from "../../../models/Groups/GroupPayload";
+import { groupService } from "../../../services/groupService";
+import { semesterService } from "../../../services/semesterService";
 
 const CreateGroup = () => {
     const navigate = useNavigate();

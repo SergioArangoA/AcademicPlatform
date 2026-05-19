@@ -37,6 +37,7 @@ const ManageUserEnrollments = () => {
     const [selectedGroups, setSelectedGroups] = useState<GroupForList[]>([]);
     const [studentEnrollments, setEnrollments] = useState<GroupForList[]>([])
     const [currentUserId,setId]=useState<string>("");
+    const [subjectToStudyPlan, setSubjectToStudyPlan] = useState<Map<string, any>>(new Map());
     const MAX_CREDITS = 20;
 
     useEffect(() => {
@@ -60,14 +61,15 @@ const ManageUserEnrollments = () => {
         const subjectsData = await subjectService.getSubjects();
         const studyPlans = await studyplanService.getStudyPlan();
 
-        // Build a map of subject_id -> study plan for efficient lookup
-        const subjectToStudyPlan = new Map<string, any>();
+        const studyPlanMap = new Map<string, any>();
+
         for (const sp of studyPlans) {
             try {
                 const spSubjects = await studyplanService.getSubjectsByStudyPlan(sp.id);
+
                 spSubjects.forEach(subject => {
-                    if (!subjectToStudyPlan.has(String(subject.id))) {
-                        subjectToStudyPlan.set(String(subject.id), sp);
+                    if (!studyPlanMap.has(String(subject.id))) {
+                        studyPlanMap.set(String(subject.id), sp);
                     }
                 });
             } catch (err) {
@@ -75,12 +77,14 @@ const ManageUserEnrollments = () => {
             }
         }
 
+        setSubjectToStudyPlan(studyPlanMap);
+
         const formattedGroups: GroupForList[] = activeGroups.map((gr) => {
             const teacher = teachers.find((tea) => tea.profile.id === gr.teacher_id);
             const subject = subjectsData.find((sub) => String(sub.id) === String(gr.subject_id));
             
             // Find study plan that contains this subject
-            const studyPlan = subjectToStudyPlan.get(String(gr.subject_id));
+            const studyPlan = studyPlanMap.get(String(gr.subject_id));
             const careerId = studyPlan?.career_id ?? "";
             const career = careersData.find((car) => car.id === careerId);
 
@@ -255,9 +259,16 @@ const ManageUserEnrollments = () => {
                 handleAction("deselect",g1);
             }
             
-            const foundSubject = subjects?.find((s)=> s.id === g1.subject_id);
+            const studentCareerIds = registrationList.map(r => r.career_id);
 
-            if (!foundSubject){
+            const groupStudyPlan = subjectToStudyPlan.get(String(g1.subject_id));
+
+            const belongsToStudentPlan =
+                groupStudyPlan &&
+                studentCareerIds.includes(groupStudyPlan.career_id);
+
+
+            if (!belongsToStudentPlan){
                 const result = await Swal.fire({
                     title: "¿Estás seguro?",
                     text: `La asignatura ${g1.subject} no se encuentra en el plan de estudios de ninguna de las carreras en las que el usuario está matriculado`,

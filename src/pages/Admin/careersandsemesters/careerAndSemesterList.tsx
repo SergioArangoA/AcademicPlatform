@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import GenericTable from "../../components/GenericTable";
-import { careerService } from "../../services/careerService";
-import { semesterService } from "../../services/semesterService";
-import { Career } from "../../models/Careers/Career";
-import { Semester } from "../../models/Semesters/Semester";
+import GenericTable from "../../../components/GenericTable";
+import { careerService } from "../../../services/careerService";
+import { semesterService } from "../../../services/semesterService";
+import { Career } from "../../../models/Careers/Career";
+import { Semester } from "../../../models/Semesters/Semester";
 
 const CareerAndSemesterList: React.FC = () => {
 	const navigate = useNavigate();

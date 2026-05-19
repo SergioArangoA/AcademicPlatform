@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import Breadcrumb from "../../components/Breadcrumb";
-import { Semester } from "../../models/Semesters/Semester";
-import { semesterService } from "../../services/semesterService";
+import Breadcrumb from "../../../components/Breadcrumb";
+import { Semester } from "../../../models/Semesters/Semester";
+import { semesterService } from "../../../services/semesterService";
 
 const formatDateTime = (value: string) => {
 	if (!value) {

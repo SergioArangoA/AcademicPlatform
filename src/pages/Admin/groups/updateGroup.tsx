@@ -5,10 +5,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Swal from "sweetalert2";
-import Breadcrumb from "../../components/Breadcrumb";
-import GroupForm from "../../components/GroupForm";
-import { GroupPayload } from "../../models/Groups/GroupPayload";
-import { groupService } from "../../services/groupService";
+import Breadcrumb from "../../../components/Breadcrumb";
+import GroupForm from "../../../components/GroupForm";
+import { GroupPayload } from "../../../models/Groups/GroupPayload";
+import { groupService } from "../../../services/groupService";
 const UpdateGroup = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
