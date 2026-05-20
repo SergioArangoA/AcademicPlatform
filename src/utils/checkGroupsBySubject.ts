@@ -4,10 +4,7 @@
  */
 import { api } from "../interceptors/authInterceptor";
 import { semesterService } from "../services/semesterService";
-
-interface GroupSearchResponse {
-    data: Array<{ id: string | number }>;
-}
+import { GroupSearchResponse } from "../models/Utils/GroupSearchResponse";
 
 /**
  * Busca grupos para una asignatura en el semestre activo.

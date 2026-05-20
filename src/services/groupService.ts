@@ -15,20 +15,9 @@ import { Group } from "../models/Groups/Group";
 import { GroupsApiResponse } from "../models/Groups/GroupsApiResponse";
 import { GroupApiResponse } from "../models/Groups/GroupApiResponse";
 import { GroupPayload } from "../models/Groups/GroupPayload";
+import { Enrollment } from "../models/Services/Enrollment";
+import { GroupWithMeta } from "../models/Services/GroupWithMeta";
 const API_URL = "/academic/groups";
-
-/** Matrículas para saber cuántos estudiantes ya están en cada grupo */
-interface Enrollment {
-    id: string;
-    group_id: string;
-    status: string;
-}
-
-/** Grupo con info extra para la tabla del admin (cupos según matrículas activas) */
-export interface GroupWithMeta extends Group {
-    enrolled_count: number;
-    available_capacity: number;
-}
 
 class GroupService {
     /** Traigo las inscripciones para calcular cupos ocupados */

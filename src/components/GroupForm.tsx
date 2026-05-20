@@ -16,20 +16,8 @@ import { semesterService } from "../services/semesterService";
 import { subjectService } from "../services/subjectService";
 import { teacherService } from "../services/teacherService";
 
-interface GroupFormProps {
-    mode: 1 | 2;
-    group?: Group | null;
-    loading?: boolean;
-    onSubmit: (values: GroupPayload) => Promise<void> | void;
-}
-
-interface GroupFormValues {
-    subject_id: string;
-    name: string;
-    group_code: string;
-    capacity: string;
-    teacher_id: string;
-}
+import { GroupFormProps } from "../models/Components/GroupFormProps";
+import { GroupFormValues } from "../models/Components/GroupFormValues";
 
 const GroupForm: React.FC<GroupFormProps> = ({ mode, group, loading = false, onSubmit }) => {
     const navigate = useNavigate();

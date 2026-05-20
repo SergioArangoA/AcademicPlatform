@@ -3,16 +3,8 @@ import { Rubric } from "../../models/Evaluation/Rubric";
 import { Criterion } from "../../models/Evaluation/Criterion";
 import { Subject } from "../../models/Subjects/Subject";
 import { Evaluation } from "../../models/Evaluation/Evaluation";
+import { RubricInfoCardProps } from "../../models/Components/RubricInfoCardProps";
 import { getCriterionWeight } from "../../utils/criterionWeight";
-
-interface RubricInfoCardProps {
-  rubric: Rubric | null;
-  criteria: Criterion[] | null;
-  subject?: Subject;
-  subjectLabel?: string;
-  evaluation?: Evaluation;
-  title?: string;
-}
 
 const formatDate = (date?: string | Date) => {
   if (!date) return "—";

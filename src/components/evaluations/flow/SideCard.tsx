@@ -1,10 +1,7 @@
 import { ReactNode } from 'react';
 
-interface SideCardProps {
-    title: string;
-    children: ReactNode;
-    className?: string;
-}
+import { SideCardProps } from '../../../models/Components/SideCardProps';
+import { ErrorBannerProps } from '../../../models/Components/ErrorBannerProps';
 
 export const SideCard = ({ title, children, className = '' }: SideCardProps) => (
     <div
@@ -14,13 +11,6 @@ export const SideCard = ({ title, children, className = '' }: SideCardProps) => 
         {children}
     </div>
 );
-
-interface ErrorBannerProps {
-    title: string;
-    message: string;
-    actionLabel?: string;
-    onAction?: () => void;
-}
 
 export const ErrorBanner = ({ title, message, actionLabel, onAction }: ErrorBannerProps) => (
     <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-900 dark:bg-red-950/40">

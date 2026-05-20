@@ -4,20 +4,8 @@ import * as Yup from "yup";
 import { Semester } from "../models/Semesters/Semester";
 import { SemesterPayload } from "../models/Semesters/SemesterPayload";
 
-interface SemesterFormProps {
-	mode: 1 | 2;
-	semester?: Semester | null;
-	loading?: boolean;
-	onSubmit: (values: SemesterPayload) => Promise<void> | void;
-}
-
-interface SemesterFormValues {
-	code: string;
-	name: string;
-	start_date: string;
-	end_date: string;
-	is_active: "true" | "false";
-}
+import { SemesterFormProps } from "../models/Components/SemesterFormProps";
+import { SemesterFormValues } from "../models/Components/SemesterFormValues";
 
 const toDateInput = (value?: string) => {
 	if (!value) {

@@ -115,12 +115,7 @@ const options: ApexOptions = {
   },
 };
 
-interface ChartOneState {
-  series: {
-    name: string;
-    data: number[];
-  }[];
-}
+import { ChartOneState } from '../models/Components/ChartOneState';
 
 const ChartOne: React.FC = () => {
   const [state, setState] = useState<ChartOneState>({

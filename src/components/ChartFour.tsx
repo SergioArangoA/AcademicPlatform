@@ -2,9 +2,7 @@ import { ApexOptions } from 'apexcharts';
 import React, { useState } from 'react';
 import ReactApexChart from 'react-apexcharts';
 
-interface ChartFourState {
-  series: { data: number[] }[];
-}
+import { ChartFourState } from '../models/Components/ChartFourState';
 
 const ChartFour: React.FC = () => {
   const [state, setState] = useState<ChartFourState>({

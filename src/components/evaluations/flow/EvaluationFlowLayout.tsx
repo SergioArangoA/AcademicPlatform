@@ -4,20 +4,8 @@
 import { ReactNode } from 'react';
 import { Check } from 'lucide-react';
 
-export interface WizardStep {
-    label: string;
-    active?: boolean;
-    done?: boolean;
-}
-
-interface EvaluationFlowLayoutProps {
-    pageTitle: string;
-    steps: WizardStep[];
-    main: ReactNode;
-    sidebar: ReactNode;
-    footer: ReactNode;
-    bottomBanners?: ReactNode;
-}
+import { WizardStep } from '../../../models/Components/WizardStep';
+import { EvaluationFlowLayoutProps } from '../../../models/Components/EvaluationFlowLayoutProps';
 
 const EvaluationFlowLayout = ({
     pageTitle,

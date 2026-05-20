@@ -3,15 +3,10 @@ import * as Yup from "yup";
 import { useState } from "react";
 import { UserResponse } from "../models/Users/UserResponse";
 import { UpdateUserPayload } from "../models/Users/UpdateUserPayload";
+import { UserFormProps } from "../models/Components/UserFormProps";
 
 
-interface MyFormProps {
-    mode: 1 | 2 | 3; // 1 = Crear, 2 = Actualizar, 3 = Ver
-    handleAction: (values: UpdateUserPayload, role: "ADMIN" | "STUDENT" | "TEACHER") => void;
-    user?: UserResponse | null;
-}
-
-const UserFormValidator: React.FC<MyFormProps> = ({mode, handleAction, user,}) => {
+const UserFormValidator: React.FC<UserFormProps> = ({mode, handleAction, user,}) => {
     const [activeTab, setActiveTab] = useState<"user" | "profile">("user");
     const isReadOnly = mode === 3;
     const profile = user && "profile" in user ? user.profile : null;

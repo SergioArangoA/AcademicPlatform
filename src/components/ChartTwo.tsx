@@ -62,12 +62,7 @@ const options: ApexOptions = {
   },
 };
 
-interface ChartTwoState {
-  series: {
-    name: string;
-    data: number[];
-  }[];
-}
+import { ChartTwoState } from '../models/Components/ChartTwoState';
 
 const ChartTwo: React.FC = () => {
   const [state, setState] = useState<ChartTwoState>({

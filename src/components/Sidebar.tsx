@@ -8,11 +8,7 @@ import Logo from '../images/logo/logo.svg';
 import SidebarLinkGroup from './SidebarLinkGroup';
 import { useSelector } from 'react-redux';
 import { RootState } from '../store/store';
-
-interface SidebarProps {
-  sidebarOpen: boolean;
-  setSidebarOpen: (arg: boolean) => void;
-}
+import { SidebarProps } from '../models/Components/SidebarProps';
 
 const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
   const location = useLocation();

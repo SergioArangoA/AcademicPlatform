@@ -3,14 +3,7 @@ import { Subject } from "../../models/Subjects/Subject";
 import { User } from "../../models/User";
 import { Group } from "../../models/Groups/Group";
 import { Rubric } from "../../models/Evaluation/Rubric";
-
-interface EvaluationCardProps{
-    evaluation: Evaluation,
-    subject: Subject,
-    group: Group,
-    user: User,
-    rubric: Rubric,
-}
+import { EvaluationCardProps } from "../../models/Components/EvaluationCardProps";
 const formatDate = (date?: string | Date) => {
   if (!date) return "—";
 

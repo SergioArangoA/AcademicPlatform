@@ -14,28 +14,11 @@ import { getApiErrorMessage, nonEmptyText } from "../utils/apiPayload";
 import { unwrapApiData } from "../utils/unwrapApiResponse";
 import { assertRubricEditable } from "../utils/rubricEditRules";
 import { criterionService } from "./criterionService";
+import { CreateRubricPayload } from "../models/Services/CreateRubricPayload";
+import { CreateRubricApiBody } from "../models/Services/CreateRubricApiBody";
+import { CreateCriterionInput } from "../models/Services/CreateCriterionInput";
 
 const API_URL = "/evaluation/rubrics";
-
-export interface CreateRubricPayload {
-    title: string;
-    description: string;
-    is_public: boolean;
-    is_archived: boolean;
-}
-
-export interface CreateRubricApiBody {
-    title: string;
-    description: string;
-    is_public: boolean;
-    is_archived: boolean;
-}
-
-export interface CreateCriterionInput {
-    name: string;
-    description: string;
-    weight: number;
-}
 
 function toCreateRubricBody(payload: CreateRubricPayload): CreateRubricApiBody {
     return {

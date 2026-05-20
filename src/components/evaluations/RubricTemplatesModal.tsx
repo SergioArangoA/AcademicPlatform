@@ -19,20 +19,8 @@ import {
 } from '../../utils/teacher';
 import { useAuth } from '../../context/AuthContext';
 
-export interface LocalCriterionDraft {
-  id_temp: string;
-  name: string;
-  description: string;
-  weight: number;
-  orden: number;
-}
-
-interface RubricTemplatesModalProps {
-  open: boolean;
-  teacherId: string;
-  onClose: () => void;
-  onApply: (criteria: LocalCriterionDraft[]) => void;
-}
+import { LocalCriterionDraft } from '../../models/Components/LocalCriterionDraft';
+import { RubricTemplatesModalProps } from '../../models/Components/RubricTemplatesModalProps';
 
 const RubricTemplatesModal: React.FC<RubricTemplatesModalProps> = ({
   open,

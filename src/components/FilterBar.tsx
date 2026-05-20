@@ -1,34 +1,17 @@
 import React from "react";
+import { BaseFilterConfig } from "../models/Components/BaseFilterConfig";
+import { TextFilterConfig } from "../models/Components/TextFilterConfig";
+import { SelectFilterConfig, SelectOption } from "../models/Components/SelectFilterConfig";
+import { FilterBarProps } from "../models/Components/FilterBarProps";
+import { FilterInputProps } from "../models/Components/FilterInputProps";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-type SelectOption = string | { value: string; label: string };
-
-interface BaseFilterConfig {
-    key: string;
-    label: string;
-}
-
-interface TextFilterConfig extends BaseFilterConfig {
-    type: "text";
-    placeholder?: string;
-}
-
-interface SelectFilterConfig extends BaseFilterConfig {
-    type: "select";
-    options: SelectOption[];
-}
+export type { BaseFilterConfig, TextFilterConfig, SelectFilterConfig, SelectOption };
 
 export type FilterConfig = TextFilterConfig | SelectFilterConfig;
 
 export type FilterValues = Record<string, string>;
-
-interface FilterBarProps {
-    filters: FilterConfig[];
-    values: FilterValues;
-    onChange: (key: string, value: string) => void;
-    onClear: () => void;
-}
 
 // ─── Icons ───────────────────────────────────────────────────────────────────
 
@@ -82,12 +65,6 @@ const ResetIcon = () => (
 );
 
 // ─── FilterInput ─────────────────────────────────────────────────────────────
-
-interface FilterInputProps {
-    config: FilterConfig;
-    value: string;
-    onChange: (key: string, value: string) => void;
-}
 
 const FilterInput: React.FC<FilterInputProps> = ({ config, value, onChange }) => {
     if (config.type === "text") {

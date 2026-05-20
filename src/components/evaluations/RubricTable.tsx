@@ -5,10 +5,8 @@ import React, { useMemo } from "react";
 import { Criterion } from "../../models/Evaluation/Criterion";
 import { Scale } from "../../models/Evaluation/Scale";
 
-interface RubricEvaluationTableProps {
-  criteria: Criterion[];
-  scales: Scale[];
-}
+import { RubricEvaluationTableProps } from "../../models/Components/RubricEvaluationTableProps";
+
 const RubricEvaluationTable: React.FC<RubricEvaluationTableProps> = ({
   criteria,
   scales,

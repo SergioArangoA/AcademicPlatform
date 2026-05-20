@@ -70,4 +70,5 @@ export {
   loadTeacherEvaluationsData,
   loadEvaluationStudentsRows,
 } from './evaluationData';
-export type { TeacherEvaluationRow, EvaluationStudentRow } from './evaluationData';
+export type { TeacherEvaluationRow } from '../../models/Utils/TeacherEvaluationRow';
+export type { EvaluationStudentRow } from '../../models/Utils/EvaluationStudentRow';

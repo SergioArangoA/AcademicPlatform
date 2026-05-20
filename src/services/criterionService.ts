@@ -12,16 +12,10 @@ import {
   filterCriteriaByRubricId,
   normalizeCriterion,
 } from '../utils/criterionWeight';
+import { CreateCriterionApiPayload } from '../models/Services/CreateCriterionApiPayload';
 
 const API_URL = '/evaluation/criteria';
 
-/** Body exacto de POST /evaluation/criteria */
-export interface CreateCriterionApiPayload {
-  rubric_id: string;
-  name: string;
-  description: string;
-  weight: number;
-}
 
 class CriterionService {
   async getCriteria(rubricId?: string): Promise<Criterion[]> {
