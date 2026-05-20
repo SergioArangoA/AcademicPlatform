@@ -92,7 +92,7 @@ const UserRegistrationList = () => {
         return userRows.filter((user) => {
             const matchesSearch =
                 search === "" ||
-                [user.code, user.name, user.email, user.career_name]
+                [user.code, user.name, user.email, user.career_name, user.identification]
                     .join(" ")
                     .toLowerCase()
                     .includes(search);
@@ -137,6 +137,7 @@ const UserRegistrationList = () => {
 
     const columns = [
         { key: "name", label: "Nombre" },
+        { key: "identification", label: "Cédula"},
         { key: "career_name", label: "Carrera" },
         { key: "is_active", label: "Estado" },
     ];

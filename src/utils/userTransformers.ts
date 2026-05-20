@@ -39,6 +39,7 @@ export const transformUsersForList = (users: UserResponse[]): UserForList[] => {
       created_at: user.created_at,
       registration_id: user.registration_id ?? profile?.registrationId ?? null,
       profile,
+      identification: user.profile?.identification ?? "",
     };
   });
 };
