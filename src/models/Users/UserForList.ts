@@ -9,4 +9,5 @@ export interface UserForList {
   created_at: string;
   registration_id?: string | null;
   profile?: BaseProfile;
+  identification: string | null;
 }
