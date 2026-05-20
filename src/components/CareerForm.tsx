@@ -3,13 +3,7 @@ import { useNavigate } from "react-router-dom";
 import * as Yup from "yup";
 import { Career } from "../models/Careers/Career";
 import { CareerPayload } from "../models/Careers/CareerPayload";
-
-interface CareerFormProps {
-	mode: 1 | 2;
-	career?: Career | null;
-	loading?: boolean;
-	onSubmit: (values: CareerPayload) => Promise<void> | void;
-}
+import { CareerFormProps } from "../models/Components/CareerFormProps";
 
 const CareerForm: React.FC<CareerFormProps> = ({ mode, career, loading = false, onSubmit }) => {
 	const navigate = useNavigate();

@@ -1,14 +1,9 @@
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { User } from "../../models/User";
+import { UserFormValidatorProps } from "../../models/Components/UserFormValidatorProps";
 
-interface MyFormProps {
-    mode: number; // 1 (crear) o 2 (actualizar), solo para texto/estilos
-    handleAction: (values: User) => void;
-    user?: User | null;
-}
-
-const UserFormValidator: React.FC<MyFormProps> = ({ mode, handleAction, user }) => {
+const UserFormValidator: React.FC<UserFormValidatorProps> = ({ mode, handleAction, user }) => {
     return (
         <Formik
             initialValues={

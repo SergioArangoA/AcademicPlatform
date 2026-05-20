@@ -2,10 +2,7 @@ import React from "react";
 import { Registration } from "../../models/Registration";
 import { Career } from "../../models/Careers/Career";
 
-interface RegistrationCardProps {
-  registration: Registration | null;
-  career?: Career;
-}
+import { RegistrationCardProps } from "../../models/Components/RegistrationCardProps";
 
 const RegistrationCard: React.FC<RegistrationCardProps> = ({
   registration,

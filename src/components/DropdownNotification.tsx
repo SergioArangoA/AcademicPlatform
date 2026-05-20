@@ -7,24 +7,8 @@ const SOCKET_URL = import.meta.env.VITE_SOCKET_URL;
 const socket = io(SOCKET_URL);
 
 
-interface Notification {
-  id: number;
-  message: string;
-  time: string;
-  subjectName?: string;
-  subjectCode?: string;
-  teacherName?: string;
-  groupName?: string;
-}
-
-interface NotificationPayload {
-  message?: string;
-  teacherId?: string;
-  teacherName?: string;
-  subjectName?: string;
-  subjectCode?: string;
-  groupName?: string;
-}
+import { Notification } from '../models/Components/Notification';
+import { NotificationPayload } from '../models/Components/NotificationPayload';
 
 const DropdownNotification = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);

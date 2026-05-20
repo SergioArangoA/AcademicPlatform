@@ -14,7 +14,8 @@ import { useAuth } from '../../../context/AuthContext';
 import { Criterion } from '../../../models/Evaluation/Criterion';
 import { criterionService } from '../../../services/criterionService';
 import { getCriterionRubricId } from '../../../utils/criterionWeight';
-import { loadTeacherRubricsData, TeacherRubricRow } from '../../../utils/teacher';
+import { loadTeacherRubricsData } from '../../../utils/teacher';
+import { TeacherRubricRow } from '../../../models/Utils/TeacherRubricRow';
 import { filterRubricsWithoutEvaluation } from '../../../utils/teacher/rubricFilters';
 import { isRubricEditable } from '../../../utils/rubricEditRules';
 import { canTeacherDeleteRubric } from '../../../utils/rubricDeleteRules';
@@ -257,7 +258,7 @@ const ListRubrics: React.FC = () => {
             </h4>
             <p className="mt-1 text-sm text-gray-500 max-w-2xl">
               <strong>Sin evaluación:</strong> plantillas que aún no están en una evaluación.{' '}
-              <strong>Mis grupos:</strong> rúbricas ya asociadas en{' '}
+              <strong>Mis Rúbricas:</strong> rúbricas ya asociadas en{' '}
               <Link to="/evaluaciones" className="text-primary hover:underline">
                 Evaluaciones
               </Link>
@@ -278,7 +279,7 @@ const ListRubrics: React.FC = () => {
               Sin evaluación ({withoutEvaluation.length})
             </button>
             <button type="button" className={tabClass('mine')} onClick={() => setTab('mine')}>
-              Mis grupos ({mine.length})
+              Mis Rúbricas ({mine.length})
             </button>
           </div>
         )}

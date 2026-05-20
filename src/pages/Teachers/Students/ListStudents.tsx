@@ -4,9 +4,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import Breadcrumb from '../../../components/Breadcrumb';
-import FilterBar, { FilterValues } from '../../../components/FilterBar';
+import FilterBar from '../../../components/FilterBar';
+import { FilterValues } from '../../../models/Components/FilterConfig';
 import GenericTable from '../../../components/GenericTable';
-import { loadTeacherStudentsData, TeacherStudentRow } from '../../../utils/teacher';
+import { loadTeacherStudentsData } from '../../../utils/teacher';
+import { TeacherStudentRow } from '../../../models/Utils/TeacherStudentRow';
 
 const initialFilters: FilterValues = {
     search: '',

@@ -8,7 +8,8 @@ import { Enrollment } from '../../models/Enrollment';
 import { Criterion } from '../../models/Evaluation/Criterion';
 import { Rubric } from '../../models/Evaluation/Rubric';
 import { Scale } from '../../models/Evaluation/Scale';
-import { groupService, GroupWithMeta } from '../../services/groupService';
+import { groupService } from '../../services/groupService';
+import { GroupWithMeta } from '../../models/Services/GroupWithMeta';
 import { enrollmentService } from '../../services/enrollmentService';
 import { semesterService } from '../../services/semesterService';
 import { subjectService } from '../../services/subjectService';
@@ -195,10 +196,7 @@ export async function loadTeacherStudentsData(user: AuthUser): Promise<{
   }
 }
 
-export type TeacherRubricRow = Rubric & {
-  subject_label: string;
-  visibility: RubricVisibility;
-};
+import { TeacherRubricRow } from '../../models/Utils/TeacherRubricRow';
 
 /**
  * Carga rúbricas del docente y aplica filtro mine | shared (rubricFilters.ts).

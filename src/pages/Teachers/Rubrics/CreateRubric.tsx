@@ -19,14 +19,7 @@ import {
 } from '../../../utils/rubricEditRules';
 import RubricInfoCard from '../../../components/evaluations/RubricCard';
 import { Criterion } from '../../../models/Evaluation/Criterion';
-
-interface LocalCriterionDraft {
-  id_temp: string;
-  name: string;
-  description: string;
-  weight: number;
-  orden: number;
-}
+import { LocalCriterionDraft } from '../../../models/Components/LocalCriterionDraft';
 
 const PUBLISH_ERROR =
   'la rúbrica debe tener al menos un criterio y la suma de los pesos debe ser 100 %.';

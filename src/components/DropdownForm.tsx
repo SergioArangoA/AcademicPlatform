@@ -1,12 +1,4 @@
-interface DropdownProps<T> {
-  title: string;
-  options: T[];
-  value: string;
-  onChange: (value: string) => void;
-
-  labelKey: keyof T;
-  valueKey: keyof T;
-}
+import { DropdownProps } from "../models/Components/DropdownProps";
 
 export default function DropdownForm<T>({
   title,

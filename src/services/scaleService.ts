@@ -3,15 +3,9 @@ import { Scale } from "../models/Evaluation/Scale";
 import { ApiEnvelope } from "../types/ApiResponse";
 import { coerceApiId, getApiErrorMessage, nonEmptyText } from "../utils/apiPayload";
 import { unwrapApiData } from "../utils/unwrapApiResponse";
+import { CreateScalePayload } from "../models/Services/CreateScalePayload";
 
 const API_URL = "/evaluation/scales";
-
-export interface CreateScalePayload {
-    criterion_id: string;
-    name: string;
-    description: string;
-    value: number;
-}
 
 class ScaleService {
     async getScales(): Promise<Scale[]> {

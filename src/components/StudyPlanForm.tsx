@@ -1,24 +1,6 @@
 import { Career } from "../models/Careers/Career";
-
-export interface StudyPlanFormValues {
-    career_id: string;
-    name: string;
-    year: string;
-    suggested_semester: string;
-    is_published: boolean;
-}
-
-interface StudyPlanFormProps {
-    values: StudyPlanFormValues;
-    careers: Career[];
-    onValueChange: (key: keyof StudyPlanFormValues, value: string | boolean) => void;
-    onSubmit: (event: React.FormEvent<HTMLFormElement>) => Promise<void>;
-    loading: boolean;
-    loadingCareers: boolean;
-    readonlyCareer?: boolean;
-    submitButtonLabel?: string;
-    pageTitle?: string;
-}
+import { StudyPlanFormValues } from "../models/Components/StudyPlanFormValues";
+import { StudyPlanFormProps } from "../models/Components/StudyPlanFormProps";
 
 const StudyPlanForm = ({
     values,

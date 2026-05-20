@@ -148,13 +148,15 @@ const ConfigurateUserRegistration = () => {
                     userPService.updateUser(user.id,user);
 
                     if (response){
-                        Swal.fire({
-                            icon: "success",
-                            title: "Operación exitosa",
-                            text: "La matrícula se ha guardado correctamente.",
-                            confirmButtonText: "Aceptar",
-                        });
-                        fetchData();
+                            Swal.fire({
+                                icon: "success",
+                                title: "Operación exitosa",
+                                text: "La matrícula se ha guardado correctamente.",
+                                confirmButtonText: "Aceptar",
+                            }).then(() => {
+                                fetchData();
+                                navigate('/admin/registration/users/list');
+                            });
                     }
                     else {
                         Swal.fire({
@@ -261,6 +263,9 @@ const ConfigurateUserRegistration = () => {
                             title: "Operación exitosa",
                             text: "La matrícula se ha actualizado correctamente.",
                             confirmButtonText: "Aceptar",
+                        }).then(() => {
+                            fetchData();
+                            navigate('/admin/registration/users/list');
                         });
                     }
                     else {
@@ -271,7 +276,6 @@ const ConfigurateUserRegistration = () => {
                         });
                     }
                 });
-                fetchData();
             }
         });
 

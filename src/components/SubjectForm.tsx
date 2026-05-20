@@ -4,19 +4,8 @@ import * as Yup from "yup";
 import { Subject } from "../models/Subjects/Subject";
 import { SubjectPayload } from "../models/Subjects/SubjectPayload";
 
-interface SubjectFormProps {
-    mode: 1 | 2;
-    subject?: Subject | null;
-    loading?: boolean;
-    onSubmit: (values: SubjectPayload) => Promise<void> | void;
-}
-
-interface SubjectFormValues {
-    code: string;
-    name: string;
-    description: string;
-    credits: string;
-}
+import { SubjectFormProps } from "../models/Components/SubjectFormProps";
+import { SubjectFormValues } from "../models/Components/SubjectFormValues";
 
 const SubjectForm: React.FC<SubjectFormProps> = ({ mode, subject, loading = false, onSubmit }) => {
     const navigate = useNavigate();

@@ -1,13 +1,8 @@
 import axios from "axios";
 import { User } from "../models/User";
+import { ApiResponse } from "../models/Services/ApiResponse";
 
 const API_URL = import.meta.env.VITE_API_URL;
-
-// Definimos la interfaz base para las respuestas del API
-interface ApiResponse<T> {
-    message?: string;
-    data: T;
-}
 
 class UserService {
     async getTeacherById(id: string): Promise<User | null> {

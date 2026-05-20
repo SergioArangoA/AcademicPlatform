@@ -15,26 +15,10 @@ import { buildStudentLookupMap, resolveStudentFromEnrollment, transformUsersForL
 import { filterGroupsByTeacherMatchIds } from './filters';
 import { resolveTeacherMatchIds, resolveTeacherRecord } from './resolveTeacherId';
 import type { AuthUser } from './types';
+import { TeacherEvaluationRow } from '../../models/Utils/TeacherEvaluationRow';
+import { EvaluationStudentRow } from '../../models/Utils/EvaluationStudentRow';
 
-export interface TeacherEvaluationRow extends Evaluation {
-  group_label: string;
-  subject_label: string;
-  students_total: number;
-  /** Con nota guardada (DRAFT o SENT). */
-  students_graded: number;
-  /** Solo calificaciones oficiales (SENT). */
-  students_graded_sent: number;
-}
-
-export interface EvaluationStudentRow {
-  enrollment_id: string;
-  student_id: string;
-  student_name: string;
-  student_code: string;
-  grade_status: 'NONE' | 'DRAFT' | 'SENT';
-  final_score: number | null;
-  grade_id: string | null;
-}
+export type { TeacherEvaluationRow, EvaluationStudentRow };
 
 export async function loadTeacherEvaluationsData(user: AuthUser): Promise<{
   evaluations: TeacherEvaluationRow[];

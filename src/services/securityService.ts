@@ -4,16 +4,8 @@ import { StorageProvider } from "../storage/StorageProvider";
 import { LocalStorageProvider } from "../storage/LocalStorageProvider";
 import { store } from "../store/store";
 import { setUser } from "../store/userSlice";
-
-interface LoginCredentials {
-  email: string;
-  password: string;
-}
-
-interface LoginResponse {
-  user: User;
-  token: string;
-}
+import { LoginCredentials } from "../models/Services/LoginCredentials";
+import { LoginResponse } from "../models/Services/LoginResponse";
 
 class SecurityService extends EventTarget {
     private readonly keyToken: string;

@@ -7,11 +7,7 @@ import { criterionService } from '../../../services/criterionService';
 import { scaleService } from '../../../services/scaleService';
 import { scalesByCriterion } from '../../../utils/rubricScoring';
 
-interface RubricPreviewModalProps {
-    rubric: Rubric | null;
-    open: boolean;
-    onClose: () => void;
-}
+import { RubricPreviewModalProps } from '../../../models/Components/RubricPreviewModalProps';
 
 const RubricPreviewModal = ({ rubric, open, onClose }: RubricPreviewModalProps) => {
     const [criteria, setCriteria] = useState<Criterion[]>([]);

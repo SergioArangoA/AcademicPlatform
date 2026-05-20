@@ -8,11 +8,7 @@
 import { Navigate } from "react-router-dom";
 import Loader from "../../common/Loader";
 import { useAuth } from "../../context/AuthContext";
-
-interface ProtectedRouteProps {
-  allowedRoles?: string[];
-  children: React.ReactNode;
-}
+import { ProtectedRouteProps } from "../../models/Components/ProtectedRouteProps";
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ allowedRoles, children }) => {
   const { user, loading, getRole } = useAuth();

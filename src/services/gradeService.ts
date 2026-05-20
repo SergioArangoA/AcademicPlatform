@@ -4,6 +4,7 @@ import { Grade, GradeStatus } from "../models/Evaluation/Grade";
 import { GradeDetail } from "../models/Evaluation/GradeDetails";
 import { ApiEnvelope } from "../types/ApiResponse";
 import { unwrapApiData } from "../utils/unwrapApiResponse";
+import { GradeStudentPayload } from "../models/Services/GradeStudentPayload";
 
 const API_URL = "/evaluation/grades";
 
@@ -24,25 +25,7 @@ export function isGradeRecorded(status?: string | null): boolean {
     return isGradeDraft(status) || isGradeSent(status);
 }
 
-export interface GradeDetailInput {
-    scale_id: string;
-    comment?: string;
-}
-
 export type { GradeDetail };
-
-/**
- * POST /evaluation/grades — el backend calcula final_score.
- * Debe incluir enrollment_id y evaluation_id o rubric_id.
- */
-export interface GradeStudentPayload {
-    enrollment_id: string;
-    evaluation_id?: string;
-    rubric_id?: string;
-    status: GradeStatus;
-    observations?: string;
-    details: GradeDetailInput[];
-}
 
 class GradeService {
     async getGrades(): Promise<Grade[]> {

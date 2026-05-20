@@ -3,10 +3,9 @@
  * No se enlaza automáticamente al crear rúbrica ni al crear evaluación sin rúbrica.
  */
 import { Evaluation } from '../models/Evaluation/Evaluation';
-import {
-  evaluationService,
-  UpdateEvaluationPayload,
-} from '../services/evaluationService';
+import { evaluationService } from '../services/evaluationService';
+import { UpdateEvaluationPayload } from '../models/Services/UpdateEvaluationPayload';
+
 
 /** CU-10: PUT evaluación con rubric_id (Postman «Update Evaluation»). */
 export async function linkRubricToEvaluation(

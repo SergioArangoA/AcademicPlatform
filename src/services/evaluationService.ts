@@ -11,27 +11,10 @@ import { api } from "../interceptors/authInterceptor";
 import { Evaluation } from "../models/Evaluation/Evaluation";
 import { ApiEnvelope } from "../types/ApiResponse";
 import { unwrapApiData } from "../utils/unwrapApiResponse";
+import { CreateEvaluationPayload } from "../models/Services/CreateEvaluationPayload";
+import { UpdateEvaluationPayload } from "../models/Services/UpdateEvaluationPayload";
 
 const API_URL = "/evaluation/evaluations";
-
-/** Body de POST Create Evaluation (sin rubric_id). */
-export interface CreateEvaluationPayload {
-    subject_id: string;
-    group_id: string;
-    name: string;
-    description: string;
-    weight: number;
-}
-
-/** Body de PUT Update Evaluation (incluye rubric_id opcional). */
-export interface UpdateEvaluationPayload {
-    subject_id?: string;
-    group_id?: string;
-    rubric_id?: string | null;
-    name?: string;
-    description?: string;
-    weight?: number;
-}
 
 class EvaluationService {
     async getEvaluations(groupId?: string): Promise<Evaluation[]> {

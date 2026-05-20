@@ -8,8 +8,8 @@ import { Link, useParams } from 'react-router-dom';
 import Breadcrumb from '../../../components/Breadcrumb';
 import {
   loadEvaluationStudentsRows,
-  EvaluationStudentRow,
 } from '../../../utils/teacher/evaluationData';
+import { EvaluationStudentRow } from '../../../models/Utils/EvaluationStudentRow';
 
 const statusLabel: Record<EvaluationStudentRow['grade_status'], string> = {
   NONE: 'Sin calificar',

@@ -1,23 +1,8 @@
 import React, { useMemo, useState } from "react";
 
-interface Action {
-    name: string;
-    label: string;
-}
-
-interface Column {
-    key: string;
-    label: string;
-}
-
-interface GenericTableProps {
-    data: Record<string, any>[];
-    columns: Column[];
-    actions: Action[];
-    onAction: (name: string, item: Record<string, any>) => void;
-    renderCell?: (key: string, item: Record<string, any>) => React.ReactNode;
-    rowClassName?: (item: Record<string, any>) => string;
-}
+import { Action } from "../models/Components/Action";
+import { Column } from "../models/Components/Column";
+import { GenericTableProps } from "../models/Components/GenericTableProps";
 
 const GenericTable: React.FC<GenericTableProps> = ({
     data,
