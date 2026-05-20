@@ -5,10 +5,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Breadcrumb from '../../../components/Breadcrumb';
-import FilterBar, { FilterValues } from '../../../components/FilterBar';
+import FilterBar from '../../../components/FilterBar';
+import { FilterValues } from '../../../models/Components/FilterConfig';
 import GenericTable from '../../../components/GenericTable';
 import { useAuth } from '../../../context/AuthContext';
-import { loadTeacherScalesData, TeacherScaleRow } from '../../../utils/teacher';
+import { loadTeacherScalesData } from '../../../utils/teacher';
+import { TeacherScaleRow } from '../../../models/Utils/TeacherScaleRow';
 
 const initialFilters: FilterValues = {
     search: '',

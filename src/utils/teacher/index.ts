@@ -58,7 +58,7 @@ export {
   loadTeacherRubricsData,
   loadTeacherScalesData,
 } from './tableData';
-export type { TeacherRubricRow } from './tableData';
+export type { TeacherRubricRow } from '../../models/Utils/TeacherRubricRow';
 
 export {
   loadTeacherSubjects,

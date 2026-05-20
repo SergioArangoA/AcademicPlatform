@@ -6,9 +6,11 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
 import Breadcrumb from '../../../components/Breadcrumb';
-import FilterBar, { FilterValues } from '../../../components/FilterBar';
+import FilterBar from '../../../components/FilterBar';
+import { FilterValues } from '../../../models/Components/FilterConfig';
 import GenericTable from '../../../components/GenericTable';
-import { loadTeacherGroupsData, TeacherGroupRow } from '../../../utils/teacher';
+import { loadTeacherGroupsData } from '../../../utils/teacher';
+import { TeacherGroupRow } from '../../../models/Utils/TeacherGroupRow';
 
 const initialFilters: FilterValues = {
     search: '',

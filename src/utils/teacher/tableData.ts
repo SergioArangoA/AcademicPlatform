@@ -196,10 +196,7 @@ export async function loadTeacherStudentsData(user: AuthUser): Promise<{
   }
 }
 
-export type TeacherRubricRow = Rubric & {
-  subject_label: string;
-  visibility: RubricVisibility;
-};
+import { TeacherRubricRow } from '../../models/Utils/TeacherRubricRow';
 
 /**
  * Carga rúbricas del docente y aplica filtro mine | shared (rubricFilters.ts).

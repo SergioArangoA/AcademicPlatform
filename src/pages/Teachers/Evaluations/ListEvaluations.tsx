@@ -10,11 +10,11 @@ import Swal from 'sweetalert2';
 import { useAuth } from '../../../context/AuthContext';
 import {
   loadTeacherEvaluationsData,
-  TeacherEvaluationRow,
   loadEvaluationStudentsRows,
 } from '../../../utils/teacher/evaluationData';
+import { TeacherEvaluationRow } from '../../../models/Utils/TeacherEvaluationRow';
 import { loadTeacherSubjects } from '../../../utils/teacher/evaluationHelpers';
-import type { TeacherSubjectOption } from '../../../utils/teacher/types';
+import type { TeacherSubjectOption } from '../../../models/Utils/TeacherSubjectOption';
 import {
   checkSubjectWeights,
   summarizeWeightsBySubject,

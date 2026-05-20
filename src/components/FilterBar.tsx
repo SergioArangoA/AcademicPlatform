@@ -1,17 +1,12 @@
 import React from "react";
+import { FilterConfig, FilterValues, TextFilterConfig, SelectFilterConfig, SelectOption } from "../models/Components/FilterConfig";
 import { BaseFilterConfig } from "../models/Components/BaseFilterConfig";
-import { TextFilterConfig } from "../models/Components/TextFilterConfig";
-import { SelectFilterConfig, SelectOption } from "../models/Components/SelectFilterConfig";
 import { FilterBarProps } from "../models/Components/FilterBarProps";
 import { FilterInputProps } from "../models/Components/FilterInputProps";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-export type { BaseFilterConfig, TextFilterConfig, SelectFilterConfig, SelectOption };
-
-export type FilterConfig = TextFilterConfig | SelectFilterConfig;
-
-export type FilterValues = Record<string, string>;
+export type { BaseFilterConfig, TextFilterConfig, SelectFilterConfig, SelectOption, FilterConfig, FilterValues };
 
 // ─── Icons ───────────────────────────────────────────────────────────────────
 

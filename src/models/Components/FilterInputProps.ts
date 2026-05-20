@@ -1,4 +1,4 @@
-import { FilterConfig } from "../../components/FilterBar";
+import { FilterConfig } from "./FilterConfig";
 
 export interface FilterInputProps {
 	config: FilterConfig;
